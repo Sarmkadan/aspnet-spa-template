@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace AspNetSpaTemplate.Services;
 /// <summary>
 /// Service for review-related business logic.
 /// </summary>
-public class ReviewService
+public sealed class ReviewService
 {
     private readonly IRepository<Review> _reviewRepository;
     private readonly ProductRepository _productRepository;
@@ -26,7 +27,7 @@ public class ReviewService
     public async Task<Review?> GetReviewByIdAsync(int id)
     {
         var review = await _reviewRepository.GetByIdAsync(id);
-        if (review == null)
+        if (review is null)
             throw new NotFoundException("Review", id);
 
         return review;
@@ -49,12 +50,12 @@ public class ReviewService
         ValidateReview(rating, title, content);
 
         var product = await _productRepository.GetByIdAsync(productId);
-        if (product == null)
+        if (product is null)
             throw new NotFoundException("Product", productId);
 
         // Check if user already reviewed this product
         var existingReview = await _reviewRepository.FirstOrDefaultAsync(r => r.ProductId == productId && r.UserId == userId);
-        if (existingReview != null)
+        if (existingReview is not null)
             throw new BusinessException("User has already reviewed this product", "DUPLICATE_REVIEW");
 
         var review = new Review
@@ -81,7 +82,7 @@ public class ReviewService
     public async Task<Review> UpdateReviewAsync(int id, int rating, string title, string content)
     {
         var review = await _reviewRepository.GetByIdAsync(id);
-        if (review == null)
+        if (review is null)
             throw new NotFoundException("Review", id);
 
         if (!review.CanBeEdited())
@@ -102,7 +103,7 @@ public class ReviewService
     public async Task DeleteReviewAsync(int id)
     {
         var review = await _reviewRepository.GetByIdAsync(id);
-        if (review == null)
+        if (review is null)
             throw new NotFoundException("Review", id);
 
         var productId = review.ProductId;
@@ -116,7 +117,7 @@ public class ReviewService
     public async Task ApproveReviewAsync(int id)
     {
         var review = await _reviewRepository.GetByIdAsync(id);
-        if (review == null)
+        if (review is null)
             throw new NotFoundException("Review", id);
 
         review.Approve();
@@ -129,7 +130,7 @@ public class ReviewService
     public async Task RejectReviewAsync(int id)
     {
         var review = await _reviewRepository.GetByIdAsync(id);
-        if (review == null)
+        if (review is null)
             throw new NotFoundException("Review", id);
 
         review.Reject();
@@ -142,7 +143,7 @@ public class ReviewService
     public async Task MarkAsHelpfulAsync(int id)
     {
         var review = await _reviewRepository.GetByIdAsync(id);
-        if (review == null)
+        if (review is null)
             throw new NotFoundException("Review", id);
 
         review.MarkAsHelpful();
@@ -153,7 +154,7 @@ public class ReviewService
     private async Task UpdateProductRatingAsync(int productId)
     {
         var product = await _productRepository.GetByIdAsync(productId);
-        if (product == null)
+        if (product is null)
             return;
 
         var reviews = await _reviewRepository.FindAsync(r => r.ProductId == productId && r.IsApproved);

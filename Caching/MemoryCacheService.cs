@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace AspNetSpaTemplate.Caching;
 /// Suitable for single-server deployments. For distributed setups, use RedisCacheService.
 /// Uses distributed lock approach for GetOrSet to prevent cache stampedes.
 /// </summary>
-public class MemoryCacheService : ICacheService
+public sealed class MemoryCacheService : ICacheService
 {
     private readonly ConcurrentDictionary<string, CacheEntry> _cache;
     private readonly ConcurrentDictionary<string, object> _locks;
@@ -99,7 +100,7 @@ public class MemoryCacheService : ICacheService
     {
         // Fast path: check if exists
         var existing = await GetAsync<T>(key);
-        if (existing != null)
+        if (existing is not null)
             return existing;
 
         // Use lock to prevent cache stampede (multiple concurrent factory calls)
@@ -108,12 +109,12 @@ public class MemoryCacheService : ICacheService
         {
             // Double-check after acquiring lock
             existing = GetAsync<T>(key).Result;
-            if (existing != null)
+            if (existing is not null)
                 return existing;
 
             // Generate value
             var value = factory().Result;
-            if (value != null)
+            if (value is not null)
             {
                 SetAsync(key, value, ttl).Wait();
             }

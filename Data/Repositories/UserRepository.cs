@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace AspNetSpaTemplate.Data.Repositories;
 /// <summary>
 /// Repository for user entity operations.
 /// </summary>
-public class UserRepository : RepositoryBase<User>
+public sealed class UserRepository : RepositoryBase<User>
 {
     public UserRepository(AppDbContext context) : base(context) { }
 
@@ -34,7 +35,7 @@ public class UserRepository : RepositoryBase<User>
     {
         var cutoffDate = DateTime.UtcNow.AddDays(-days);
         return await DbSet
-            .Where(u => u.LastLoginAt != null && u.LastLoginAt >= cutoffDate)
+            .Where(u => u.LastLoginAt is not null && u.LastLoginAt >= cutoffDate)
             .OrderByDescending(u => u.LastLoginAt)
             .ToListAsync();
     }

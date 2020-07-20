@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace AspNetSpaTemplate.Controllers;
 /// <summary>
 /// API controller for order management.
 /// </summary>
-public class OrdersController : ApiControllerBase
+public sealed class OrdersController : ApiControllerBase
 {
     private readonly OrderService _orderService;
 

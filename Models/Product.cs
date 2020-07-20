@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ namespace AspNetSpaTemplate.Models;
 /// <summary>
 /// Represents a product in the catalog.
 /// </summary>
-public class Product
+public sealed class Product
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;

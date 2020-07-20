@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace AspNetSpaTemplate.Exceptions;
 /// <summary>
 /// Exception thrown when data validation fails.
 /// </summary>
-public class ValidationException : Exception
+public sealed class ValidationException : Exception
 {
     public Dictionary<string, List<string>> Errors { get; }
 

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace AspNetSpaTemplate.BackgroundWorkers;
 /// Periodically monitors cache health, evicts stale entries, and reports statistics.
 /// Prevents cache memory bloat and ensures cache effectiveness.
 /// </summary>
-public class CacheMaintenanceWorker : IBackgroundTask
+public sealed class CacheMaintenanceWorker : IBackgroundTask
 {
     public string TaskName => "CacheMaintenanceWorker";
     public TimeSpan? ExecutionInterval => TimeSpan.FromMinutes(5);
@@ -119,7 +120,7 @@ public interface ICacheHealthMonitor
 /// <summary>
 /// Cache health report data.
 /// </summary>
-public class CacheHealthReport
+public sealed class CacheHealthReport
 {
     public bool IsHealthy { get; set; }
     public double HitRate { get; set; }
@@ -133,7 +134,7 @@ public class CacheHealthReport
 /// <summary>
 /// Cache health monitor implementation.
 /// </summary>
-public class DefaultCacheHealthMonitor : ICacheHealthMonitor
+public sealed class DefaultCacheHealthMonitor : ICacheHealthMonitor
 {
     private readonly ICacheService _cacheService;
     private readonly ILogger<DefaultCacheHealthMonitor> _logger;
