@@ -2,7 +2,7 @@
 
 A production-ready template for building modern Single Page Applications with ASP.NET Core backend and vanilla JavaScript frontend. No React, Vue, or Angular—just clean, semantic HTML, CSS, and JavaScript with a powerful RESTful API backend.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
@@ -18,7 +18,7 @@ A production-ready template for building modern Single Page Applications with AS
 
 ---
 
-## 🎯 Overview
+## Overview
 
 **aspnet-spa-template** is a modern, full-stack web application template that demonstrates best practices for building scalable applications with:
 
@@ -44,7 +44,7 @@ Modern web development often defaults to heavy JavaScript frameworks (React, Vue
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### High-Level System Diagram
 
@@ -150,7 +150,7 @@ aspnet-spa-template/
 
 ---
 
-## ✨ Features
+## Features
 
 ### Backend Features
 - ✅ RESTful API with standardized response format
@@ -191,7 +191,7 @@ aspnet-spa-template/
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### Prerequisites
 
@@ -241,7 +241,7 @@ start AspNetSpaTemplate.sln
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ### 1. Start the Application
 
@@ -279,7 +279,7 @@ curl -X POST https://localhost:7001/api/products \
 
 ---
 
-## 📖 Usage Examples
+## Usage Examples
 
 ### Example 1: Fetch All Products
 
@@ -449,7 +449,7 @@ const response = await fetch('/api/users/profile', {
 
 ---
 
-## 🔌 API Reference
+## API Reference
 
 ### Base URL
 ```
@@ -536,7 +536,7 @@ Application health status.
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### appsettings.json
 
@@ -567,7 +567,7 @@ ConnectionStrings__DefaultConnection=...
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Database Connection Failed
 ```bash
@@ -595,7 +595,7 @@ dotnet ef database update
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/my-feature`
@@ -605,7 +605,7 @@ dotnet ef database update
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
 

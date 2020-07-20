@@ -27,16 +27,19 @@ bld/
 *.user
 *.userosscache
 *.sln.docstates
+*.DotSettings.user
 
 # NuGet Packages
 *.nupkg
 *.snupkg
 *.lock.json
+packages/
 
 # Local env files
 .env
 .env.local
 *.env.*.local
+appsettings.Development.json
 
 # IDE
 .vscode/
