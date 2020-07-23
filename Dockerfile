@@ -4,22 +4,28 @@
 # =============================================================================
 
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 
 WORKDIR /app
 
-# Copy project files
-COPY AspNetSpaTemplate.csproj .
-RUN dotnet restore
+# Copy project files for layer caching
+COPY AspNetSpaTemplate.csproj ./
+RUN dotnet restore --verbosity minimal
 
-# Copy all source files
+# Copy additional files that affect dependencies
+COPY Directory.Build.props ./
+COPY NuGet.Config ./
+
+# Copy source files
 COPY . .
 
 # Build application
 RUN dotnet build -c Release --no-restore
 
 # Publish application
-RUN dotnet publish -c Release -o /app/publish --no-build
+RUN dotnet publish -c Release -o /app/publish \
+    --no-build \
+    --verbosity minimal
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
