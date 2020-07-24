@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace AspNetSpaTemplate.Integration;
 /// Abstracts notification implementation details from business logic.
 /// Queues notifications for async processing to avoid blocking requests.
 /// </summary>
-public class NotificationService
+public sealed class NotificationService
 {
     private readonly ILogger<NotificationService> _logger;
     private readonly Queue<NotificationMessage> _notificationQueue = new();
@@ -169,7 +170,7 @@ public class NotificationService
 /// <summary>
 /// Notification message envelope for queuing.
 /// </summary>
-public class NotificationMessage
+public sealed class NotificationMessage
 {
     public NotificationType Type { get; set; }
     public string Recipient { get; set; } = "";

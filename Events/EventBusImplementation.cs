@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -23,7 +24,7 @@ public class EventBusImplementation : IEventBus
 
     public void Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : DomainEvent
     {
-        if (handler == null)
+        if (handler is null)
             throw new ArgumentNullException(nameof(handler));
 
         lock (_subscriberLock)
@@ -53,7 +54,7 @@ public class EventBusImplementation : IEventBus
 
     public async Task PublishAsync<TEvent>(TEvent @event) where TEvent : DomainEvent
     {
-        if (@event == null)
+        if (@event is null)
             throw new ArgumentNullException(nameof(@event));
 
         var eventType = typeof(TEvent);

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -98,7 +99,7 @@ public static class JsonSerializationHelper
     /// </summary>
     public static async Task<T?> DeserializeAsync<T>(Stream stream)
     {
-        if (stream == null || stream.Length == 0)
+        if (stream is null || stream.Length == 0)
             return default;
 
         try
@@ -117,7 +118,7 @@ public static class JsonSerializationHelper
     /// </summary>
     public static T? ConvertObject<T>(object source) where T : class
     {
-        if (source == null)
+        if (source is null)
             return null;
 
         var json = JsonSerializer.Serialize(source, DefaultOptions);

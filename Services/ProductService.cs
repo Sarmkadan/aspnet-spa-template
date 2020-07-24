@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -14,7 +15,7 @@ namespace AspNetSpaTemplate.Services;
 /// <summary>
 /// Service for product-related business logic.
 /// </summary>
-public class ProductService
+public sealed class ProductService
 {
     private readonly ProductRepository _productRepository;
 
@@ -26,7 +27,7 @@ public class ProductService
     public async Task<ProductResponse?> GetProductByIdAsync(int id)
     {
         var product = await _productRepository.GetByIdAsync(id);
-        if (product == null)
+        if (product is null)
             throw new NotFoundException("Product", id);
 
         return MapToResponse(product);
@@ -112,7 +113,7 @@ public class ProductService
     public async Task<ProductResponse> UpdateProductAsync(int id, UpdateProductRequest request)
     {
         var product = await _productRepository.GetByIdAsync(id);
-        if (product == null)
+        if (product is null)
             throw new NotFoundException("Product", id);
 
         product.UpdateDetails(request.Name, request.Description, request.Price, request.Category, request.ImageUrl);
@@ -127,7 +128,7 @@ public class ProductService
     public async Task SetProductAvailabilityAsync(int id, bool isAvailable)
     {
         var product = await _productRepository.GetByIdAsync(id);
-        if (product == null)
+        if (product is null)
             throw new NotFoundException("Product", id);
 
         product.SetAvailability(isAvailable);
@@ -138,7 +139,7 @@ public class ProductService
     public async Task SetProductFeaturedAsync(int id, bool isFeatured)
     {
         var product = await _productRepository.GetByIdAsync(id);
-        if (product == null)
+        if (product is null)
             throw new NotFoundException("Product", id);
 
         product.SetFeatured(isFeatured);
@@ -149,7 +150,7 @@ public class ProductService
     public async Task DeleteProductAsync(int id)
     {
         var product = await _productRepository.GetByIdAsync(id);
-        if (product == null)
+        if (product is null)
             throw new NotFoundException("Product", id);
 
         _productRepository.Remove(product);

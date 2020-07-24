@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -45,7 +46,7 @@ public abstract class RepositoryBase<T> : IRepository<T> where T : class
 
     public virtual async Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null)
     {
-        return predicate == null
+        return predicate is null
             ? await DbSet.CountAsync()
             : await DbSet.CountAsync(predicate);
     }
@@ -57,7 +58,7 @@ public abstract class RepositoryBase<T> : IRepository<T> where T : class
 
     public virtual async Task<IEnumerable<T>> GetPagedAsync(int pageNumber, int pageSize, Expression<Func<T, bool>>? predicate = null)
     {
-        var query = predicate == null ? DbSet.AsQueryable() : DbSet.Where(predicate);
+        var query = predicate is null ? DbSet.AsQueryable() : DbSet.Where(predicate);
         return await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ namespace AspNetSpaTemplate.DTOs;
 /// <summary>
 /// Data transfer object for creating a new product.
 /// </summary>
-public class CreateProductRequest
+public sealed class CreateProductRequest
 {
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -24,7 +25,7 @@ public class CreateProductRequest
 /// <summary>
 /// Data transfer object for updating a product.
 /// </summary>
-public class UpdateProductRequest
+public sealed class UpdateProductRequest
 {
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -37,7 +38,7 @@ public class UpdateProductRequest
 /// <summary>
 /// Data transfer object for product response.
 /// </summary>
-public class ProductResponse
+public sealed class ProductResponse
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -57,7 +58,7 @@ public class ProductResponse
 /// <summary>
 /// Data transfer object for product list response with pagination.
 /// </summary>
-public class ProductListResponse
+public sealed class ProductListResponse
 {
     public List<ProductResponse> Products { get; set; } = new();
     public int TotalCount { get; set; }

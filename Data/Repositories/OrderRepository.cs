@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace AspNetSpaTemplate.Data.Repositories;
 /// <summary>
 /// Repository for order entity operations.
 /// </summary>
-public class OrderRepository : RepositoryBase<Order>
+public sealed class OrderRepository : RepositoryBase<Order>
 {
     public OrderRepository(AppDbContext context) : base(context) { }
 

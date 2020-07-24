@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ namespace AspNetSpaTemplate.Models;
 /// <summary>
 /// Represents a customer order.
 /// </summary>
-public class Order
+public sealed class Order
 {
     public int Id { get; set; }
     public int UserId { get; set; }

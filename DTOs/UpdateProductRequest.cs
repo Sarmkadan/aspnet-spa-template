@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace AspNetSpaTemplate.DTOs;
 /// Request DTO for updating product details.
 /// Encapsulates product update fields with validation rules.
 /// </summary>
-public class UpdateProductRequest
+public sealed class UpdateProductRequest
 {
     public string Name { get; set; } = "";
     public string Description { get; set; } = "";
@@ -44,7 +45,7 @@ public class UpdateProductRequest
 /// Response DTO for product details.
 /// Used in all product-related API responses.
 /// </summary>
-public class ProductResponse
+public sealed class ProductResponse
 {
     public int Id { get; set; }
     public string Name { get; set; } = "";
@@ -66,7 +67,7 @@ public class ProductResponse
 /// <summary>
 /// Response DTO for paginated product list.
 /// </summary>
-public class ProductListResponse
+public sealed class ProductListResponse
 {
     public List<ProductResponse> Products { get; set; } = new();
     public int PageNumber { get; set; }
@@ -80,7 +81,7 @@ public class ProductListResponse
 /// <summary>
 /// Request DTO for searching products.
 /// </summary>
-public class ProductSearchRequest
+public sealed class ProductSearchRequest
 {
     public string? SearchTerm { get; set; }
     public ProductCategory? Category { get; set; }
@@ -105,7 +106,7 @@ public class ProductSearchRequest
 /// <summary>
 /// Request DTO for bulk product operations.
 /// </summary>
-public class BulkProductRequest
+public sealed class BulkProductRequest
 {
     public List<int> ProductIds { get; set; } = new();
     public BulkOperation Operation { get; set; }
@@ -113,7 +114,7 @@ public class BulkProductRequest
 
     public void Validate()
     {
-        if (ProductIds == null || ProductIds.Count == 0)
+        if (ProductIds is null || ProductIds.Count == 0)
             throw new ArgumentException("ProductIds cannot be empty");
 
         if (ProductIds.Count > 1000)
@@ -133,7 +134,7 @@ public enum BulkOperation
 /// <summary>
 /// Response DTO for product statistics.
 /// </summary>
-public class ProductStatsResponse
+public sealed class ProductStatsResponse
 {
     public int TotalProducts { get; set; }
     public int AvailableProducts { get; set; }

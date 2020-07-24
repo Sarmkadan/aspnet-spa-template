@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace AspNetSpaTemplate.Models;
 /// <summary>
 /// Represents a product review by a user.
 /// </summary>
-public class Review
+public sealed class Review
 {
     public int Id { get; set; }
     public int ProductId { get; set; }

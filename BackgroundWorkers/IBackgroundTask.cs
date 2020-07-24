@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -40,7 +41,7 @@ public interface IBackgroundTask
 /// <summary>
 /// Status information for monitoring background tasks.
 /// </summary>
-public class BackgroundTaskStatus
+public sealed class BackgroundTaskStatus
 {
     public string TaskName { get; set; } = "";
     public bool IsRunning { get; set; }
@@ -50,7 +51,7 @@ public class BackgroundTaskStatus
     public int ExecutionCount { get; set; }
     public int FailureCount { get; set; }
     public string? LastError { get; set; }
-    public string Status => IsRunning ? "Running" : LastError != null ? "Failed" : "Idle";
+    public string Status => IsRunning ? "Running" : LastError is not null ? "Failed" : "Idle";
 }
 
 /// <summary>

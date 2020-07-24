@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace AspNetSpaTemplate.Controllers;
 /// <summary>
 /// API controller for user management and authentication.
 /// </summary>
-public class UsersController : ApiControllerBase
+public sealed class UsersController : ApiControllerBase
 {
     private readonly UserService _userService;
 
