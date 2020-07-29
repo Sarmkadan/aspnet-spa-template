@@ -12,7 +12,9 @@ using AspNetSpaTemplate.Models;
 namespace AspNetSpaTemplate.Services;
 
 /// <summary>
-/// Service for user-related business logic.
+/// Service for user-related business logic including registration, profile updates,
+/// email uniqueness validation, and password hashing. Maps between domain entities
+/// and DTOs for the API layer.
 /// </summary>
 public sealed class UserService
 {
@@ -23,6 +25,12 @@ public sealed class UserService
         _userRepository = userRepository;
     }
 
+    /// <summary>
+    /// Retrieves a user by their unique identifier and maps to a response DTO.
+    /// </summary>
+    /// <param name="id">The user's database identifier.</param>
+    /// <returns>A <see cref="UserResponse"/> DTO.</returns>
+    /// <exception cref="NotFoundException">Thrown when no user exists with the given ID.</exception>
     public async Task<UserResponse?> GetUserByIdAsync(int id)
     {
         var user = await _userRepository.GetByIdAsync(id);
@@ -32,6 +40,13 @@ public sealed class UserService
         return MapToResponse(user);
     }
 
+    /// <summary>
+    /// Creates a new user after validating the request and checking email uniqueness.
+    /// The password is hashed before storage.
+    /// </summary>
+    /// <param name="request">The user creation request with profile data and credentials.</param>
+    /// <returns>A <see cref="UserResponse"/> DTO for the newly created user.</returns>
+    /// <exception cref="ValidationException">Thrown when the email already exists or request data is invalid.</exception>
     public async Task<UserResponse> CreateUserAsync(CreateUserRequest request)
     {
         ValidateCreateUserRequest(request);
@@ -60,6 +75,13 @@ public sealed class UserService
         return MapToResponse(user);
     }
 
+    /// <summary>
+    /// Updates an existing user's profile fields. Does not modify email or password.
+    /// </summary>
+    /// <param name="id">The user's database identifier.</param>
+    /// <param name="request">The profile update request with new field values.</param>
+    /// <returns>The updated <see cref="UserResponse"/> DTO.</returns>
+    /// <exception cref="NotFoundException">Thrown when no user exists with the given ID.</exception>
     public async Task<UserResponse> UpdateUserAsync(int id, UpdateUserRequest request)
     {
         var user = await _userRepository.GetByIdAsync(id);
