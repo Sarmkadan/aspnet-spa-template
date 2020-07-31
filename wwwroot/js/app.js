@@ -49,6 +49,8 @@ const AppState = {
 };
 
 // API Communication
+// Delegates to the Api wrapper (api.js) so that POST/PUT/DELETE requests
+// automatically carry the X-CSRF-Token header read from the csrf-token meta tag.
 const API = {
     async request(endpoint, options = {}) {
         const url = `${API_BASE}${endpoint}`;
@@ -62,7 +64,7 @@ const API = {
         }
 
         try {
-            const response = await fetch(url, {
+            const response = await Api.request(url, {
                 ...options,
                 headers
             });
