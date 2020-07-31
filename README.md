@@ -544,17 +544,109 @@ Application health status.
 
 ## Configuration
 
-### appsettings.json
+### Environment-Specific Settings
+
+ASP.NET Core uses a layered configuration system. Files are applied in order, with later files overriding earlier ones:
+
+| File | Purpose | Commit to git? |
+|---|---|---|
+| `appsettings.json` | Base defaults (no secrets) | ✅ Yes |
+| `appsettings.Development.json` | Dev overrides | ⚠️ Only if it contains no secrets |
+| `appsettings.Production.json` | Production overrides | ✅ Yes (no secrets — use env vars) |
+| Environment variables | Runtime secrets & deployment config | ✅ (set in your CI/CD or hosting platform) |
+| `dotnet user-secrets` | Local developer secrets | ✅ Stored outside the repo |
+
+The active environment is controlled by the `ASPNETCORE_ENVIRONMENT` variable (defaults to `Production` when not set).
+
+```bash
+# Use Development profile
+ASPNETCORE_ENVIRONMENT=Development dotnet run
+
+# Use Production profile
+ASPNETCORE_ENVIRONMENT=Production dotnet run
+```
+
+### Local Secrets with dotnet user-secrets
+
+Never put real credentials in `appsettings.json`. Use `dotnet user-secrets` for local development — secrets are stored in your OS user profile, not in the repository.
+
+```bash
+# Initialise user-secrets for the project (one-time)
+dotnet user-secrets init
+
+# Store a connection string locally
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
+  "Server=localhost;Database=AspNetSpaTemplate;User ID=dev;Password=dev;"
+
+# Store the JWT secret locally
+dotnet user-secrets set "AppSettings:JwtSecret" "my-local-only-secret"
+
+# List stored secrets
+dotnet user-secrets list
+
+# Remove a secret
+dotnet user-secrets remove "AppSettings:JwtSecret"
+```
+
+Secrets set this way are automatically merged into `IConfiguration` at startup when `ASPNETCORE_ENVIRONMENT=Development`.
+
+### Environment Variable Substitution
+
+All configuration keys are available as environment variables using `__` as the section separator:
+
+```bash
+# Database
+ConnectionStrings__DefaultConnection="Server=prod-db;Database=AspNetSpaTemplate;..."
+
+# Logging
+Logging__LogLevel__Default=Warning
+
+# Request logging verbosity
+RequestLogging__VerbosityLevel=Minimal
+RequestLogging__Enabled=true
+
+# App settings
+AppSettings__JwtSecret=your-production-secret-here
+AppSettings__JwtExpiration=3600
+```
+
+Environment variables always take precedence over `appsettings.json`, making them ideal for container/cloud deployments.
+
+### appsettings.Development.json (example)
+
+Create this file locally (it is gitignored when it contains secrets) to override defaults during development:
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug",
+      "Microsoft.EntityFrameworkCore": "Information"
+    }
+  },
+  "RequestLogging": {
+    "Enabled": true,
+    "VerbosityLevel": "Detailed"
+  }
+}
+```
+
+### appsettings.json (base defaults)
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=AspNetSpaTemplate;Trusted_Connection=true;"
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=AspNetSpaTemplate;Trusted_Connection=true;TrustServerCertificate=true;"
   },
   "Logging": {
     "LogLevel": {
       "Default": "Information"
     }
+  },
+  "RequestLogging": {
+    "Enabled": true,
+    "VerbosityLevel": "Standard",
+    "SlowRequestThresholdMs": 1000
   },
   "RateLimiting": {
     "Enabled": true,
@@ -563,12 +655,13 @@ Application health status.
 }
 ```
 
-### Environment Variables
+### Environment Variables in Production
 
 ```bash
-ASPNETCORE_ENVIRONMENT=Development
-ASPNETCORE_URLS=https://localhost:7001
-ConnectionStrings__DefaultConnection=...
+ASPNETCORE_ENVIRONMENT=Production
+ASPNETCORE_URLS=https://0.0.0.0:443
+ConnectionStrings__DefaultConnection=Server=prod-db-server;Database=AspNetSpaTemplate;...
+AppSettings__JwtSecret=<generated-secure-value>
 ```
 
 ---
