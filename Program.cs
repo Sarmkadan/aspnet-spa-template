@@ -35,6 +35,10 @@ builder.Services.AddScoped<ReviewService>();
 // Offline support — asset versioning + HMR
 builder.Services.AddOfflineSupport();
 
+// Request/response logging — opt-in via "RequestLogging:Enabled" in appsettings.json
+builder.Services.Configure<LoggingMiddlewareOptions>(
+    builder.Configuration.GetSection(LoggingMiddlewareOptions.SectionName));
+
 // API services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -75,6 +79,7 @@ app.UseHttpsRedirection();
 app.UseOfflineSupport();
 app.UseStaticFiles();
 
+app.UseMiddleware<RequestResponseLoggingMiddleware>();
 app.UseMiddleware<LoggingMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
