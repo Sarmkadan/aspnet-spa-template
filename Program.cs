@@ -41,6 +41,9 @@ builder.Services.AddScoped<IThemeService, ThemeService>();
 // PWA manifest
 builder.Services.AddSingleton<IManifestService, ManifestService>();
 
+// Offline sync queue
+builder.Services.AddSingleton<ISyncQueueService, SyncQueueService>();
+
 // Offline support — asset versioning + HMR
 builder.Services.AddOfflineSupport();
 
