@@ -464,6 +464,14 @@ curl -X POST https://localhost:7001/api/products \
 
 ## Usage Examples
 
+This repository includes a set of practical C# usage examples in the `examples/` directory to help you get started:
+
+- `examples/BasicUsage.cs`: Demonstrates minimal setup and first calls for core services.
+- `examples/AdvancedUsage.cs`: Shows advanced configuration, custom options, and error handling.
+- `examples/IntegrationExample.cs`: Illustrates how to wire services into the ASP.NET Core dependency injection container.
+
+For additional, scenario-specific guidance, see the examples below:
+
 ### Example 1: Fetch All Products
 
 **Frontend (JavaScript)**
