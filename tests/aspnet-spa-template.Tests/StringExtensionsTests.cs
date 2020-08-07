@@ -12,56 +12,90 @@ namespace AspNetSpaTemplate.Tests;
 
 public sealed class StringExtensionsTests
 {
-    [Fact]
-    public void Sanitize_WhenInputIsNull_ReturnsEmptyString()
+    [Theory]
+    [InlineData(null, "")]
+    [InlineData("", "")]
+    [InlineData("   ", "")]
+    public void Sanitize_WhenInputIsNullOrWhiteSpace_ReturnsEmptyString(string? input, string expected)
     {
-        // Arrange
-        string? input = null;
-
-        // Act
-        var result = input.Sanitize();
-
-        // Assert
-        result.Should().BeEmpty();
+        input.Sanitize().Should().Be(expected);
     }
 
     [Fact]
     public void Sanitize_WhenInputHasExcessiveWhitespace_CollapsesToSingleSpaces()
     {
-        // Arrange
         var input = "  hello   world  ";
-
-        // Act
-        var result = input.Sanitize();
-
-        // Assert
-        result.Should().Be("hello world");
+        input.Sanitize().Should().Be("hello world");
     }
 
     [Fact]
     public void ToSlug_WithUppercaseAndSpecialChars_ReturnsLowercaseHyphenated()
     {
-        // Arrange
         var input = "Hello World!";
+        input.ToSlug().Should().Be("hello-world");
+    }
 
-        // Act
-        var result = input.ToSlug();
-
-        // Assert
-        result.Should().Be("hello-world");
+    [Fact]
+    public void ToSlug_WithEmptyInput_ReturnsEmptyString()
+    {
+        string.Empty.ToSlug().Should().Be("");
     }
 
     [Fact]
     public void Truncate_WhenInputExceedsMaxLength_AppendsEllipsis()
     {
-        // Arrange
         var input = "Hello World";
+        input.Truncate(8).Should().Be("Hello...");
+    }
 
-        // Act
-        var result = input.Truncate(8);
+    [Fact]
+    public void Truncate_WhenInputIsWithinMaxLength_ReturnsOriginalString()
+    {
+        var input = "Hello";
+        input.Truncate(10).Should().Be("Hello");
+    }
 
-        // Assert
-        result.Should().Be("Hello...");
-        result.Length.Should().Be(8);
+    [Fact]
+    public void ToDisplayName_ConvertsPascalCaseToWords()
+    {
+        "ProductName".ToDisplayName().Should().Be("Product Name");
+    }
+
+    [Theory]
+    [InlineData("test@example.com", true)]
+    [InlineData("invalid-email", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void IsValidEmail_ReturnsExpectedResult(string? email, bool expected)
+    {
+        (email ?? "").IsValidEmail().Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("abc123", true)]
+    [InlineData("abc 123", false)]
+    [InlineData("abc!", false)]
+    public void IsAlphaNumeric_ReturnsExpectedResult(string input, bool expected)
+    {
+        input.IsAlphaNumeric().Should().Be(expected);
+    }
+
+    [Fact]
+    public void OrIfEmpty_ReturnsInputIfNotNullOrEmpty()
+    {
+        "hello".OrIfEmpty("fallback").Should().Be("hello");
+    }
+
+    [Fact]
+    public void OrIfEmpty_ReturnsFallbackIfInputIsNullOrEmpty()
+    {
+        "".OrIfEmpty("fallback").Should().Be("fallback");
+        ((string?)null).OrIfEmpty("fallback").Should().Be("fallback");
+    }
+
+    [Fact]
+    public void HtmlEncode_EncodesSpecialCharacters()
+    {
+        "<script>alert('xss')</script>".HtmlEncode().Should().Contain("&lt;script&gt;");
     }
 }
