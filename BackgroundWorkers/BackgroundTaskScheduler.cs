@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -25,7 +26,7 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
 
     public void RegisterTask(IBackgroundTask task)
     {
-        if (task == null)
+        if (task is null)
             throw new ArgumentNullException(nameof(task));
 
         _tasks.Add(task);
@@ -35,7 +36,7 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        if (_schedulerTask != null)
+        if (_schedulerTask is not null)
             throw new InvalidOperationException("Scheduler is already running");
 
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -50,7 +51,7 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
         _logger.LogInformation("Stopping background task scheduler");
         _cancellationTokenSource?.Cancel();
 
-        if (_schedulerTask != null)
+        if (_schedulerTask is not null)
         {
             try
             {
@@ -81,7 +82,7 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     public async Task TriggerTaskAsync(string taskName)
     {
         var task = _tasks.FirstOrDefault(t => t.TaskName == taskName);
-        if (task == null)
+        if (task is null)
             throw new KeyNotFoundException($"Task not found: {taskName}");
 
         _logger.LogInformation($"Manually triggering task: {taskName}");
@@ -97,14 +98,14 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
                 foreach (var task in _tasks)
                 {
                     // Skip tasks that don't have interval (one-time tasks)
-                    if (task.ExecutionInterval == null)
+                    if (task.ExecutionInterval is null)
                         continue;
 
                     var state = _taskStates[task.TaskName];
                     var now = DateTime.UtcNow;
 
                     // Check if it's time to execute
-                    if (state.NextExecutionAt == null || state.NextExecutionAt <= now)
+                    if (state.NextExecutionAt is null || state.NextExecutionAt <= now)
                     {
                         // Execute without blocking scheduler
                         _ = ExecuteTaskAsync(task, cancellationToken);

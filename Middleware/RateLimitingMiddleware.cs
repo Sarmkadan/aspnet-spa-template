@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ namespace AspNetSpaTemplate.Middleware;
 /// Prevents DOS attacks and resource exhaustion.
 /// Uses in-memory sliding window algorithm for simplicity.
 /// </summary>
-public class RateLimitingMiddleware
+public sealed class RateLimitingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<RateLimitingMiddleware> _logger;
@@ -149,7 +150,7 @@ public class RateLimitingMiddleware
 /// Configuration for rate limiting behavior.
 /// Can be extended to support per-endpoint and per-user limits.
 /// </summary>
-public class RateLimitConfig
+public sealed class RateLimitConfig
 {
     public int RequestsPerMinute { get; set; } = 60;
     public int RequestsPerHour { get; set; } = 1000;

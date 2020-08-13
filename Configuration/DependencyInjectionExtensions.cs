@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -110,7 +111,7 @@ public static class DependencyInjectionExtensions
             .AddCheck("cache", async () =>
             {
                 var cache = services.BuildServiceProvider().GetService<ICacheHealthMonitor>();
-                var isHealthy = cache != null && await cache.IsCacheHealthyAsync();
+                var isHealthy = cache is not null && await cache.IsCacheHealthyAsync();
                 return isHealthy
                     ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("Cache OK")
                     : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy("Cache failed");

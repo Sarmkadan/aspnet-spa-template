@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace AspNetSpaTemplate.Data.Repositories;
 /// <summary>
 /// Repository for product entity operations.
 /// </summary>
-public class ProductRepository : RepositoryBase<Product>
+public sealed class ProductRepository : RepositoryBase<Product>
 {
     public ProductRepository(AppDbContext context) : base(context) { }
 

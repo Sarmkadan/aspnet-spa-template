@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace AspNetSpaTemplate.Exceptions;
 /// <summary>
 /// Exception thrown when a requested resource is not found in the system.
 /// </summary>
-public class NotFoundException : Exception
+public sealed class NotFoundException : Exception
 {
     public string? ResourceType { get; }
     public object? ResourceId { get; }

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace AspNetSpaTemplate.Controllers;
 /// <summary>
 /// API controller for product management.
 /// </summary>
-public class ProductsController : ApiControllerBase
+public sealed class ProductsController : ApiControllerBase
 {
     private readonly ProductService _productService;
 

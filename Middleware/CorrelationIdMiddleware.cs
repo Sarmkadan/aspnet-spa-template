@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -97,7 +98,7 @@ public static class CorrelationIdExtensions
     /// </summary>
     public static void SetCorrelationId(this HttpContext context, string correlationId)
     {
-        if (context != null)
+        if (context is not null)
             context.Items["CorrelationId"] = correlationId;
     }
 }

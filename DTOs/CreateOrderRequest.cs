@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace AspNetSpaTemplate.DTOs;
 /// <summary>
 /// Represents an item to add to an order.
 /// </summary>
-public class OrderItemRequest
+public sealed class OrderItemRequest
 {
     public int ProductId { get; set; }
     public int Quantity { get; set; }
@@ -17,7 +18,7 @@ public class OrderItemRequest
 /// <summary>
 /// Data transfer object for creating a new order.
 /// </summary>
-public class CreateOrderRequest
+public sealed class CreateOrderRequest
 {
     public List<OrderItemRequest> Items { get; set; } = new();
     public string? ShippingAddress { get; set; }
@@ -28,7 +29,7 @@ public class CreateOrderRequest
 /// <summary>
 /// Data transfer object for order item response.
 /// </summary>
-public class OrderItemResponse
+public sealed class OrderItemResponse
 {
     public int Id { get; set; }
     public int ProductId { get; set; }
@@ -43,7 +44,7 @@ public class OrderItemResponse
 /// <summary>
 /// Data transfer object for order response.
 /// </summary>
-public class OrderResponse
+public sealed class OrderResponse
 {
     public int Id { get; set; }
     public string OrderNumber { get; set; } = string.Empty;
@@ -64,7 +65,7 @@ public class OrderResponse
 /// <summary>
 /// Data transfer object for applying discount to an order.
 /// </summary>
-public class ApplyDiscountRequest
+public sealed class ApplyDiscountRequest
 {
     public decimal DiscountAmount { get; set; }
 }
@@ -72,7 +73,7 @@ public class ApplyDiscountRequest
 /// <summary>
 /// Data transfer object for updating order status.
 /// </summary>
-public class UpdateOrderStatusRequest
+public sealed class UpdateOrderStatusRequest
 {
     public string Status { get; set; } = string.Empty;
     public string? TrackingNumber { get; set; }
