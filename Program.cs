@@ -61,11 +61,17 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Middleware pipeline
+// UseRouting must precede UseCors so endpoint metadata is available when
+// the CORS middleware evaluates policies. UseCors must also run before
+// UseHttpsRedirection so that HTTPS-redirect responses carry CORS headers,
+// preventing opaque network errors in the browser on 3xx/4xx/5xx replies.
+app.UseRouting();
+app.UseCors("AllowAll");
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
 app.UseOfflineSupport();
 app.UseStaticFiles();
 
