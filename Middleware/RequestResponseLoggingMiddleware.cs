@@ -6,146 +6,165 @@
 
 using System.Text;
 using AspNetSpaTemplate.Utilities;
+using Microsoft.Extensions.Options;
 
 namespace AspNetSpaTemplate.Middleware;
 
 /// <summary>
-/// Middleware for detailed request/response logging.
-/// Logs HTTP method, path, status code, and response time.
+/// Configures what the <see cref="RequestResponseLoggingMiddleware"/> emits.
+/// Bind this class to the "RequestLogging" section of appsettings.json.
+/// </summary>
+public sealed class LoggingMiddlewareOptions
+{
+    public const string SectionName = "RequestLogging";
+
+    /// <summary>Set to false to disable the middleware entirely.</summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// Controls how much detail is logged.
+    /// Minimal  – method, path, status, duration only.
+    /// Standard – adds query string (sensitive values redacted).
+    /// Detailed – adds request headers (sensitive headers redacted).
+    /// </summary>
+    public string VerbosityLevel { get; set; } = "Standard";
+
+    public bool LogRequestHeaders { get; set; } = false;
+    public bool LogResponseHeaders { get; set; } = false;
+    public bool LogRequestBody { get; set; } = false;
+    public bool LogResponseBody { get; set; } = false;
+    public int SlowRequestThresholdMs { get; set; } = 1000;
+    public List<string> ExcludedPaths { get; set; } = new();
+}
+
+/// <summary>
+/// Middleware for structured HTTP request/response logging.
+/// Logs method, path, status code, and duration via <see cref="ILogger"/>.
+/// Verbosity and opt-in behaviour are driven by <see cref="LoggingMiddlewareOptions"/>
+/// which can be configured in appsettings.json under the "RequestLogging" key.
 /// Sensitive data (passwords, tokens, PII) is automatically masked.
 /// </summary>
 public sealed class RequestResponseLoggingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<RequestResponseLoggingMiddleware> _logger;
+    private readonly LoggingMiddlewareOptions _options;
 
-    // Endpoints to exclude from detailed logging (logs only method, path, status)
-    private static readonly string[] ExcludedPaths = new[]
+    private static readonly string[] SensitiveParameters =
     {
-        "/health",
-        "/metrics",
-        "/swagger",
-        "/favicon"
+        "password", "token", "apikey", "secret",
+        "creditcard", "ssn", "authorization"
     };
 
-    // Parameters that contain sensitive data
-    private static readonly string[] SensitiveParameters = new[]
+    private static readonly string[] DefaultExcludedPaths =
     {
-        "password",
-        "token",
-        "apikey",
-        "secret",
-        "creditcard",
-        "ssn",
-        "authorization"
+        "/health", "/metrics", "/swagger", "/favicon"
     };
 
-    public RequestResponseLoggingMiddleware(RequestDelegate next, ILogger<RequestResponseLoggingMiddleware> logger)
+    public RequestResponseLoggingMiddleware(
+        RequestDelegate next,
+        ILogger<RequestResponseLoggingMiddleware> logger,
+        IOptions<LoggingMiddlewareOptions> options)
     {
         _next = next;
         _logger = logger;
+        _options = options.Value;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Log incoming request
-        LogRequest(context);
-
-        // Capture response by replacing response stream
-        var originalResponseBody = context.Response.Body;
-        using (var memoryStream = new MemoryStream())
+        if (!_options.Enabled)
         {
-            context.Response.Body = memoryStream;
+            await _next(context);
+            return;
+        }
 
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var path = context.Request.Path.Value ?? string.Empty;
+        if (IsExcludedPath(path))
+        {
+            await _next(context);
+            return;
+        }
 
-            try
-            {
-                await _next(context);
-            }
-            finally
-            {
-                stopwatch.Stop();
+        LogRequest(context, path);
 
-                // Log response
-                LogResponse(context, stopwatch.ElapsedMilliseconds);
+        var originalResponseBody = context.Response.Body;
+        using var memoryStream = new MemoryStream();
+        context.Response.Body = memoryStream;
 
-                // Copy captured response to original stream
-                await memoryStream.CopyToAsync(originalResponseBody);
-            }
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            await _next(context);
+        }
+        finally
+        {
+            stopwatch.Stop();
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            LogResponse(context, path, stopwatch.ElapsedMilliseconds);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            await memoryStream.CopyToAsync(originalResponseBody);
+            context.Response.Body = originalResponseBody;
         }
     }
 
-    private void LogRequest(HttpContext context)
+    private void LogRequest(HttpContext context, string path)
     {
-        var path = context.Request.Path.Value ?? "";
+        var verbosity = _options.VerbosityLevel;
 
-        // Skip logging excluded paths at detail level
-        if (IsExcludedPath(path))
+        if (verbosity == "Minimal")
+        {
+            _logger.LogInformation("[REQUEST] {Method} {Path}", context.Request.Method, path);
             return;
+        }
 
         var sb = new StringBuilder();
-        sb.AppendLine($"[REQUEST] {context.Request.Method} {path}");
+        sb.Append($"[REQUEST] {context.Request.Method} {path}");
 
-        // Log headers (excluding sensitive ones)
-        if (context.Request.Headers.Count > 0)
+        if (context.Request.QueryString.HasValue)
+            sb.Append($" | Query: {MaskSensitiveData(context.Request.QueryString.Value ?? string.Empty)}");
+
+        if ((verbosity == "Detailed" || _options.LogRequestHeaders) && context.Request.Headers.Count > 0)
         {
-            sb.AppendLine("Headers:");
+            sb.AppendLine();
+            sb.Append("Headers:");
             foreach (var header in context.Request.Headers)
             {
-                if (IsSensitiveHeader(header.Key))
-                {
-                    sb.AppendLine($"  {header.Key}: [REDACTED]");
-                }
-                else
-                {
-                    sb.AppendLine($"  {header.Key}: {header.Value}");
-                }
+                var value = IsSensitiveHeader(header.Key) ? "[REDACTED]" : header.Value.ToString();
+                sb.Append($"\n  {header.Key}: {value}");
             }
         }
 
-        // Log query parameters (mask sensitive ones)
-        if (context.Request.QueryString.HasValue)
-        {
-            sb.AppendLine($"Query: {MaskSensitiveData(context.Request.QueryString.Value)}");
-        }
-
-        _logger.LogInformation(sb.ToString());
+        _logger.LogInformation("{RequestLog}", sb.ToString());
     }
 
-    private void LogResponse(HttpContext context, long elapsedMilliseconds)
+    private void LogResponse(HttpContext context, string path, long elapsedMs)
     {
-        var path = context.Request.Path.Value ?? "";
-
-        // Always log response status
         var statusCode = context.Response.StatusCode;
         var correlationId = context.GetCorrelationId();
 
         _logger.LogInformation(
-            $"[RESPONSE] {context.Request.Method} {path} => {statusCode} ({elapsedMilliseconds}ms) | CorrelationId: {correlationId}");
+            "[RESPONSE] {Method} {Path} => {StatusCode} ({Elapsed}ms) | CorrelationId: {CorrelationId}",
+            context.Request.Method, path, statusCode, elapsedMs, correlationId);
 
-        // Alert on slow requests (> 1 second)
-        if (elapsedMilliseconds > 1000)
-        {
-            _logger.LogWarning($"Slow request detected: {path} took {elapsedMilliseconds}ms");
-        }
+        if (elapsedMs > _options.SlowRequestThresholdMs)
+            _logger.LogWarning("Slow request detected: {Path} took {Elapsed}ms", path, elapsedMs);
 
-        // Alert on errors (5xx)
         if (statusCode >= 500)
-        {
-            _logger.LogError($"Server error in {path}: {statusCode}");
-        }
+            _logger.LogError("Server error {StatusCode} on {Method} {Path}", statusCode, context.Request.Method, path);
     }
 
-    /// <summary>
-    /// Masks sensitive parameter values from query strings and post data.
-    /// </summary>
+    private bool IsExcludedPath(string path)
+    {
+        var allExcluded = DefaultExcludedPaths.Concat(_options.ExcludedPaths);
+        return allExcluded.Any(ep => path.Contains(ep, StringComparison.OrdinalIgnoreCase));
+    }
+
     private static string MaskSensitiveData(string data)
     {
         if (string.IsNullOrEmpty(data))
             return data;
 
-        // Simple masking: replace values of sensitive params with [REDACTED]
         foreach (var param in SensitiveParameters)
         {
             var pattern = $@"{param}=([^&]+)";
@@ -156,33 +175,6 @@ public sealed class RequestResponseLoggingMiddleware
         return data;
     }
 
-    /// <summary>
-    /// Checks if a header contains sensitive information.
-    /// </summary>
-    private static bool IsSensitiveHeader(string headerName)
-    {
-        return SensitiveParameters.Any(sp =>
-            headerName.Equals(sp, StringComparison.OrdinalIgnoreCase));
-    }
-
-    /// <summary>
-    /// Checks if path should be excluded from detailed logging.
-    /// </summary>
-    private static bool IsExcludedPath(string path)
-    {
-        return ExcludedPaths.Any(ep => path.Contains(ep, StringComparison.OrdinalIgnoreCase));
-    }
-}
-
-/// <summary>
-/// Request/Response logging configuration.
-/// </summary>
-public sealed class LoggingMiddlewareOptions
-{
-    public bool LogRequestHeaders { get; set; } = true;
-    public bool LogResponseHeaders { get; set; } = false; // Be careful with sensitive response headers
-    public bool LogRequestBody { get; set; } = false; // Can be expensive for large payloads
-    public bool LogResponseBody { get; set; } = false;
-    public int SlowRequestThresholdMs { get; set; } = 1000;
-    public List<string> ExcludedPaths { get; set; } = new();
+    private static bool IsSensitiveHeader(string headerName) =>
+        SensitiveParameters.Any(sp => headerName.Equals(sp, StringComparison.OrdinalIgnoreCase));
 }
