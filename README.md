@@ -263,13 +263,63 @@ The application starts on:
 
 Open your browser to `https://localhost:7001/` to see the vanilla JavaScript SPA.
 
-### 3. Make Your First API Call
+---
+
+## Development Workflow (Hot-Reload with Dev Proxy)
+
+For a faster inner loop you can run the ASP.NET backend and the frontend dev server in two separate terminals. The dev proxy forwards `/api` requests to the backend, so you never have to deal with CORS during development.
+
+### Terminal 1 – ASP.NET backend
+
+```bash
+dotnet run
+# Listening on http://localhost:5000 (HTTP) and https://localhost:7001 (HTTPS)
+```
+
+### Terminal 2 – Frontend dev server
+
+```bash
+# Install dependencies once
+npm install
+
+# Start the dev proxy (serves wwwroot and proxies /api to http://localhost:5000)
+npm run dev
+# Dev server available at http://localhost:3000
+```
+
+Open `http://localhost:3000` in your browser. All `/api/*` requests are transparently proxied to `http://localhost:5000`, and any change you make to files inside `wwwroot/` is reflected immediately on the next browser refresh.
+
+### How it works
+
+| File | Purpose |
+|---|---|
+| `proxy.config.json` | Declares proxy rules (context → target) |
+| `dev-server.js` | Express server that reads the proxy config and serves static files |
+| `package.json` | `npm run dev` entry point |
+
+The `/api` rule in `proxy.config.json` can be updated to point at any backend URL:
+
+```json
+{
+  "/api": {
+    "target": "http://localhost:5000",
+    "changeOrigin": true,
+    "secure": false
+  }
+}
+```
+
+---
+
+## Quick Start (API)
+
+### Make Your First API Call
 
 ```bash
 curl https://localhost:7001/api/products
 ```
 
-### 4. Create Your First Product
+### Create Your First Product
 
 ```bash
 curl -X POST https://localhost:7001/api/products \

@@ -1,0 +1,14 @@
+{
+  "name": "aspnet-spa-template-client",
+  "version": "1.0.0",
+  "description": "Vanilla JS SPA frontend dev tooling",
+  "private": true,
+  "scripts": {
+    "dev": "node dev-server.js",
+    "serve": "npx http-server wwwroot -p 3000 -c-1"
+  },
+  "devDependencies": {
+    "express": "^4.19.2",
+    "http-proxy-middleware": "^3.0.3"
+  }
+}
