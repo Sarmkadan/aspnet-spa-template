@@ -3,7 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
-const API_BASE = '/api/v1';
+// Read the API base from the meta tag so the SPA works correctly when hosted
+// behind a reverse proxy at a sub-path (e.g. /myapp/api/v1).
+const API_BASE = document.querySelector('meta[name="api-base"]')?.getAttribute('content') ?? '/api/v1';
 const AUTH_TOKEN_KEY = 'authToken';
 
 // Application State
