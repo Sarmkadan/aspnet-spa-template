@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#2563eb">
+    <!-- Server should populate the content attribute with the antiforgery token,
+         e.g. @AntiForgery.GetAndStoreTokens(HttpContext).RequestToken in Razor. -->
+    <meta name="csrf-token" content="">
     <title>AspNet SPA Template - E-Commerce Platform</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -135,6 +138,7 @@
         </div>
     </footer>
 
+    <script src="js/api.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
