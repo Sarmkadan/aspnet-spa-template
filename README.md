@@ -1,5 +1,6 @@
 # ASP.NET SPA Template
 
+![Build](https://github.com/sarmkadan/aspnet-spa-template/actions/workflows/build.yml/badge.svg)
 ![CI](https://github.com/sarmkadan/aspnet-spa-template/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/github/license/sarmkadan/aspnet-spa-template)
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)

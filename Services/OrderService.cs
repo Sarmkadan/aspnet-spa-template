@@ -13,19 +13,29 @@ using AspNetSpaTemplate.Models;
 namespace AspNetSpaTemplate.Services;
 
 /// <summary>
-/// Service for order-related business logic.
+/// Service for order-related business logic, handling creation, status updates, and reporting.
 /// </summary>
 public sealed class OrderService
 {
     private readonly OrderRepository _orderRepository;
     private readonly ProductRepository _productRepository;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="OrderService"/>.
+    /// </summary>
+    /// <param name="orderRepository">The order repository.</param>
+    /// <param name="productRepository">The product repository.</param>
     public OrderService(OrderRepository orderRepository, ProductRepository productRepository)
     {
         _orderRepository = orderRepository;
         _productRepository = productRepository;
     }
 
+    /// <summary>
+    /// Gets an order by its ID.
+    /// </summary>
+    /// <param name="id">The order ID.</param>
+    /// <returns>The order response, or throws NotFoundException.</returns>
     public async Task<OrderResponse?> GetOrderByIdAsync(int id)
     {
         var order = await _orderRepository.GetByIdAsync(id);
@@ -35,6 +45,12 @@ public sealed class OrderService
         return MapToResponse(order);
     }
 
+    /// <summary>
+    /// Creates a new order.
+    /// </summary>
+    /// <param name="userId">The user ID.</param>
+    /// <param name="request">The create order request.</param>
+    /// <returns>The created order response.</returns>
     public async Task<OrderResponse> CreateOrderAsync(int userId, CreateOrderRequest request)
     {
         if (request.Items is null || request.Items.Count == 0)
@@ -95,6 +111,12 @@ public sealed class OrderService
         return MapToResponse(order);
     }
 
+    /// <summary>
+    /// Updates the status of an order.
+    /// </summary>
+    /// <param name="id">The order ID.</param>
+    /// <param name="request">The update request.</param>
+    /// <returns>The updated order response.</returns>
     public async Task<OrderResponse> UpdateOrderStatusAsync(int id, UpdateOrderStatusRequest request)
     {
         var order = await _orderRepository.GetByIdAsync(id);
@@ -132,6 +154,12 @@ public sealed class OrderService
         return MapToResponse(order);
     }
 
+    /// <summary>
+    /// Applies a discount to an order.
+    /// </summary>
+    /// <param name="id">The order ID.</param>
+    /// <param name="request">The discount request.</param>
+    /// <returns>The updated order response.</returns>
     public async Task<OrderResponse> ApplyDiscountAsync(int id, ApplyDiscountRequest request)
     {
         var order = await _orderRepository.GetByIdAsync(id);
@@ -148,23 +176,43 @@ public sealed class OrderService
         return MapToResponse(order);
     }
 
+    /// <summary>
+    /// Gets orders for a user.
+    /// </summary>
+    /// <param name="userId">The user ID.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <returns>A collection of orders.</returns>
     public async Task<IEnumerable<OrderResponse>> GetUserOrdersAsync(int userId, int pageNumber = 1, int pageSize = 10)
     {
         var orders = await _orderRepository.GetUserOrdersAsync(userId, pageNumber, pageSize);
         return orders.Select(MapToResponse).ToList();
     }
 
+    /// <summary>
+    /// Gets all pending orders.
+    /// </summary>
+    /// <returns>A collection of pending orders.</returns>
     public async Task<IEnumerable<OrderResponse>> GetPendingOrdersAsync()
     {
         var orders = await _orderRepository.GetPendingOrdersAsync();
         return orders.Select(MapToResponse).ToList();
     }
 
+    /// <summary>
+    /// Gets total revenue.
+    /// </summary>
+    /// <returns>The total revenue.</returns>
     public async Task<decimal> GetTotalRevenueAsync()
     {
         return await _orderRepository.GetTotalRevenueAsync();
     }
 
+    /// <summary>
+    /// Gets total revenue for the last N days.
+    /// </summary>
+    /// <param name="days">Number of days.</param>
+    /// <returns>The total revenue.</returns>
     public async Task<decimal> GetTotalRevenueAsync(int days)
     {
         return await _orderRepository.GetTotalRevenueAsync(days);
