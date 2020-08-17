@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using AspNetSpaTemplate.Caching;
 using AspNetSpaTemplate.Configuration;
 using AspNetSpaTemplate.Data;
 using AspNetSpaTemplate.Data.Repositories;
@@ -31,6 +32,11 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<ReviewService>();
+
+// Theme (dark mode) preferences
+builder.Services.AddSingleton<ICacheService, MemoryCacheService>(sp =>
+    new MemoryCacheService(sp.GetRequiredService<ILogger<MemoryCacheService>>()));
+builder.Services.AddScoped<IThemeService, ThemeService>();
 
 // Offline support — asset versioning + HMR
 builder.Services.AddOfflineSupport();

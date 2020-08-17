@@ -449,6 +449,45 @@ function showNotification(message, type) {
     setTimeout(() => notification.remove(), 5000);
 }
 
+// ── Dark Mode ─────────────────────────────────────────────────────────────────
+
+const DARK_MODE_KEY = 'darkMode';
+
+const DarkMode = {
+    /** Reads the saved preference (or OS default) and applies it. */
+    init() {
+        const saved = localStorage.getItem(DARK_MODE_KEY);
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = saved !== null ? saved === 'true' : prefersDark;
+        this._apply(isDark);
+
+        // Follow OS-level changes when no explicit preference is stored.
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (localStorage.getItem(DARK_MODE_KEY) === null) {
+                this._apply(e.matches);
+            }
+        });
+    },
+
+    /** Flips the current theme and persists the choice. */
+    toggle() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        this._apply(!isDark);
+        localStorage.setItem(DARK_MODE_KEY, String(!isDark));
+    },
+
+    /** Returns true when dark mode is currently active. */
+    isActive() {
+        return document.documentElement.getAttribute('data-theme') === 'dark';
+    },
+
+    _apply(dark) {
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        const btn = document.getElementById('darkModeToggle');
+        if (btn) btn.textContent = dark ? '☀️ Light' : '🌙 Dark';
+    }
+};
+
 // ── Service Worker & Offline Support ──────────────────────────────────────────
 
 const SW = {
@@ -505,6 +544,7 @@ function initHmr() {
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     AppState.init();
+    DarkMode.init();
     updateAuthUI();
     navigateTo('home');
     SW.register();
