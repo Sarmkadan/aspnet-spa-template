@@ -38,6 +38,9 @@ builder.Services.AddSingleton<ICacheService, MemoryCacheService>(sp =>
     new MemoryCacheService(sp.GetRequiredService<ILogger<MemoryCacheService>>()));
 builder.Services.AddScoped<IThemeService, ThemeService>();
 
+// PWA manifest
+builder.Services.AddSingleton<IManifestService, ManifestService>();
+
 // Offline support — asset versioning + HMR
 builder.Services.AddOfflineSupport();
 
