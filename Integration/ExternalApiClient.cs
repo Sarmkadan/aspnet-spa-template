@@ -119,6 +119,7 @@ public sealed class ExternalApiClient
 				_logger.LogError(ex, "Error calling {Endpoint}", endpoint);
 				throw new ExternalApiException(endpoint, ex);
 			}
+		}
 
 		throw new ExternalApiException(endpoint, "GET", 0, $"Failed to GET {endpoint} after {_maxRetries} attempts")
 			.WithContext("Endpoint", endpoint)
@@ -196,6 +197,7 @@ public sealed class ExternalApiClient
 				_logger.LogError(ex, "Error calling {Endpoint}", endpoint);
 				throw new ExternalApiException(endpoint, ex);
 			}
+		}
 
 		throw new ExternalApiException(endpoint, "POST", 0, $"Failed to POST {endpoint} after {_maxRetries} attempts")
 			.WithContext("Endpoint", endpoint)
