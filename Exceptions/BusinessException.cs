@@ -9,7 +9,7 @@ namespace AspNetSpaTemplate.Exceptions;
 /// <summary>
 /// Exception thrown when business logic constraints are violated.
 /// </summary>
-public sealed class BusinessException : Exception
+public sealed class BusinessException : AspNetSpaTemplateException
 {
     public string? ErrorCode { get; }
     public int HttpStatusCode { get; set; } = 400;

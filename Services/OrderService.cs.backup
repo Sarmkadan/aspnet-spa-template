@@ -21,15 +21,14 @@ public sealed class OrderService
     private readonly ProductRepository _productRepository;
 
     /// <summary>
-    /// Initializes a new instance of <see cref="OrderService"/>
+    /// Initializes a new instance of <see cref="OrderService"/>.
     /// </summary>
     /// <param name="orderRepository">The order repository.</param>
     /// <param name="productRepository">The product repository.</param>
-    /// <exception cref="ArgumentNullException">Thrown when orderRepository or productRepository is null.</exception>
     public OrderService(OrderRepository orderRepository, ProductRepository productRepository)
     {
-        _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
-        _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
+        _orderRepository = orderRepository;
+        _productRepository = productRepository;
     }
 
     /// <summary>
@@ -37,12 +36,8 @@ public sealed class OrderService
     /// </summary>
     /// <param name="id">The order ID.</param>
     /// <returns>The order response, or throws NotFoundException.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when ID is less than or equal to 0.</exception>
     public async Task<OrderResponse?> GetOrderByIdAsync(int id)
     {
-        if (id <= 0)
-            throw new ArgumentOutOfRangeException(nameof(id), "Order ID must be greater than 0");
-
         var order = await _orderRepository.GetByIdAsync(id);
         if (order is null)
             throw new NotFoundException("Order", id);
@@ -56,18 +51,8 @@ public sealed class OrderService
     /// <param name="userId">The user ID.</param>
     /// <param name="request">The create order request.</param>
     /// <returns>The created order response.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
-    /// <exception cref="ValidationException">Thrown when items list is empty.</exception>
-    /// <exception cref="NotFoundException">Thrown when product is not found.</exception>
-    /// <exception cref="BusinessException">Thrown when there's insufficient stock.</exception>
     public async Task<OrderResponse> CreateOrderAsync(int userId, CreateOrderRequest request)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (userId <= 0)
-            throw new ArgumentOutOfRangeException(nameof(userId), "User ID must be greater than 0");
-
         if (request.Items is null || request.Items.Count == 0)
             throw new ValidationException("Items", "Order must contain at least one item");
 
@@ -86,62 +71,44 @@ public sealed class OrderService
         decimal subtotal = 0;
         decimal totalTax = 0;
 
-        try
+        foreach (var itemRequest in request.Items)
         {
-            foreach (var itemRequest in request.Items)
+            var product = await _productRepository.GetByIdAsync(itemRequest.ProductId);
+            if (product is null)
+                throw new NotFoundException("Product", itemRequest.ProductId);
+
+            if (!product.CanPurchase(itemRequest.Quantity))
+                throw new BusinessException($"Insufficient stock for product {product.Name}", "INSUFFICIENT_STOCK");
+
+            var itemSubtotal = product.Price * itemRequest.Quantity;
+            var itemTax = itemSubtotal * ProductCategory.GetTaxRate();
+
+            var orderItem = new OrderItem
             {
-                var product = await _productRepository.GetByIdAsync(itemRequest.ProductId);
-                if (product is null)
-                    throw new NotFoundException("Product", itemRequest.ProductId);
+                ProductId = product.Id,
+                Quantity = itemRequest.Quantity,
+                UnitPrice = product.Price,
+                TaxAmount = itemTax,
+                Total = itemSubtotal + itemTax
+            };
 
-                if (!product.CanPurchase(itemRequest.Quantity))
-                    throw new BusinessException($"Insufficient stock for product {product.Name}", "INSUFFICIENT_STOCK");
+            order.Items.Add(orderItem);
+            subtotal += itemSubtotal;
+            totalTax += itemTax;
 
-                var itemSubtotal = product.Price * itemRequest.Quantity;
-                var itemTax = itemSubtotal * ProductCategory.GetTaxRate();
-
-                var orderItem = new OrderItem
-                {
-                    ProductId = product.Id,
-                    Quantity = itemRequest.Quantity,
-                    UnitPrice = product.Price,
-                    TaxAmount = itemTax,
-                    Total = itemSubtotal + itemTax
-                };
-
-                order.Items.Add(orderItem);
-                subtotal += itemSubtotal;
-                totalTax += itemTax;
-
-                // Reduce product stock
-                product.ReduceStock(itemRequest.Quantity);
-                _productRepository.Update(product);
-            }
-
-            order.SubTotal = subtotal;
-            order.TaxAmount = totalTax;
-            order.Total = subtotal + totalTax + order.ShippingCost - order.Discount;
-
-            _orderRepository.Add(order);
-            await _orderRepository.SaveChangesAsync();
-
-            return MapToResponse(order);
+            // Reduce product stock
+            product.ReduceStock(itemRequest.Quantity);
+            _productRepository.Update(product);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            // Rollback stock changes if order creation fails
-            foreach (var item in order.Items)
-            {
-                var product = await _productRepository.GetByIdAsync(item.ProductId);
-                if (product is not null)
-                {
-                    product.IncreaseStock(item.Quantity);
-                    _productRepository.Update(product);
-                }
-            }
 
-            throw new BusinessException("Failed to create order due to database error", "ORDER_CREATION_FAILED", 500).WithData(ex);
-        }
+        order.SubTotal = subtotal;
+        order.TaxAmount = totalTax;
+        order.Total = subtotal + totalTax + order.ShippingCost - order.Discount;
+
+        _orderRepository.Add(order);
+        await _orderRepository.SaveChangesAsync();
+
+        return MapToResponse(order);
     }
 
     /// <summary>
@@ -150,14 +117,8 @@ public sealed class OrderService
     /// <param name="id">The order ID.</param>
     /// <param name="request">The update request.</param>
     /// <returns>The updated order response.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
-    /// <exception cref="NotFoundException">Thrown when order is not found.</exception>
-    /// <exception cref="ValidationException">Thrown when status is invalid.</exception>
     public async Task<OrderResponse> UpdateOrderStatusAsync(int id, UpdateOrderStatusRequest request)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
         var order = await _orderRepository.GetByIdAsync(id);
         if (order is null)
             throw new NotFoundException("Order", id);
@@ -199,13 +160,8 @@ public sealed class OrderService
     /// <param name="id">The order ID.</param>
     /// <param name="request">The discount request.</param>
     /// <returns>The updated order response.</returns>
-    /// <exception cref="NotFoundException">Thrown when order is not found.</exception>
-    /// <exception cref="BusinessException">Thrown when order is finalized.</exception>
     public async Task<OrderResponse> ApplyDiscountAsync(int id, ApplyDiscountRequest request)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
         var order = await _orderRepository.GetByIdAsync(id);
         if (order is null)
             throw new NotFoundException("Order", id);
@@ -227,12 +183,8 @@ public sealed class OrderService
     /// <param name="pageNumber">The page number.</param>
     /// <param name="pageSize">The page size.</param>
     /// <returns>A collection of orders.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when userId is less than or equal to 0.</exception>
     public async Task<IEnumerable<OrderResponse>> GetUserOrdersAsync(int userId, int pageNumber = 1, int pageSize = 10)
     {
-        if (userId <= 0)
-            throw new ArgumentOutOfRangeException(nameof(userId), "User ID must be greater than 0");
-
         var orders = await _orderRepository.GetUserOrdersAsync(userId, pageNumber, pageSize);
         return orders.Select(MapToResponse).ToList();
     }
@@ -261,12 +213,8 @@ public sealed class OrderService
     /// </summary>
     /// <param name="days">Number of days.</param>
     /// <returns>The total revenue.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when days is less than 1.</exception>
     public async Task<decimal> GetTotalRevenueAsync(int days)
     {
-        if (days < 1)
-            throw new ArgumentOutOfRangeException(nameof(days), "Days must be greater than 0");
-
         return await _orderRepository.GetTotalRevenueAsync(days);
     }
 

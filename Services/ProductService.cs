@@ -23,9 +23,10 @@ public sealed class ProductService
     /// Initializes a new instance of <see cref="ProductService"/>.
     /// </summary>
     /// <param name="productRepository">The product repository.</param>
+    /// <exception cref="ArgumentNullException">Thrown when productRepository is null.</exception>
     public ProductService(ProductRepository productRepository)
     {
-        _productRepository = productRepository;
+        _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
     }
 
     /// <summary>
@@ -129,8 +130,12 @@ public sealed class ProductService
     /// </summary>
     /// <param name="request">The create product request.</param>
     /// <returns>The created product response.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
     public async Task<ProductResponse> CreateProductAsync(CreateProductRequest request)
     {
+        if (request is null)
+            throw new ArgumentNullException(nameof(request));
+
         ValidateProductRequest(request);
 
         var product = new Product
@@ -146,10 +151,17 @@ public sealed class ProductService
             CreatedAt = DateTime.UtcNow
         };
 
-        _productRepository.Add(product);
-        await _productRepository.SaveChangesAsync();
+        try
+        {
+            _productRepository.Add(product);
+            await _productRepository.SaveChangesAsync();
 
-        return MapToResponse(product);
+            return MapToResponse(product);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new BusinessException("Failed to create product due to database error", "PRODUCT_CREATION_FAILED", 500).WithData(ex);
+        }
     }
 
     /// <summary>
@@ -158,19 +170,30 @@ public sealed class ProductService
     /// <param name="id">The product ID.</param>
     /// <param name="request">The update product request.</param>
     /// <returns>The updated product response.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
     public async Task<ProductResponse> UpdateProductAsync(int id, UpdateProductRequest request)
     {
+        if (request is null)
+            throw new ArgumentNullException(nameof(request));
+
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
             throw new NotFoundException("Product", id);
 
-        product.UpdateDetails(request.Name, request.Description, request.Price, request.Category, request.ImageUrl);
-        product.SetAvailability(request.IsAvailable);
+        try
+        {
+            product.UpdateDetails(request.Name, request.Description, request.Price, request.Category, request.ImageUrl);
+            product.SetAvailability(request.IsAvailable);
 
-        _productRepository.Update(product);
-        await _productRepository.SaveChangesAsync();
+            _productRepository.Update(product);
+            await _productRepository.SaveChangesAsync();
 
-        return MapToResponse(product);
+            return MapToResponse(product);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new BusinessException("Failed to update product due to database error", "PRODUCT_UPDATE_FAILED", 500).WithData(ex);
+        }
     }
 
     /// <summary>
@@ -178,15 +201,23 @@ public sealed class ProductService
     /// </summary>
     /// <param name="id">The product ID.</param>
     /// <param name="isAvailable">The availability status.</param>
+    /// <exception cref="NotFoundException">Thrown when product with specified ID is not found.</exception>
     public async Task SetProductAvailabilityAsync(int id, bool isAvailable)
     {
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
             throw new NotFoundException("Product", id);
 
-        product.SetAvailability(isAvailable);
-        _productRepository.Update(product);
-        await _productRepository.SaveChangesAsync();
+        try
+        {
+            product.SetAvailability(isAvailable);
+            _productRepository.Update(product);
+            await _productRepository.SaveChangesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new BusinessException("Failed to update product availability", "PRODUCT_AVAILABILITY_UPDATE_FAILED", 500).WithData(ex);
+        }
     }
 
     /// <summary>
@@ -194,29 +225,45 @@ public sealed class ProductService
     /// </summary>
     /// <param name="id">The product ID.</param>
     /// <param name="isFeatured">The featured status.</param>
+    /// <exception cref="NotFoundException">Thrown when product with specified ID is not found.</exception>
     public async Task SetProductFeaturedAsync(int id, bool isFeatured)
     {
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
             throw new NotFoundException("Product", id);
 
-        product.SetFeatured(isFeatured);
-        _productRepository.Update(product);
-        await _productRepository.SaveChangesAsync();
+        try
+        {
+            product.SetFeatured(isFeatured);
+            _productRepository.Update(product);
+            await _productRepository.SaveChangesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new BusinessException("Failed to update product featured status", "PRODUCT_FEATURED_UPDATE_FAILED", 500).WithData(ex);
+        }
     }
 
     /// <summary>
     /// Deletes a product.
     /// </summary>
     /// <param name="id">The product ID.</param>
+    /// <exception cref="NotFoundException">Thrown when product with specified ID is not found.</exception>
     public async Task DeleteProductAsync(int id)
     {
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
             throw new NotFoundException("Product", id);
 
-        _productRepository.Remove(product);
-        await _productRepository.SaveChangesAsync();
+        try
+        {
+            _productRepository.Remove(product);
+            await _productRepository.SaveChangesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new BusinessException("Failed to delete product", "PRODUCT_DELETION_FAILED", 500).WithData(ex);
+        }
     }
 
     private void ValidateProductRequest(CreateProductRequest request)

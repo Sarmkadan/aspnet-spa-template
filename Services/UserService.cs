@@ -22,7 +22,7 @@ public sealed class UserService
 
     public UserService(UserRepository userRepository)
     {
-        _userRepository = userRepository;
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
     }
 
     /// <summary>
@@ -46,9 +46,13 @@ public sealed class UserService
     /// </summary>
     /// <param name="request">The user creation request with profile data and credentials.</param>
     /// <returns>A <see cref="UserResponse"/> DTO for the newly created user.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
     /// <exception cref="ValidationException">Thrown when the email already exists or request data is invalid.</exception>
     public async Task<UserResponse> CreateUserAsync(CreateUserRequest request)
     {
+        if (request is null)
+            throw new ArgumentNullException(nameof(request));
+
         ValidateCreateUserRequest(request);
 
         if (await _userRepository.EmailExistsAsync(request.Email))
@@ -69,10 +73,17 @@ public sealed class UserService
             CreatedAt = DateTime.UtcNow
         };
 
-        _userRepository.Add(user);
-        await _userRepository.SaveChangesAsync();
+        try
+        {
+            _userRepository.Add(user);
+            await _userRepository.SaveChangesAsync();
 
-        return MapToResponse(user);
+            return MapToResponse(user);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new BusinessException("Failed to create user due to database error", "USER_CREATION_FAILED", 500).WithData(ex);
+        }
     }
 
     /// <summary>

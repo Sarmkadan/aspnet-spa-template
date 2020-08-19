@@ -9,7 +9,7 @@ namespace AspNetSpaTemplate.Exceptions;
 /// <summary>
 /// Exception thrown when data validation fails.
 /// </summary>
-public sealed class ValidationException : Exception
+public sealed class ValidationException : AspNetSpaTemplateException
 {
     public Dictionary<string, List<string>> Errors { get; }
 
