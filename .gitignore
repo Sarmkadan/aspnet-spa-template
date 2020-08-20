@@ -60,3 +60,8 @@ Thumbs.db
 coverage/
 node_modules/
 dist/
+bin/
+obj/
+TestResults/
+BenchmarkDotNet.Artifacts/
+.aider*
