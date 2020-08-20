@@ -223,7 +223,9 @@ public static class BackgroundTaskExtensions
         await scheduler.StartAsync(appLifetime.ApplicationStopping);
 
         // Stop scheduler on app shutdown
-        appLifetime.ApplicationStopping.Register(() => scheduler.StopAsync().Wait());
+        appLifetime.ApplicationStopping.Register(() => {
+            _ = Task.Run(async () => await scheduler.StopAsync());
+        });
 
         return app;
     }

@@ -83,41 +83,10 @@ public sealed class OrderService
             Items = new List<OrderItem>()
         };
 
-        decimal subtotal = 0;
-        decimal totalTax = 0;
-
         try
         {
-            foreach (var itemRequest in request.Items)
-            {
-                var product = await _productRepository.GetByIdAsync(itemRequest.ProductId);
-                if (product is null)
-                    throw new NotFoundException("Product", itemRequest.ProductId);
-
-                if (!product.CanPurchase(itemRequest.Quantity))
-                    throw new BusinessException($"Insufficient stock for product {product.Name}", "INSUFFICIENT_STOCK");
-
-                var itemSubtotal = product.Price * itemRequest.Quantity;
-                var itemTax = itemSubtotal * ProductCategory.GetTaxRate();
-
-                var orderItem = new OrderItem
-                {
-                    ProductId = product.Id,
-                    Quantity = itemRequest.Quantity,
-                    UnitPrice = product.Price,
-                    TaxAmount = itemTax,
-                    Total = itemSubtotal + itemTax
-                };
-
-                order.Items.Add(orderItem);
-                subtotal += itemSubtotal;
-                totalTax += itemTax;
-
-                // Reduce product stock
-                product.ReduceStock(itemRequest.Quantity);
-                _productRepository.Update(product);
-            }
-
+            var (subtotal, totalTax) = await ProcessOrderItemsAsync(order, request.Items);
+            
             order.SubTotal = subtotal;
             order.TaxAmount = totalTax;
             order.Total = subtotal + totalTax + order.ShippingCost - order.Discount;
@@ -142,6 +111,44 @@ public sealed class OrderService
 
             throw new BusinessException("Failed to create order due to database error", "ORDER_CREATION_FAILED", 500).WithData(ex);
         }
+    }
+
+    private async Task<(decimal Subtotal, decimal TotalTax)> ProcessOrderItemsAsync(Order order, List<OrderItemRequest> itemRequests)
+    {
+        decimal subtotal = 0;
+        decimal totalTax = 0;
+
+        foreach (var itemRequest in itemRequests)
+        {
+            var product = await _productRepository.GetByIdAsync(itemRequest.ProductId);
+            if (product is null)
+                throw new NotFoundException("Product", itemRequest.ProductId);
+
+            if (!product.CanPurchase(itemRequest.Quantity))
+                throw new BusinessException($"Insufficient stock for product {product.Name}", "INSUFFICIENT_STOCK");
+
+            var itemSubtotal = product.Price * itemRequest.Quantity;
+            var itemTax = itemSubtotal * ProductCategory.GetTaxRate();
+
+            var orderItem = new OrderItem
+            {
+                ProductId = product.Id,
+                Quantity = itemRequest.Quantity,
+                UnitPrice = product.Price,
+                TaxAmount = itemTax,
+                Total = itemSubtotal + itemTax
+            };
+
+            order.Items.Add(orderItem);
+            subtotal += itemSubtotal;
+            totalTax += itemTax;
+
+            // Reduce product stock
+            product.ReduceStock(itemRequest.Quantity);
+            _productRepository.Update(product);
+        }
+
+        return (subtotal, totalTax);
     }
 
     /// <summary>

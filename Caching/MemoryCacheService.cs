@@ -6,6 +6,7 @@
 
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace AspNetSpaTemplate.Caching;
 
@@ -17,14 +18,14 @@ namespace AspNetSpaTemplate.Caching;
 public sealed class MemoryCacheService : ICacheService
 {
     private readonly ConcurrentDictionary<string, CacheEntry> _cache;
-    private readonly ConcurrentDictionary<string, object> _locks;
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _semaphores;
     private readonly CacheStatistics _stats;
     private readonly ILogger<MemoryCacheService> _logger;
 
     public MemoryCacheService(ILogger<MemoryCacheService> logger)
     {
         _cache = new ConcurrentDictionary<string, CacheEntry>();
-        _locks = new ConcurrentDictionary<string, object>();
+        _semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
         _stats = new CacheStatistics();
         _logger = logger;
     }
@@ -103,23 +104,28 @@ public sealed class MemoryCacheService : ICacheService
         if (existing is not null)
             return existing;
 
-        // Use lock to prevent cache stampede (multiple concurrent factory calls)
-        var lockObj = _locks.GetOrAdd(key, _ => new object());
-        lock (lockObj)
+        // Use semaphore to prevent cache stampede (multiple concurrent factory calls)
+        var semaphore = _semaphores.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+        await semaphore.WaitAsync();
+        try
         {
-            // Double-check after acquiring lock
-            existing = GetAsync<T>(key).Result;
+            // Double-check after acquiring semaphore
+            existing = await GetAsync<T>(key);
             if (existing is not null)
                 return existing;
 
             // Generate value
-            var value = factory().Result;
+            var value = await factory();
             if (value is not null)
             {
-                SetAsync(key, value, ttl).Wait();
+                await SetAsync(key, value, ttl);
             }
 
             return value;
+        }
+        finally
+        {
+            semaphore.Release();
         }
     }
 
@@ -154,7 +160,7 @@ public sealed class MemoryCacheService : ICacheService
     public async Task FlushAllAsync()
     {
         _cache.Clear();
-        _locks.Clear();
+        _semaphores.Clear();
         _logger.LogWarning("Cache FLUSH_ALL executed");
     }
 
@@ -172,7 +178,7 @@ public sealed class MemoryCacheService : ICacheService
     /// <summary>
     /// Internal cache entry wrapper with expiration metadata.
     /// </summary>
-    private class CacheEntry
+    private sealed class CacheEntry
     {
         public object Value { get; set; } = null!;
         public DateTime? ExpiresAt { get; set; }
