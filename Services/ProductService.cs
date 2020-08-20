@@ -9,6 +9,7 @@ using AspNetSpaTemplate.Data.Repositories;
 using AspNetSpaTemplate.DTOs;
 using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
+using Microsoft.Extensions.Logging;
 
 namespace AspNetSpaTemplate.Services;
 
@@ -18,15 +19,18 @@ namespace AspNetSpaTemplate.Services;
 public sealed class ProductService
 {
     private readonly ProductRepository _productRepository;
+    private readonly ILogger<ProductService> _logger;
 
     /// <summary>
     /// Initializes a new instance of <see cref="ProductService"/>.
     /// </summary>
     /// <param name="productRepository">The product repository.</param>
-    /// <exception cref="ArgumentNullException">Thrown when productRepository is null.</exception>
-    public ProductService(ProductRepository productRepository)
+    /// <param name="logger">The logger.</param>
+    /// <exception cref="ArgumentNullException">Thrown when productRepository or logger is null.</exception>
+    public ProductService(ProductRepository productRepository, ILogger<ProductService> logger)
     {
         _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -36,10 +40,16 @@ public sealed class ProductService
     /// <returns>The product response, or throws NotFoundException.</returns>
     public async Task<ProductResponse?> GetProductByIdAsync(int id)
     {
+        _logger.LogDebug("Getting product by ID: {ProductId}", id);
+
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
+        {
+            _logger.LogWarning("Product not found: {ProductId}", id);
             throw new NotFoundException("Product", id);
+        }
 
+        _logger.LogInformation("Retrieved product: {ProductId} - {ProductName}", product.Id, product.Name);
         return MapToResponse(product);
     }
 
@@ -51,11 +61,15 @@ public sealed class ProductService
     /// <returns>A paginated list response.</returns>
     public async Task<ProductListResponse> GetAllProductsAsync(int pageNumber = 1, int pageSize = 10)
     {
+        _logger.LogDebug("Getting all available products: page={PageNumber}, pageSize={PageSize}", pageNumber, pageSize);
+
         pageSize = Math.Min(pageSize, AppConstants.Pagination.MaxPageSize);
         pageSize = Math.Max(pageSize, AppConstants.Pagination.MinPageSize);
 
         var totalCount = await _productRepository.CountAsync(p => p.IsAvailable);
         var products = await _productRepository.GetPagedAsync(pageNumber, pageSize, p => p.IsAvailable);
+
+        _logger.LogInformation("Retrieved {ProductCount} products (total: {TotalCount})", products.Count(), totalCount);
 
         return new ProductListResponse
         {
@@ -131,8 +145,13 @@ public sealed class ProductService
     /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
     public async Task<ProductResponse> CreateProductAsync(CreateProductRequest request)
     {
+        _logger.LogInformation("Creating new product: {ProductName}", request?.Name ?? "Unknown");
+
         if (request is null)
+        {
+            _logger.LogWarning("CreateProductAsync called with null request");
             throw new ArgumentNullException(nameof(request));
+        }
 
         ValidateProductRequest(request);
 
@@ -154,10 +173,12 @@ public sealed class ProductService
             _productRepository.Add(product);
             await _productRepository.SaveChangesAsync();
 
+            _logger.LogInformation("Product created successfully: {ProductId} - {ProductName}", product.Id, product.Name);
             return MapToResponse(product);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            _logger.LogError(ex, "Failed to create product: {ProductName}", request.Name);
             throw new BusinessException("Failed to create product due to database error", "PRODUCT_CREATION_FAILED", 500).WithData(ex);
         }
     }
@@ -171,12 +192,20 @@ public sealed class ProductService
     /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
     public async Task<ProductResponse> UpdateProductAsync(int id, UpdateProductRequest request)
     {
+        _logger.LogInformation("Updating product: {ProductId}", id);
+
         if (request is null)
+        {
+            _logger.LogWarning("UpdateProductAsync called with null request for product {ProductId}", id);
             throw new ArgumentNullException(nameof(request));
+        }
 
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
+        {
+            _logger.LogWarning("Product not found for update: {ProductId}", id);
             throw new NotFoundException("Product", id);
+        }
 
         try
         {
@@ -186,10 +215,12 @@ public sealed class ProductService
             _productRepository.Update(product);
             await _productRepository.SaveChangesAsync();
 
+            _logger.LogInformation("Product updated successfully: {ProductId} - {ProductName}", product.Id, product.Name);
             return MapToResponse(product);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            _logger.LogError(ex, "Failed to update product: {ProductId}", id);
             throw new BusinessException("Failed to update product due to database error", "PRODUCT_UPDATE_FAILED", 500).WithData(ex);
         }
     }
@@ -202,18 +233,26 @@ public sealed class ProductService
     /// <exception cref="NotFoundException">Thrown when product with specified ID is not found.</exception>
     public async Task SetProductAvailabilityAsync(int id, bool isAvailable)
     {
+        _logger.LogInformation("Setting product availability: {ProductId} - Available={IsAvailable}", id, isAvailable);
+
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
+        {
+            _logger.LogWarning("Product not found for availability update: {ProductId}", id);
             throw new NotFoundException("Product", id);
+        }
 
         try
         {
             product.SetAvailability(isAvailable);
             _productRepository.Update(product);
             await _productRepository.SaveChangesAsync();
+
+            _logger.LogInformation("Product availability updated: {ProductId} - Available={IsAvailable}", product.Id, isAvailable);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            _logger.LogError(ex, "Failed to update product availability: {ProductId}", id);
             throw new BusinessException("Failed to update product availability", "PRODUCT_AVAILABILITY_UPDATE_FAILED", 500).WithData(ex);
         }
     }
@@ -226,18 +265,26 @@ public sealed class ProductService
     /// <exception cref="NotFoundException">Thrown when product with specified ID is not found.</exception>
     public async Task SetProductFeaturedAsync(int id, bool isFeatured)
     {
+        _logger.LogInformation("Setting product featured status: {ProductId} - Featured={IsFeatured}", id, isFeatured);
+
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
+        {
+            _logger.LogWarning("Product not found for featured update: {ProductId}", id);
             throw new NotFoundException("Product", id);
+        }
 
         try
         {
             product.SetFeatured(isFeatured);
             _productRepository.Update(product);
             await _productRepository.SaveChangesAsync();
+
+            _logger.LogInformation("Product featured status updated: {ProductId} - Featured={IsFeatured}", product.Id, isFeatured);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            _logger.LogError(ex, "Failed to update product featured status: {ProductId}", id);
             throw new BusinessException("Failed to update product featured status", "PRODUCT_FEATURED_UPDATE_FAILED", 500).WithData(ex);
         }
     }
@@ -249,17 +296,26 @@ public sealed class ProductService
     /// <exception cref="NotFoundException">Thrown when product with specified ID is not found.</exception>
     public async Task DeleteProductAsync(int id)
     {
+        _logger.LogInformation("Deleting product: {ProductId}", id);
+
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
+        {
+            _logger.LogWarning("Product not found for deletion: {ProductId}", id);
             throw new NotFoundException("Product", id);
+        }
 
         try
         {
+            _logger.LogDebug("Removing product from repository: {ProductId} - {ProductName}", product.Id, product.Name);
             _productRepository.Remove(product);
             await _productRepository.SaveChangesAsync();
+
+            _logger.LogInformation("Product deleted successfully: {ProductId} - {ProductName}", product.Id, product.Name);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            _logger.LogError(ex, "Failed to delete product: {ProductId}", id);
             throw new BusinessException("Failed to delete product", "PRODUCT_DELETION_FAILED", 500).WithData(ex);
         }
     }

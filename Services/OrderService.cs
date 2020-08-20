@@ -9,6 +9,7 @@ using AspNetSpaTemplate.Data.Repositories;
 using AspNetSpaTemplate.DTOs;
 using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
+using Microsoft.Extensions.Logging;
 
 namespace AspNetSpaTemplate.Services;
 
@@ -19,17 +20,20 @@ public sealed class OrderService
 {
     private readonly OrderRepository _orderRepository;
     private readonly ProductRepository _productRepository;
+    private readonly ILogger<OrderService> _logger;
 
     /// <summary>
     /// Initializes a new instance of <see cref="OrderService"/>
     /// </summary>
     /// <param name="orderRepository">The order repository.</param>
     /// <param name="productRepository">The product repository.</param>
-    /// <exception cref="ArgumentNullException">Thrown when orderRepository or productRepository is null.</exception>
-    public OrderService(OrderRepository orderRepository, ProductRepository productRepository)
+    /// <param name="logger">The logger.</param>
+    /// <exception cref="ArgumentNullException">Thrown when orderRepository, productRepository, or logger is null.</exception>
+    public OrderService(OrderRepository orderRepository, ProductRepository productRepository, ILogger<OrderService> logger)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -40,13 +44,22 @@ public sealed class OrderService
     /// <exception cref="ArgumentOutOfRangeException">Thrown when ID is less than or equal to 0.</exception>
     public async Task<OrderResponse?> GetOrderByIdAsync(int id)
     {
+        _logger.LogDebug("Getting order by ID: {OrderId}", id);
+
         if (id <= 0)
+        {
+            _logger.LogWarning("Invalid order ID: {OrderId}", id);
             throw new ArgumentOutOfRangeException(nameof(id), "Order ID must be greater than 0");
+        }
 
         var order = await _orderRepository.GetByIdAsync(id);
         if (order is null)
+        {
+            _logger.LogWarning("Order not found: {OrderId}", id);
             throw new NotFoundException("Order", id);
+        }
 
+        _logger.LogInformation("Retrieved order: {OrderId} - {OrderNumber} (Status: {Status})", order.Id, order.OrderNumber, order.Status.ToDisplayName());
         return MapToResponse(order);
     }
 
@@ -162,12 +175,20 @@ public sealed class OrderService
     /// <exception cref="ValidationException">Thrown when status is invalid.</exception>
     public async Task<OrderResponse> UpdateOrderStatusAsync(int id, UpdateOrderStatusRequest request)
     {
+        _logger.LogInformation("Updating order status: {OrderId} - Status={Status}", id, request?.Status ?? "Unknown");
+
         if (request is null)
+        {
+            _logger.LogWarning("UpdateOrderStatusAsync called with null request for order {OrderId}", id);
             throw new ArgumentNullException(nameof(request));
+        }
 
         var order = await _orderRepository.GetByIdAsync(id);
         if (order is null)
+        {
+            _logger.LogWarning("Order not found for status update: {OrderId}", id);
             throw new NotFoundException("Order", id);
+        }
 
         if (Enum.TryParse<OrderStatus>(request.Status, true, out var newStatus))
         {
@@ -175,28 +196,35 @@ public sealed class OrderService
             {
                 case OrderStatus.Processing:
                     order.MarkAsProcessing();
+                    _logger.LogDebug("Order marked as Processing: {OrderId}", id);
                     break;
                 case OrderStatus.Shipped:
                     order.MarkAsShipped(request.TrackingNumber ?? "");
+                    _logger.LogDebug("Order marked as Shipped: {OrderId} - Tracking: {TrackingNumber}", id, request.TrackingNumber ?? "None");
                     break;
                 case OrderStatus.Delivered:
                     order.MarkAsDelivered();
+                    _logger.LogDebug("Order marked as Delivered: {OrderId}", id);
                     break;
                 case OrderStatus.Cancelled:
                     order.Cancel();
+                    _logger.LogDebug("Order cancelled: {OrderId}", id);
                     break;
                 default:
+                    _logger.LogWarning("Invalid order status: {Status}", request.Status);
                     throw new ValidationException("Status", "Invalid order status");
             }
         }
         else
         {
+            _logger.LogWarning("Invalid order status format: {Status}", request.Status);
             throw new ValidationException("Status", "Invalid order status format");
         }
 
         _orderRepository.Update(order);
         await _orderRepository.SaveChangesAsync();
 
+        _logger.LogInformation("Order status updated successfully: {OrderId} - New Status: {Status}", order.Id, order.Status.ToDisplayName());
         return MapToResponse(order);
     }
 
@@ -210,20 +238,32 @@ public sealed class OrderService
     /// <exception cref="BusinessException">Thrown when order is finalized.</exception>
     public async Task<OrderResponse> ApplyDiscountAsync(int id, ApplyDiscountRequest request)
     {
+        _logger.LogInformation("Applying discount to order: {OrderId} - Discount: {DiscountAmount}", id, request?.DiscountAmount ?? 0);
+
         if (request is null)
+        {
+            _logger.LogWarning("ApplyDiscountAsync called with null request for order {OrderId}", id);
             throw new ArgumentNullException(nameof(request));
+        }
 
         var order = await _orderRepository.GetByIdAsync(id);
         if (order is null)
+        {
+            _logger.LogWarning("Order not found for discount: {OrderId}", id);
             throw new NotFoundException("Order", id);
+        }
 
         if (order.Status.IsFinal())
+        {
+            _logger.LogWarning("Cannot apply discount to finalized order: {OrderId} - Status: {Status}", id, order.Status.ToDisplayName());
             throw new BusinessException("Cannot apply discount to a finalized order", "ORDER_FINALIZED");
+        }
 
         order.ApplyDiscount(request.DiscountAmount);
         _orderRepository.Update(order);
         await _orderRepository.SaveChangesAsync();
 
+        _logger.LogInformation("Discount applied successfully: {OrderId} - New Total: {Total}", order.Id, order.Total);
         return MapToResponse(order);
     }
 
@@ -237,10 +277,18 @@ public sealed class OrderService
     /// <exception cref="ArgumentOutOfRangeException">Thrown when userId is less than or equal to 0.</exception>
     public async Task<IEnumerable<OrderResponse>> GetUserOrdersAsync(int userId, int pageNumber = 1, int pageSize = 10)
     {
+        _logger.LogDebug("Getting orders for user: {UserId} (page {PageNumber}, pageSize {PageSize})", userId, pageNumber, pageSize);
+
         if (userId <= 0)
+        {
+            _logger.LogWarning("Invalid user ID for order retrieval: {UserId}", userId);
             throw new ArgumentOutOfRangeException(nameof(userId), "User ID must be greater than 0");
+        }
 
         var orders = await _orderRepository.GetUserOrdersAsync(userId, pageNumber, pageSize);
+        var count = orders.Count();
+        _logger.LogInformation("Retrieved {OrderCount} orders for user {UserId}", count, userId);
+
         return orders.Select(MapToResponse).ToList();
     }
 
@@ -250,7 +298,10 @@ public sealed class OrderService
     /// <returns>A collection of pending orders.</returns>
     public async Task<IEnumerable<OrderResponse>> GetPendingOrdersAsync()
     {
+        _logger.LogDebug("Getting all pending orders");
         var orders = await _orderRepository.GetPendingOrdersAsync();
+        var count = orders.Count();
+        _logger.LogInformation("Retrieved {PendingOrderCount} pending orders", count);
         return orders.Select(MapToResponse).ToList();
     }
 
@@ -260,7 +311,10 @@ public sealed class OrderService
     /// <returns>The total revenue.</returns>
     public async Task<decimal> GetTotalRevenueAsync()
     {
-        return await _orderRepository.GetTotalRevenueAsync();
+        _logger.LogDebug("Getting total revenue");
+        var revenue = await _orderRepository.GetTotalRevenueAsync();
+        _logger.LogInformation("Total revenue: {Revenue}", revenue);
+        return revenue;
     }
 
     /// <summary>
@@ -271,10 +325,17 @@ public sealed class OrderService
     /// <exception cref="ArgumentOutOfRangeException">Thrown when days is less than 1.</exception>
     public async Task<decimal> GetTotalRevenueAsync(int days)
     {
-        if (days < 1)
-            throw new ArgumentOutOfRangeException(nameof(days), "Days must be greater than 0");
+        _logger.LogDebug("Getting revenue for last {Days} days", days);
 
-        return await _orderRepository.GetTotalRevenueAsync(days);
+        if (days < 1)
+        {
+            _logger.LogWarning("Invalid days parameter: {Days}", days);
+            throw new ArgumentOutOfRangeException(nameof(days), "Days must be greater than 0");
+        }
+
+        var revenue = await _orderRepository.GetTotalRevenueAsync(days);
+        _logger.LogInformation("Revenue for last {Days} days: {Revenue}", days, revenue);
+        return revenue;
     }
 
     private string GenerateOrderNumber()
