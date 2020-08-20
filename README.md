@@ -736,12 +736,31 @@ ASP.NET Core uses a layered configuration system. Files are applied in order, wi
 | File | Purpose | Commit to git? |
 |---|---|---|
 | `appsettings.json` | Base defaults (no secrets) | ✅ Yes |
+| `appsettings.example.json` | Example settings with placeholders | ✅ Yes |
 | `appsettings.Development.json` | Dev overrides | ⚠️ Only if it contains no secrets |
 | `appsettings.Production.json` | Production overrides | ✅ Yes (no secrets — use env vars) |
 | Environment variables | Runtime secrets & deployment config | ✅ (set in your CI/CD or hosting platform) |
 | `dotnet user-secrets` | Local developer secrets | ✅ Stored outside the repo |
 
 The active environment is controlled by the `ASPNETCORE_ENVIRONMENT` variable (defaults to `Production` when not set).
+
+### Application Configuration (AspnetSpaTemplateOptions)
+
+The application uses the Options pattern for strongly-typed configuration. The main settings are under the `AspnetSpaTemplate` section.
+
+```json
+{
+  "AspnetSpaTemplate": {
+    "Environment": "Production",
+    "JwtSecret": "REPLACE_WITH_A_SECURE_RANDOM_KEY",
+    "JwtExpiration": 3600,
+    "RequestLogging": {
+      "Enabled": true,
+      "VerbosityLevel": "Standard",
+      "SlowRequestThresholdMs": 1000
+    }
+  }
+}
 
 ```bash
 # Use Development profile

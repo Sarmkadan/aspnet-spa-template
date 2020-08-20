@@ -56,6 +56,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Configure AspnetSpaTemplateOptions
+builder.Services.AddOptions<AspnetSpaTemplateOptions>()
+    .Bind(builder.Configuration.GetSection(AspnetSpaTemplateOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 // CORS configuration
 builder.Services.AddCors(options =>
 {
