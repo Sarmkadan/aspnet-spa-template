@@ -178,12 +178,14 @@ public sealed class UserService
 
     public async Task<LoginResponse> AuthenticateAsync(LoginRequest request)
     {
-        _logger.LogDebug("Authenticating user: {Email}", request?.Email ?? "Unknown");
+        ArgumentNullException.ThrowIfNull(request);
+
+        _logger.LogDebug("Authenticating user: {Email}", request.Email);
 
         var user = await _userRepository.GetByEmailAsync(request.Email);
         if (user is null)
         {
-            _logger.LogWarning("Login failed - user not found: {Email}", request?.Email ?? "Unknown");
+            _logger.LogWarning("Login failed - user not found: {Email}", request.Email);
             throw new BusinessException("Invalid email or password", "INVALID_CREDENTIALS");
         }
 

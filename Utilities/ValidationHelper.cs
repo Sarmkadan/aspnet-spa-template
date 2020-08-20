@@ -116,20 +116,27 @@ public static class ValidationHelper
     }
 
     /// <summary>
-    /// Validates multiple fields and collects all errors for batch reporting.
-    /// Returns collection of validation errors instead of throwing.
+    /// Runs a validation function and collects its errors for batch reporting
+    /// instead of letting a <see cref="ValidationException"/> propagate.
+    /// Errors returned by the function are preserved; if the function throws a
+    /// <see cref="ValidationException"/>, its errors are added to the result.
     /// </summary>
+    /// <exception cref="ArgumentNullException">Thrown when validationFunc is null.</exception>
     public static Dictionary<string, string> ValidateAndCollectErrors(
         Func<Dictionary<string, string>> validationFunc)
     {
+        ArgumentNullException.ThrowIfNull(validationFunc);
+
         var errors = new Dictionary<string, string>();
         try
         {
-            validationFunc();
+            foreach (var (field, message) in validationFunc())
+                errors[field] = message;
         }
         catch (ValidationException ex)
         {
-            errors[ex.Field] = ex.Message;
+            foreach (var (field, messages) in ex.Errors)
+                errors[field] = string.Join("; ", messages);
         }
         return errors;
     }

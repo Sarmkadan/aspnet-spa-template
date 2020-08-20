@@ -47,6 +47,9 @@ public class NotificationWorker : IBackgroundTask
 
             _logger.LogInformation($"Processing {notifications.Count} pending notifications");
 
+            var batchSent = 0;
+            var batchFailed = 0;
+
             foreach (var notification in notifications)
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -56,11 +59,13 @@ public class NotificationWorker : IBackgroundTask
                 {
                     await SendNotificationAsync(notification, cancellationToken);
                     _totalNotificationsSent++;
+                    batchSent++;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"Failed to send notification: {notification.Type} to {notification.Recipient}");
+                    _logger.LogError(ex, "Failed to send notification: {NotificationType} to {Recipient}", notification.Type, notification.Recipient);
                     _totalNotificationsFailed++;
+                    batchFailed++;
 
                     // In production, re-queue for retry with exponential backoff
                     // For now, just log and discard
@@ -68,7 +73,7 @@ public class NotificationWorker : IBackgroundTask
             }
 
             _lastExecutedAt = DateTime.UtcNow;
-            _logger.LogInformation($"Notification processing complete. Sent: {notifications.Count}, Failed: 0");
+            _logger.LogInformation("Notification processing complete. Sent: {SentCount}, Failed: {FailedCount}", batchSent, batchFailed);
         }
         catch (Exception ex)
         {

@@ -41,9 +41,9 @@ public sealed class RateLimitingMiddleware
             context.Response.OnStarting(() =>
             {
                 var remaining = GetRemainingRequests(clientId);
-                context.Response.Headers.Add("X-RateLimit-Limit", RequestsPerMinute.ToString());
-                context.Response.Headers.Add("X-RateLimit-Remaining", remaining.ToString());
-                context.Response.Headers.Add("X-RateLimit-Reset", GetResetTime(clientId).ToString("O"));
+                context.Response.Headers["X-RateLimit-Limit"] = RequestsPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                context.Response.Headers["X-RateLimit-Remaining"] = remaining.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                context.Response.Headers["X-RateLimit-Reset"] = GetResetTime(clientId).ToString("O", System.Globalization.CultureInfo.InvariantCulture);
                 return Task.CompletedTask;
             });
 
@@ -51,9 +51,9 @@ public sealed class RateLimitingMiddleware
         }
         else
         {
-            _logger.LogWarning($"Rate limit exceeded for client {clientId}");
+            _logger.LogWarning("Rate limit exceeded for client {ClientId}", clientId);
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-            context.Response.Headers.Add("Retry-After", "60");
+            context.Response.Headers["Retry-After"] = "60";
             await context.Response.WriteAsync("Rate limit exceeded. Please try again later.");
         }
     }
@@ -86,7 +86,6 @@ public sealed class RateLimitingMiddleware
         lock (RequestLogLock)
         {
             var now = DateTime.UtcNow;
-            var minuteAgo = now.AddMinutes(-1);
 
             // Clean old entries
             var keysToRemove = RequestLog

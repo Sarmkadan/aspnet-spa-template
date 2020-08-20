@@ -19,20 +19,23 @@ public sealed class MemoryCacheService : ICacheService
 {
     private readonly ConcurrentDictionary<string, CacheEntry> _cache;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _semaphores;
-    private readonly CacheStatistics _stats;
     private readonly ILogger<MemoryCacheService> _logger;
+
+    // Counters are updated with Interlocked because GetAsync runs concurrently.
+    private long _totalRequests;
+    private long _cacheHits;
+    private long _cacheMisses;
 
     public MemoryCacheService(ILogger<MemoryCacheService> logger)
     {
         _cache = new ConcurrentDictionary<string, CacheEntry>();
         _semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
-        _stats = new CacheStatistics();
         _logger = logger;
     }
 
     public async Task<T?> GetAsync<T>(string key) where T : class
     {
-        _stats.TotalRequests++;
+        Interlocked.Increment(ref _totalRequests);
 
         if (_cache.TryGetValue(key, out var entry))
         {
@@ -40,15 +43,15 @@ public sealed class MemoryCacheService : ICacheService
             if (entry.ExpiresAt.HasValue && entry.ExpiresAt < DateTime.UtcNow)
             {
                 _cache.TryRemove(key, out _);
-                _stats.CacheMisses++;
+                Interlocked.Increment(ref _cacheMisses);
                 return null;
             }
 
-            _stats.CacheHits++;
+            Interlocked.Increment(ref _cacheHits);
             return entry.Value as T;
         }
 
-        _stats.CacheMisses++;
+        Interlocked.Increment(ref _cacheMisses);
         return null;
     }
 
@@ -121,7 +124,7 @@ public sealed class MemoryCacheService : ICacheService
                 await SetAsync(key, value, ttl);
             }
 
-            return value;
+            return value!;
         }
         finally
         {
@@ -131,15 +134,16 @@ public sealed class MemoryCacheService : ICacheService
 
     public async Task<long> IncrementAsync(string key, long increment = 1)
     {
-        if (_cache.TryGetValue(key, out var entry) && entry.Value is long)
-        {
-            var newValue = (long)entry.Value + increment;
-            _cache[key] = new CacheEntry { Value = newValue, ExpiresAt = entry.ExpiresAt };
-            return newValue;
-        }
+        // AddOrUpdate makes the read-modify-write atomic; the old TryGetValue/set
+        // sequence could lose increments under concurrent callers.
+        var entry = _cache.AddOrUpdate(
+            key,
+            _ => new CacheEntry { Value = increment, ExpiresAt = null },
+            (_, existing) => existing.Value is long current
+                ? new CacheEntry { Value = current + increment, ExpiresAt = existing.ExpiresAt }
+                : new CacheEntry { Value = increment, ExpiresAt = null });
 
-        _cache[key] = new CacheEntry { Value = increment, ExpiresAt = null };
-        return increment;
+        return (long)entry.Value;
     }
 
     public async Task<bool> ExpireAsync(string key, TimeSpan ttl)
@@ -168,9 +172,9 @@ public sealed class MemoryCacheService : ICacheService
     {
         return new CacheStatistics
         {
-            TotalRequests = _stats.TotalRequests,
-            CacheHits = _stats.CacheHits,
-            CacheMisses = _stats.CacheMisses,
+            TotalRequests = Interlocked.Read(ref _totalRequests),
+            CacheHits = Interlocked.Read(ref _cacheHits),
+            CacheMisses = Interlocked.Read(ref _cacheMisses),
             ItemCount = _cache.Count
         };
     }

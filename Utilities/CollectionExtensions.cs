@@ -101,6 +101,7 @@ public static class CollectionExtensions
     /// Useful for logging or debugging configuration values.
     /// </summary>
     public static string ToKeyValueString<TKey, TValue>(this Dictionary<TKey, TValue> source)
+        where TKey : notnull
     {
         if (source is null || source.Count == 0)
             return string.Empty;
@@ -129,11 +130,10 @@ public static class CollectionExtensions
     public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
     {
         var items = source.ToList();
-        var random = new Random();
 
         for (int i = items.Count - 1; i > 0; i--)
         {
-            int randomIndex = random.Next(i + 1);
+            int randomIndex = Random.Shared.Next(i + 1);
             (items[i], items[randomIndex]) = (items[randomIndex], items[i]);
         }
 

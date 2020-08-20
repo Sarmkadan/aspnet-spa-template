@@ -132,18 +132,23 @@ public sealed class AuthenticationMiddleware
     }
 
     /// <summary>
-    /// Extracts user ID from token (for demonstration).
-    /// In production, extract from JWT claims.
+    /// Derives a stable user ID from the token.
+    /// Uses a SHA-256 based derivation so the ID is deterministic across process
+    /// restarts, unlike <see cref="string.GetHashCode()"/> which is randomized per process.
+    /// In production, extract the ID from JWT claims instead.
     /// </summary>
     private static int ExtractUserId(string token)
     {
-        // Simplified: in production extract from JWT claims
-        return token.GetHashCode() % 100; // Dummy implementation
+        var hash = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        var value = BitConverter.ToInt32(hash, 0) & int.MaxValue; // non-negative
+        return value % 100;
     }
 
     /// <summary>
     /// Determines if endpoint should skip authentication.
     /// Health checks, login endpoints, etc. don't require auth.
+    /// Matches on path segments to avoid accidentally exempting paths that
+    /// merely contain a public path as a substring.
     /// </summary>
     private static bool IsPublicEndpoint(PathString path)
     {
@@ -156,7 +161,6 @@ public sealed class AuthenticationMiddleware
             "/index.html"
         };
 
-        var pathValue = path.Value?.ToLowerInvariant() ?? string.Empty;
-        return publicPaths.Any(p => pathValue.Contains(p));
+        return publicPaths.Any(p => path.StartsWithSegments(p, StringComparison.OrdinalIgnoreCase));
     }
 }

@@ -43,7 +43,7 @@ public static class DataExportHelper
     {
         var csv = CsvFormatter.ToCsv(items);
         var data = System.Text.Encoding.UTF8.GetBytes(csv);
-        var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
         var fullFileName = $"{fileName}-{timestamp}.csv";
 
         return (data, "text/csv", fullFileName);
@@ -58,7 +58,7 @@ public static class DataExportHelper
     {
         var json = JsonSerializationHelper.SerializePretty(items.ToList());
         var data = System.Text.Encoding.UTF8.GetBytes(json);
-        var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
         var fullFileName = $"{fileName}-{timestamp}.json";
 
         return (data, "application/json", fullFileName);
@@ -74,7 +74,7 @@ public static class DataExportHelper
         var wrapper = new { Items = items.ToList() };
         var xml = XmlFormatter.ToXml(wrapper);
         var data = System.Text.Encoding.UTF8.GetBytes(xml);
-        var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
         var fullFileName = $"{fileName}-{timestamp}.xml";
 
         return (data, "application/xml", fullFileName);

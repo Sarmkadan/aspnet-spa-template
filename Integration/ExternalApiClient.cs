@@ -105,7 +105,7 @@ public sealed class ExternalApiClient
 				throw new ExternalApiException(endpoint, "GET", ex.StatusCode.HasValue ? (int)ex.StatusCode : 0,
 					ex.Message ?? "HTTP request failed")
 					.WithContext("Endpoint", endpoint)
-					.WithContext("StatusCode", ex.StatusCode)
+					.WithContext("StatusCode", ex.StatusCode?.ToString() ?? "None")
 					.WithContext("InnerException", ex.InnerException?.GetType().Name ?? "None");
 			}
 			catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
@@ -183,7 +183,7 @@ public sealed class ExternalApiClient
 				throw new ExternalApiException(endpoint, "POST", ex.StatusCode.HasValue ? (int)ex.StatusCode : 0,
 					ex.Message ?? "HTTP request failed")
 					.WithContext("Endpoint", endpoint)
-					.WithContext("StatusCode", ex.StatusCode)
+					.WithContext("StatusCode", ex.StatusCode?.ToString() ?? "None")
 					.WithContext("RequestBody", request);
 			}
 			catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)

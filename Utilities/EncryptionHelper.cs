@@ -94,11 +94,9 @@ public static class EncryptionHelper
         var saltString = Convert.ToBase64String(salt);
 
         // Hash with salt using PBKDF2
-        using (var pbkdf2 = new Rfc2898DeriveBytes(input, salt, 10000, HashAlgorithmName.SHA256))
-        {
-            var hash = Convert.ToBase64String(pbkdf2.GetBytes(20));
-            return (hash, saltString);
-        }
+        var hash = Convert.ToBase64String(
+            Rfc2898DeriveBytes.Pbkdf2(input, salt, 10000, HashAlgorithmName.SHA256, 20));
+        return (hash, saltString);
     }
 
     /// <summary>
@@ -109,13 +107,22 @@ public static class EncryptionHelper
         if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(hash) || string.IsNullOrEmpty(salt))
             return false;
 
-        var saltBytes = Convert.FromBase64String(salt);
-
-        using (var pbkdf2 = new Rfc2898DeriveBytes(input, saltBytes, 10000, HashAlgorithmName.SHA256))
+        byte[] saltBytes;
+        byte[] expectedHash;
+        try
         {
-            var hashOfInput = Convert.ToBase64String(pbkdf2.GetBytes(20));
-            return hashOfInput == hash;
+            saltBytes = Convert.FromBase64String(salt);
+            expectedHash = Convert.FromBase64String(hash);
         }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        var hashOfInput = Rfc2898DeriveBytes.Pbkdf2(input, saltBytes, 10000, HashAlgorithmName.SHA256, 20);
+
+        // Fixed-time comparison prevents timing side-channel attacks.
+        return CryptographicOperations.FixedTimeEquals(hashOfInput, expectedHash);
     }
 
     /// <summary>

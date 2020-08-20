@@ -122,12 +122,19 @@ public sealed class OrderService
                 }
             }
 
+            // Domain failures (insufficient stock, missing product, validation) must
+            // surface as-is; only unexpected errors are wrapped as a creation failure.
+            if (ex is AspNetSpaTemplateException)
+                throw;
+
             throw new BusinessException("Failed to create order due to database error", "ORDER_CREATION_FAILED", 500).WithData(ex);
         }
     }
 
     private async Task<(decimal Subtotal, decimal TotalTax)> ProcessOrderItemsAsync(Order order, List<OrderItemRequest> itemRequests)
     {
+        order.Items ??= new List<OrderItem>();
+
         decimal subtotal = 0;
         decimal totalTax = 0;
 

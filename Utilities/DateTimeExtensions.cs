@@ -81,7 +81,9 @@ public static class DateTimeExtensions
     /// </summary>
     public static string ToIso8601(this DateTime dateTime)
     {
-        return dateTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ");
+        // InvariantCulture: custom format separators (":" and "-") are otherwise
+        // replaced by culture-specific date/time separators.
+        return dateTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     /// <summary>

@@ -20,7 +20,7 @@ public static class RequestContextHelper
     {
         const string key = "CorrelationId";
 
-        if (!context.Items.TryGetValue(key, out var id))
+        if (!context.Items.TryGetValue(key, out var id) || id is null)
         {
             id = Guid.NewGuid().ToString("N")[..16]; // Short ID: 16 chars
             context.Items[key] = id;
@@ -35,7 +35,7 @@ public static class RequestContextHelper
     /// </summary>
     public static int GetUserId(this HttpContext context)
     {
-        if (context.Items.TryGetValue("UserId", out var userId) && int.TryParse(userId.ToString(), out var id))
+        if (context.Items.TryGetValue("UserId", out var userId) && int.TryParse(userId?.ToString(), out var id))
             return id;
 
         return 0;
