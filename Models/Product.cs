@@ -54,7 +54,7 @@ public sealed class Product
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public decimal GetTaxAmount() => Price * ProductCategory.GetTaxRate();
+    public decimal GetTaxAmount() => Price * Category.GetTaxRate();
 
     public decimal GetPriceWithTax() => Price + GetTaxAmount();
 

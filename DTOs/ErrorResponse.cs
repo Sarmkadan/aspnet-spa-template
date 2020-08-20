@@ -16,6 +16,7 @@ public sealed class ErrorResponse
     public Dictionary<string, List<string>>? Errors { get; set; }
     public string? TraceId { get; set; }
     public int StatusCode { get; set; }
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
     public ErrorResponse() { }
 

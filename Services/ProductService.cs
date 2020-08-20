@@ -62,8 +62,7 @@ public sealed class ProductService
             Products = products.Select(MapToResponse).ToList(),
             TotalCount = totalCount,
             PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalPages = (totalCount + pageSize - 1) / pageSize
+            PageSize = pageSize
         };
     }
 
@@ -84,8 +83,7 @@ public sealed class ProductService
             Products = products.Select(MapToResponse).ToList(),
             TotalCount = totalCount,
             PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalPages = (totalCount + pageSize - 1) / pageSize
+            PageSize = pageSize
         };
     }
 

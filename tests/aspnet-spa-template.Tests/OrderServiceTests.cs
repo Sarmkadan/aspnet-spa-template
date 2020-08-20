@@ -72,7 +72,7 @@ public sealed class OrderServiceTests
 
         _mockProductRepository.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
         _mockOrderRepository.Setup(r => r.Add(It.IsAny<Order>()));
-        _mockOrderRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockOrderRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _orderService.CreateOrderAsync(userId, request);
@@ -147,7 +147,7 @@ public sealed class OrderServiceTests
 
         _mockOrderRepository.Setup(r => r.GetByIdAsync(orderId)).ReturnsAsync(order);
         _mockOrderRepository.Setup(r => r.Update(It.IsAny<Order>()));
-        _mockOrderRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockOrderRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _orderService.UpdateOrderStatusAsync(orderId, request);
@@ -167,7 +167,7 @@ public sealed class OrderServiceTests
 
         _mockOrderRepository.Setup(r => r.GetByIdAsync(orderId)).ReturnsAsync(order);
         _mockOrderRepository.Setup(r => r.Update(It.IsAny<Order>()));
-        _mockOrderRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockOrderRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _orderService.ApplyDiscountAsync(orderId, request);

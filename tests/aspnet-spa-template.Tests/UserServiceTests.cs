@@ -70,7 +70,7 @@ public sealed class UserServiceTests
         };
         _mockUserRepository.Setup(r => r.EmailExistsAsync(request.Email)).ReturnsAsync(false);
         _mockUserRepository.Setup(r => r.Add(It.IsAny<User>()));
-        _mockUserRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _userService.CreateUserAsync(request);
@@ -198,7 +198,7 @@ public sealed class UserServiceTests
         };
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         _mockUserRepository.Setup(r => r.Update(It.IsAny<User>()));
-        _mockUserRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _userService.UpdateUserAsync(userId, request);
@@ -219,7 +219,7 @@ public sealed class UserServiceTests
 
         _mockUserRepository.Setup(r => r.GetByEmailAsync(request.Email)).ReturnsAsync(user);
         _mockUserRepository.Setup(r => r.Update(It.IsAny<User>()));
-        _mockUserRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _userService.AuthenticateAsync(request);
@@ -289,7 +289,7 @@ public sealed class UserServiceTests
         var user = new User { Id = userId, IsActive = true };
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         _mockUserRepository.Setup(r => r.Update(It.IsAny<User>()));
-        _mockUserRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _userService.DeactivateUserAsync(userId);
@@ -306,7 +306,7 @@ public sealed class UserServiceTests
         var user = new User { Id = userId, IsActive = false };
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         _mockUserRepository.Setup(r => r.Update(It.IsAny<User>()));
-        _mockUserRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _userService.ActivateUserAsync(userId);

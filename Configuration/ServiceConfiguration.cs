@@ -31,7 +31,7 @@ public static class ServiceConfiguration
         services.AddSingleton<DomainEventHandlers>();
 
         // Integration
-        services.AddSingleton<IHttpClientFactory, DefaultHttpClientFactory>();
+        services.AddSingleton<AspNetSpaTemplate.Integration.IHttpClientFactory, DefaultHttpClientFactory>();
         services.AddScoped<ExternalApiClient>();
         services.AddSingleton<NotificationService>();
 

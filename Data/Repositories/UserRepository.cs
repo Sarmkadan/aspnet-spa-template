@@ -35,7 +35,7 @@ public sealed class UserRepository : RepositoryBase<User>
     {
         var cutoffDate = DateTime.UtcNow.AddDays(-days);
         return await DbSet
-            .Where(u => u.LastLoginAt is not null && u.LastLoginAt >= cutoffDate)
+            .Where(u => u.LastLoginAt != null && u.LastLoginAt >= cutoffDate)
             .OrderByDescending(u => u.LastLoginAt)
             .ToListAsync();
     }

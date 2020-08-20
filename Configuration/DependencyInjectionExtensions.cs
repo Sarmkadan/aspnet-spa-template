@@ -92,7 +92,7 @@ public static class DependencyInjectionExtensions
     /// </summary>
     public static IServiceCollection AddIntegrationOnly(this IServiceCollection services)
     {
-        services.AddSingleton<IHttpClientFactory, DefaultHttpClientFactory>();
+        services.AddSingleton<AspNetSpaTemplate.Integration.IHttpClientFactory, DefaultHttpClientFactory>();
         services.AddScoped<ExternalApiClient>();
         services.AddSingleton<NotificationService>();
 
@@ -105,10 +105,10 @@ public static class DependencyInjectionExtensions
     /// </summary>
     public static IServiceCollection AddHealthChecks(this IServiceCollection services)
     {
-        services
-            .AddHealthChecks()
+        Microsoft.Extensions.DependencyInjection.HealthCheckServiceCollectionExtensions
+            .AddHealthChecks(services)
             .AddCheck("database", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("DB OK"))
-            .AddCheck("cache", async () =>
+            .AddAsyncCheck("cache", async () =>
             {
                 var cache = services.BuildServiceProvider().GetService<ICacheHealthMonitor>();
                 var isHealthy = cache is not null && await cache.IsCacheHealthyAsync();

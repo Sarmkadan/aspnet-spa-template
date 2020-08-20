@@ -31,4 +31,17 @@ public sealed class BusinessException : AspNetSpaTemplateException
 
     public BusinessException(string message, Exception innerException)
         : base(message, innerException) { }
+
+    /// <summary>
+    /// Attaches additional contextual data (e.g. the original exception) to this instance
+    /// and returns it, enabling fluent construction like:
+    /// <c>throw new BusinessException(...).WithData(ex);</c>
+    /// </summary>
+    /// <param name="data">The data to attach (commonly the original caught exception).</param>
+    /// <returns>This <see cref="BusinessException"/> instance.</returns>
+    public BusinessException WithData(object data)
+    {
+        Data["Context"] = data;
+        return this;
+    }
 }

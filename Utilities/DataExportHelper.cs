@@ -5,6 +5,7 @@
 // =============================================================================
 
 using AspNetSpaTemplate.Formatters;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AspNetSpaTemplate.Utilities;
 

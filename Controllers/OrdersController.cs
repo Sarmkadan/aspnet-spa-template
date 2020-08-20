@@ -23,7 +23,7 @@ public sealed class OrdersController : ApiControllerBase
     }
 
     [HttpGet("{id:int}")]
-    [ProduceResponseType(typeof(OrderResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OrderResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetOrder(int id)
     {
         var order = await _orderService.GetOrderByIdAsync(id);
@@ -31,7 +31,7 @@ public sealed class OrdersController : ApiControllerBase
     }
 
     [HttpPost]
-    [ProduceResponseType(typeof(OrderResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(OrderResponse), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
     {
         if (!IsAuthenticated)
@@ -43,7 +43,7 @@ public sealed class OrdersController : ApiControllerBase
     }
 
     [HttpPut("{id:int}/status")]
-    [ProduceResponseType(typeof(OrderResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OrderResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusRequest request)
     {
         var order = await _orderService.UpdateOrderStatusAsync(id, request);
@@ -51,7 +51,7 @@ public sealed class OrdersController : ApiControllerBase
     }
 
     [HttpPost("{id:int}/discount")]
-    [ProduceResponseType(typeof(OrderResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OrderResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> ApplyDiscount(int id, [FromBody] ApplyDiscountRequest request)
     {
         var order = await _orderService.ApplyDiscountAsync(id, request);
@@ -59,7 +59,7 @@ public sealed class OrdersController : ApiControllerBase
     }
 
     [HttpGet("user/{userId:int}")]
-    [ProduceResponseType(typeof(List<OrderResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<OrderResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUserOrders(int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var orders = await _orderService.GetUserOrdersAsync(userId, pageNumber, pageSize);
@@ -67,7 +67,7 @@ public sealed class OrdersController : ApiControllerBase
     }
 
     [HttpGet("my-orders")]
-    [ProduceResponseType(typeof(List<OrderResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<OrderResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         if (!IsAuthenticated)
@@ -79,7 +79,7 @@ public sealed class OrdersController : ApiControllerBase
     }
 
     [HttpGet("pending")]
-    [ProduceResponseType(typeof(List<OrderResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<OrderResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPendingOrders()
     {
         var orders = await _orderService.GetPendingOrdersAsync();
@@ -87,7 +87,7 @@ public sealed class OrdersController : ApiControllerBase
     }
 
     [HttpGet("revenue/total")]
-    [ProduceResponseType(typeof(decimal), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(decimal), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTotalRevenue([FromQuery] int? days = null)
     {
         decimal revenue = days.HasValue

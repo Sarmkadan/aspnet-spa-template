@@ -5,6 +5,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Text.Json;
 using AspNetSpaTemplate.Events;
 using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Utilities;

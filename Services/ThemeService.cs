@@ -5,6 +5,7 @@
 // =============================================================================
 
 using AspNetSpaTemplate.Caching;
+using AspNetSpaTemplate.Exceptions;
 
 namespace AspNetSpaTemplate.Services;
 

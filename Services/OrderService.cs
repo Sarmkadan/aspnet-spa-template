@@ -128,7 +128,7 @@ public sealed class OrderService
                 throw new BusinessException($"Insufficient stock for product {product.Name}", "INSUFFICIENT_STOCK");
 
             var itemSubtotal = product.Price * itemRequest.Quantity;
-            var itemTax = itemSubtotal * ProductCategory.GetTaxRate();
+            var itemTax = itemSubtotal * product.Category.GetTaxRate();
 
             var orderItem = new OrderItem
             {
@@ -217,7 +217,7 @@ public sealed class OrderService
         if (order is null)
             throw new NotFoundException("Order", id);
 
-        if (order.IsFinal())
+        if (order.Status.IsFinal())
             throw new BusinessException("Cannot apply discount to a finalized order", "ORDER_FINALIZED");
 
         order.ApplyDiscount(request.DiscountAmount);

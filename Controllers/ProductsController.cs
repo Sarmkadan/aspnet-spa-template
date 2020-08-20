@@ -24,7 +24,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpGet("{id:int}")]
-    [ProduceResponseType(typeof(ProductResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProductResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetProduct(int id)
     {
         var product = await _productService.GetProductByIdAsync(id);
@@ -32,7 +32,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpGet]
-    [ProduceResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetProducts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var products = await _productService.GetAllProductsAsync(pageNumber, pageSize);
@@ -40,7 +40,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpGet("category/{category}")]
-    [ProduceResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetProductsByCategory(ProductCategory category, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var products = await _productService.GetProductsByCategoryAsync(category, pageNumber, pageSize);
@@ -48,7 +48,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpGet("featured")]
-    [ProduceResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFeaturedProducts([FromQuery] int limit = 10)
     {
         var products = await _productService.GetFeaturedProductsAsync(limit);
@@ -56,7 +56,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpGet("top-rated")]
-    [ProduceResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTopRatedProducts([FromQuery] int limit = 10)
     {
         var products = await _productService.GetTopRatedProductsAsync(limit);
@@ -64,7 +64,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpGet("search")]
-    [ProduceResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> SearchProducts([FromQuery] string searchTerm)
     {
         var products = await _productService.SearchProductsAsync(searchTerm);
@@ -72,7 +72,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpPost]
-    [ProduceResponseType(typeof(ProductResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProductResponse), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
     {
         var product = await _productService.CreateProductAsync(request);
@@ -80,7 +80,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [ProduceResponseType(typeof(ProductResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProductResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductRequest request)
     {
         var product = await _productService.UpdateProductAsync(id, request);
@@ -88,7 +88,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpPatch("{id:int}/availability")]
-    [ProduceResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SetAvailability(int id, [FromBody] Dictionary<string, bool> request)
     {
         if (!request.TryGetValue("isAvailable", out var isAvailable))
@@ -99,7 +99,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpPatch("{id:int}/featured")]
-    [ProduceResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SetFeatured(int id, [FromBody] Dictionary<string, bool> request)
     {
         if (!request.TryGetValue("isFeatured", out var isFeatured))
@@ -110,7 +110,7 @@ public sealed class ProductsController : ApiControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [ProduceResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         await _productService.DeleteProductAsync(id);

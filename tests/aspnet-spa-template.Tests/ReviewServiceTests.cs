@@ -1,4 +1,5 @@
 #nullable enable
+using System.Linq.Expressions;
 using AspNetSpaTemplate.Data.Repositories;
 using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
@@ -60,12 +61,12 @@ public sealed class ReviewServiceTests
         var userId = 5;
         var product = new Product { Id = productId, Name = "Test Product" };
         _mockProductRepository.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
-        _mockReviewRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Func<Review, bool>>())).ReturnsAsync((Review?)null);
+        _mockReviewRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Review, bool>>>())).ReturnsAsync((Review?)null);
         _mockReviewRepository.Setup(r => r.Add(It.IsAny<Review>()));
-        _mockReviewRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
-        _mockReviewRepository.Setup(r => r.FindAsync(It.IsAny<Func<Review, bool>>())).ReturnsAsync(new List<Review>());
+        _mockReviewRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _mockReviewRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Review, bool>>>())).ReturnsAsync(new List<Review>());
         _mockProductRepository.Setup(r => r.Update(It.IsAny<Product>()));
-        _mockProductRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockProductRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _reviewService.CreateReviewAsync(productId, userId, 5, "Great!", "This product is fantastic");
@@ -129,7 +130,7 @@ public sealed class ReviewServiceTests
         var product = new Product { Id = productId };
         var existingReview = new Review { Id = 1, ProductId = productId, UserId = userId };
         _mockProductRepository.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
-        _mockReviewRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Func<Review, bool>>())).ReturnsAsync(existingReview);
+        _mockReviewRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Review, bool>>>())).ReturnsAsync(existingReview);
 
         // Act
         var act = () => _reviewService.CreateReviewAsync(productId, userId, 4, "Title Here", "Content here is good");
@@ -148,7 +149,7 @@ public sealed class ReviewServiceTests
             new Review { Id = 1, ProductId = productId, IsApproved = true, CreatedAt = DateTime.UtcNow },
             new Review { Id = 2, ProductId = productId, IsApproved = true, CreatedAt = DateTime.UtcNow.AddDays(-1) }
         };
-        _mockReviewRepository.Setup(r => r.FindAsync(It.IsAny<Func<Review, bool>>())).ReturnsAsync(reviews);
+        _mockReviewRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Review, bool>>>())).ReturnsAsync(reviews);
 
         // Act
         var result = await _reviewService.GetProductReviewsAsync(productId);
@@ -167,7 +168,7 @@ public sealed class ReviewServiceTests
             new Review { Id = 1, UserId = userId, CreatedAt = DateTime.UtcNow },
             new Review { Id = 2, UserId = userId, CreatedAt = DateTime.UtcNow.AddDays(-1) }
         };
-        _mockReviewRepository.Setup(r => r.FindAsync(It.IsAny<Func<Review, bool>>())).ReturnsAsync(reviews);
+        _mockReviewRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Review, bool>>>())).ReturnsAsync(reviews);
 
         // Act
         var result = await _reviewService.GetUserReviewsAsync(userId);
@@ -186,10 +187,10 @@ public sealed class ReviewServiceTests
         _mockReviewRepository.Setup(r => r.GetByIdAsync(reviewId)).ReturnsAsync(review);
         _mockProductRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(product);
         _mockReviewRepository.Setup(r => r.Update(It.IsAny<Review>()));
-        _mockReviewRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
-        _mockReviewRepository.Setup(r => r.FindAsync(It.IsAny<Func<Review, bool>>())).ReturnsAsync(new List<Review> { review });
+        _mockReviewRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _mockReviewRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Review, bool>>>())).ReturnsAsync(new List<Review> { review });
         _mockProductRepository.Setup(r => r.Update(It.IsAny<Product>()));
-        _mockProductRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockProductRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _reviewService.ApproveReviewAsync(reviewId);
@@ -208,10 +209,10 @@ public sealed class ReviewServiceTests
         _mockReviewRepository.Setup(r => r.GetByIdAsync(reviewId)).ReturnsAsync(review);
         _mockProductRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(product);
         _mockReviewRepository.Setup(r => r.Remove(It.IsAny<Review>()));
-        _mockReviewRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
-        _mockReviewRepository.Setup(r => r.FindAsync(It.IsAny<Func<Review, bool>>())).ReturnsAsync(new List<Review>());
+        _mockReviewRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _mockReviewRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Review, bool>>>())).ReturnsAsync(new List<Review>());
         _mockProductRepository.Setup(r => r.Update(It.IsAny<Product>()));
-        _mockProductRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockProductRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _reviewService.DeleteReviewAsync(reviewId);

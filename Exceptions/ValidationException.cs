@@ -13,6 +13,12 @@ public sealed class ValidationException : AspNetSpaTemplateException
 {
     public Dictionary<string, List<string>> Errors { get; }
 
+    /// <summary>
+    /// The name of the field that failed validation, when this exception represents
+    /// a single-field failure. Returns the first key in <see cref="Errors"/>, if any.
+    /// </summary>
+    public string? Field => Errors.Keys.FirstOrDefault();
+
     public ValidationException(string message) : base(message)
     {
         Errors = new Dictionary<string, List<string>>();

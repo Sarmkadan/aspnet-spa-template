@@ -23,7 +23,7 @@ public sealed class UsersController : ApiControllerBase
     }
 
     [HttpPost("register")]
-    [ProduceResponseType(typeof(UserResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status201Created)]
     public async Task<IActionResult> Register([FromBody] CreateUserRequest request)
     {
         var user = await _userService.CreateUserAsync(request);
@@ -31,7 +31,7 @@ public sealed class UsersController : ApiControllerBase
     }
 
     [HttpPost("login")]
-    [ProduceResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var response = await _userService.AuthenticateAsync(request);
@@ -39,7 +39,7 @@ public sealed class UsersController : ApiControllerBase
     }
 
     [HttpGet("{id:int}")]
-    [ProduceResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUser(int id)
     {
         var user = await _userService.GetUserByIdAsync(id);
@@ -47,7 +47,7 @@ public sealed class UsersController : ApiControllerBase
     }
 
     [HttpGet("profile")]
-    [ProduceResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetProfile()
     {
         if (!IsAuthenticated)
@@ -59,7 +59,7 @@ public sealed class UsersController : ApiControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [ProduceResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
     {
         if (!IsAuthenticated)
@@ -74,7 +74,7 @@ public sealed class UsersController : ApiControllerBase
     }
 
     [HttpPut("{id:int}/deactivate")]
-    [ProduceResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeactivateUser(int id)
     {
         if (!IsAuthenticated)
@@ -85,7 +85,7 @@ public sealed class UsersController : ApiControllerBase
     }
 
     [HttpPut("{id:int}/activate")]
-    [ProduceResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> ActivateUser(int id)
     {
         if (!IsAuthenticated)
@@ -96,7 +96,7 @@ public sealed class UsersController : ApiControllerBase
     }
 
     [HttpGet]
-    [ProduceResponseType(typeof(List<UserResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<UserResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllUsers()
     {
         var users = await _userService.GetAllUsersAsync();
@@ -104,7 +104,7 @@ public sealed class UsersController : ApiControllerBase
     }
 
     [HttpGet("recently-active")]
-    [ProduceResponseType(typeof(List<UserResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<UserResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecentlyActiveUsers([FromQuery] int days = 30)
     {
         var users = await _userService.GetRecentlyActiveUsersAsync(days);

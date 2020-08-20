@@ -6,6 +6,7 @@
 
 using AspNetSpaTemplate.BackgroundWorkers;
 using AspNetSpaTemplate.Caching;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AspNetSpaTemplate.Controllers;
 
@@ -37,7 +38,7 @@ public sealed class HealthController : ControllerBase
     /// Used by container orchestration for basic liveness probes.
     /// </summary>
     [HttpGet("live")]
-    [ProduceResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult Liveness()
     {
         return Ok(new { status = "alive", timestamp = DateTime.UtcNow });
@@ -48,8 +49,8 @@ public sealed class HealthController : ControllerBase
     /// Used for readiness probes before routing traffic.
     /// </summary>
     [HttpGet("ready")]
-    [ProduceResponseType(StatusCodes.Status200OK)]
-    [ProduceResponseType(StatusCodes.Status503ServiceUnavailable)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Readiness()
     {
         var report = new HealthCheckReport
@@ -83,7 +84,7 @@ public sealed class HealthController : ControllerBase
     /// Returns comprehensive system health and performance metrics.
     /// </summary>
     [HttpGet("diagnostics")]
-    [ProduceResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Diagnostics()
     {
         var cacheReport = await _cacheHealthMonitor.GetHealthReportAsync();
@@ -124,8 +125,8 @@ public sealed class HealthController : ControllerBase
     /// Protected endpoint - requires authentication.
     /// </summary>
     [HttpPost("trigger-task/{taskName}")]
-    [ProduceResponseType(StatusCodes.Status200OK)]
-    [ProduceResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> TriggerTask(string taskName)
     {
         try
@@ -144,7 +145,7 @@ public sealed class HealthController : ControllerBase
     /// Gets current status of all background workers.
     /// </summary>
     [HttpGet("workers")]
-    [ProduceResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult GetWorkerStatus()
     {
         var workers = _taskScheduler.GetStatus().Select(s => new

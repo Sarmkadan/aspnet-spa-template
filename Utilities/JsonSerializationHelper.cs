@@ -21,7 +21,7 @@ public static class JsonSerializationHelper
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = new List<JsonConverter>
+        Converters =
         {
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         }
@@ -33,7 +33,7 @@ public static class JsonSerializationHelper
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = new List<JsonConverter>
+        Converters =
         {
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         }

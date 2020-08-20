@@ -5,6 +5,7 @@
 // =============================================================================
 
 using AspNetSpaTemplate.Integration;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AspNetSpaTemplate.Controllers;
 
@@ -31,9 +32,9 @@ public sealed class WebhooksController : ControllerBase
     /// Validates HMAC signature and queues for processing.
     /// </summary>
     [HttpPost("payment")]
-    [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status200OK)]
-    [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status400BadRequest)]
-    [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandlePaymentWebhook([FromBody] WebhookRequest request)
     {
         if (request is null || string.IsNullOrEmpty(request.Payload))
@@ -72,8 +73,8 @@ public sealed class WebhooksController : ControllerBase
     /// Receives webhook from email service (delivery status, bounces, complaints).
     /// </summary>
     [HttpPost("email")]
-    [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status200OK)]
-    [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleEmailWebhook([FromBody] WebhookRequest request)
     {
         var success = await _webhookHandler.HandleWebhookAsync("email-service", request.Payload, request.Signature);
@@ -99,8 +100,8 @@ public sealed class WebhooksController : ControllerBase
     /// Receives webhook from shipping provider (shipment tracking updates).
     /// </summary>
     [HttpPost("shipping")]
-    [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status200OK)]
-    [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleShippingWebhook([FromBody] WebhookRequest request)
     {
         var success = await _webhookHandler.HandleWebhookAsync("shipping-provider", request.Payload, request.Signature);
@@ -127,9 +128,9 @@ public sealed class WebhooksController : ControllerBase
     /// Routes to appropriate handler based on provider.
     /// </summary>
     [HttpPost("{provider}")]
-    [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status200OK)]
-    [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status400BadRequest)]
-    [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleGenericWebhook(string provider, [FromBody] WebhookRequest request)
     {
         if (string.IsNullOrEmpty(provider))

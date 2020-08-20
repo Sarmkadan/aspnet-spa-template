@@ -1,4 +1,5 @@
 #nullable enable
+using System.Linq.Expressions;
 using AspNetSpaTemplate.Constants;
 using AspNetSpaTemplate.Data.Repositories;
 using AspNetSpaTemplate.DTOs;
@@ -70,8 +71,8 @@ public sealed class ProductServiceTests
             new Product { Id = 1, Name = "Product 1", IsAvailable = true },
             new Product { Id = 2, Name = "Product 2", IsAvailable = true }
         };
-        _mockProductRepository.Setup(r => r.CountAsync(It.IsAny<Func<Product, bool>>())).ReturnsAsync(2);
-        _mockProductRepository.Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<Func<Product, bool>>())).ReturnsAsync(products);
+        _mockProductRepository.Setup(r => r.CountAsync(It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(2);
+        _mockProductRepository.Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(products);
 
         // Act
         var result = await _productService.GetAllProductsAsync();
@@ -92,7 +93,7 @@ public sealed class ProductServiceTests
             new Product { Id = 1, Name = "Book 1", Category = category, IsAvailable = true }
         };
         _mockProductRepository.Setup(r => r.GetPagedByCategoryAsync(category, It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(products);
-        _mockProductRepository.Setup(r => r.CountAsync(It.IsAny<Func<Product, bool>>())).ReturnsAsync(1);
+        _mockProductRepository.Setup(r => r.CountAsync(It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(1);
 
         // Act
         var result = await _productService.GetProductsByCategoryAsync(category);
@@ -195,7 +196,7 @@ public sealed class ProductServiceTests
             Sku = "SKU-001"
         };
         _mockProductRepository.Setup(r => r.Add(It.IsAny<Product>()));
-        _mockProductRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockProductRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _productService.CreateProductAsync(request);
@@ -268,7 +269,7 @@ public sealed class ProductServiceTests
         };
         _mockProductRepository.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
         _mockProductRepository.Setup(r => r.Update(It.IsAny<Product>()));
-        _mockProductRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockProductRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _productService.UpdateProductAsync(productId, request);
@@ -286,7 +287,7 @@ public sealed class ProductServiceTests
         var product = new Product { Id = productId, IsAvailable = true };
         _mockProductRepository.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
         _mockProductRepository.Setup(r => r.Update(It.IsAny<Product>()));
-        _mockProductRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockProductRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _productService.SetProductAvailabilityAsync(productId, false);
@@ -303,7 +304,7 @@ public sealed class ProductServiceTests
         var product = new Product { Id = productId, Name = "To Delete" };
         _mockProductRepository.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
         _mockProductRepository.Setup(r => r.Remove(It.IsAny<Product>()));
-        _mockProductRepository.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _mockProductRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _productService.DeleteProductAsync(productId);
