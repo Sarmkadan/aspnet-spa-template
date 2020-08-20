@@ -6,6 +6,7 @@ using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
 using AspNetSpaTemplate.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -21,7 +22,7 @@ public sealed class OrderServiceTests
     {
         _mockOrderRepository = new Mock<OrderRepository>();
         _mockProductRepository = new Mock<ProductRepository>();
-        _orderService = new OrderService(_mockOrderRepository.Object, _mockProductRepository.Object);
+        _orderService = new OrderService(_mockOrderRepository.Object, _mockProductRepository.Object, NullLogger<OrderService>.Instance);
     }
 
     [Fact]
@@ -104,7 +105,7 @@ public sealed class OrderServiceTests
     {
         // Arrange
         var userId = 5;
-        var request = new CreateOrderRequest { Items = null };
+        var request = new CreateOrderRequest { Items = null! };
 
         // Act
         var act = () => _orderService.CreateOrderAsync(userId, request);

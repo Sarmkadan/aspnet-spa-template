@@ -13,11 +13,14 @@ namespace AspNetSpaTemplate.Data.Repositories;
 /// <summary>
 /// Repository for product entity operations.
 /// </summary>
-public sealed class ProductRepository : RepositoryBase<Product>
+public class ProductRepository : RepositoryBase<Product>
 {
     public ProductRepository(AppDbContext context) : base(context) { }
 
-    public async Task<IEnumerable<Product>> GetByCategoryAsync(ProductCategory category)
+    /// <summary>Parameterless constructor for test-time proxying.</summary>
+    protected ProductRepository() { }
+
+    public virtual async Task<IEnumerable<Product>> GetByCategoryAsync(ProductCategory category)
     {
         return await DbSet
             .Where(p => p.Category == category && p.IsAvailable)
@@ -25,7 +28,7 @@ public sealed class ProductRepository : RepositoryBase<Product>
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Product>> GetFeaturedProductsAsync(int limit = 10)
+    public virtual async Task<IEnumerable<Product>> GetFeaturedProductsAsync(int limit = 10)
     {
         return await DbSet
             .Where(p => p.IsFeatured && p.IsAvailable)
@@ -34,7 +37,7 @@ public sealed class ProductRepository : RepositoryBase<Product>
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Product>> GetTopRatedAsync(int limit = 10)
+    public virtual async Task<IEnumerable<Product>> GetTopRatedAsync(int limit = 10)
     {
         return await DbSet
             .Where(p => p.IsAvailable)
@@ -44,14 +47,14 @@ public sealed class ProductRepository : RepositoryBase<Product>
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Product>> GetInStockAsync()
+    public virtual async Task<IEnumerable<Product>> GetInStockAsync()
     {
         return await DbSet
             .Where(p => p.StockQuantity > 0 && p.IsAvailable)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Product>> GetLowStockAsync(int threshold = 10)
+    public virtual async Task<IEnumerable<Product>> GetLowStockAsync(int threshold = 10)
     {
         return await DbSet
             .Where(p => p.StockQuantity <= threshold && p.StockQuantity > 0)
@@ -59,7 +62,7 @@ public sealed class ProductRepository : RepositoryBase<Product>
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Product>> SearchAsync(string searchTerm)
+    public virtual async Task<IEnumerable<Product>> SearchAsync(string searchTerm)
     {
         var term = searchTerm.ToLower();
         return await DbSet
@@ -70,12 +73,12 @@ public sealed class ProductRepository : RepositoryBase<Product>
             .ToListAsync();
     }
 
-    public async Task<Product?> GetBySkuAsync(string sku)
+    public virtual async Task<Product?> GetBySkuAsync(string sku)
     {
         return await DbSet.FirstOrDefaultAsync(p => p.Sku == sku);
     }
 
-    public async Task<IEnumerable<Product>> GetPagedByCategoryAsync(ProductCategory category, int pageNumber, int pageSize)
+    public virtual async Task<IEnumerable<Product>> GetPagedByCategoryAsync(ProductCategory category, int pageNumber, int pageSize)
     {
         return await DbSet
             .Where(p => p.Category == category && p.IsAvailable)
@@ -85,14 +88,14 @@ public sealed class ProductRepository : RepositoryBase<Product>
             .ToListAsync();
     }
 
-    public async Task<decimal> GetAveragePriceAsync(ProductCategory category)
+    public virtual async Task<decimal> GetAveragePriceAsync(ProductCategory category)
     {
         return await DbSet
             .Where(p => p.Category == category && p.IsAvailable)
             .AverageAsync(p => p.Price);
     }
 
-    public async Task<int> GetAvailableProductCountAsync()
+    public virtual async Task<int> GetAvailableProductCountAsync()
     {
         return await DbSet.CountAsync(p => p.IsAvailable && p.StockQuantity > 0);
     }

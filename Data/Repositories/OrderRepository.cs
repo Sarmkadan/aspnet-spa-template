@@ -13,18 +13,21 @@ namespace AspNetSpaTemplate.Data.Repositories;
 /// <summary>
 /// Repository for order entity operations.
 /// </summary>
-public sealed class OrderRepository : RepositoryBase<Order>
+public class OrderRepository : RepositoryBase<Order>
 {
     public OrderRepository(AppDbContext context) : base(context) { }
 
-    public async Task<Order?> GetByOrderNumberAsync(string orderNumber)
+    /// <summary>Parameterless constructor for test-time proxying.</summary>
+    protected OrderRepository() { }
+
+    public virtual async Task<Order?> GetByOrderNumberAsync(string orderNumber)
     {
         return await DbSet
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
     }
 
-    public async Task<IEnumerable<Order>> GetByUserIdAsync(int userId)
+    public virtual async Task<IEnumerable<Order>> GetByUserIdAsync(int userId)
     {
         return await DbSet
             .Include(o => o.Items)
@@ -33,7 +36,7 @@ public sealed class OrderRepository : RepositoryBase<Order>
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Order>> GetByStatusAsync(OrderStatus status)
+    public virtual async Task<IEnumerable<Order>> GetByStatusAsync(OrderStatus status)
     {
         return await DbSet
             .Include(o => o.Items)
@@ -42,7 +45,7 @@ public sealed class OrderRepository : RepositoryBase<Order>
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Order>> GetUserOrdersAsync(int userId, int pageNumber, int pageSize)
+    public virtual async Task<IEnumerable<Order>> GetUserOrdersAsync(int userId, int pageNumber, int pageSize)
     {
         return await DbSet
             .Include(o => o.Items)
@@ -53,7 +56,7 @@ public sealed class OrderRepository : RepositoryBase<Order>
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Order>> GetRecentOrdersAsync(int days = 30)
+    public virtual async Task<IEnumerable<Order>> GetRecentOrdersAsync(int days = 30)
     {
         var cutoffDate = DateTime.UtcNow.AddDays(-days);
         return await DbSet
@@ -63,7 +66,7 @@ public sealed class OrderRepository : RepositoryBase<Order>
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Order>> GetPendingOrdersAsync()
+    public virtual async Task<IEnumerable<Order>> GetPendingOrdersAsync()
     {
         return await DbSet
             .Include(o => o.Items)
@@ -72,14 +75,14 @@ public sealed class OrderRepository : RepositoryBase<Order>
             .ToListAsync();
     }
 
-    public async Task<decimal> GetTotalRevenueAsync()
+    public virtual async Task<decimal> GetTotalRevenueAsync()
     {
         return await DbSet
             .Where(o => o.Status != OrderStatus.Cancelled && o.Status != OrderStatus.Refunded)
             .SumAsync(o => o.Total);
     }
 
-    public async Task<decimal> GetTotalRevenueAsync(int days)
+    public virtual async Task<decimal> GetTotalRevenueAsync(int days)
     {
         var cutoffDate = DateTime.UtcNow.AddDays(-days);
         return await DbSet
@@ -89,12 +92,12 @@ public sealed class OrderRepository : RepositoryBase<Order>
             .SumAsync(o => o.Total);
     }
 
-    public async Task<int> GetOrderCountAsync(int userId)
+    public virtual async Task<int> GetOrderCountAsync(int userId)
     {
         return await DbSet.CountAsync(o => o.UserId == userId);
     }
 
-    public async Task<decimal> GetAverageOrderValueAsync()
+    public virtual async Task<decimal> GetAverageOrderValueAsync()
     {
         return await DbSet
             .Where(o => o.Status != OrderStatus.Cancelled && o.Status != OrderStatus.Refunded)

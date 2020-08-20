@@ -12,26 +12,29 @@ namespace AspNetSpaTemplate.Data.Repositories;
 /// <summary>
 /// Repository for user entity operations.
 /// </summary>
-public sealed class UserRepository : RepositoryBase<User>
+public class UserRepository : RepositoryBase<User>
 {
     public UserRepository(AppDbContext context) : base(context) { }
 
-    public async Task<User?> GetByEmailAsync(string email)
+    /// <summary>Parameterless constructor for test-time proxying.</summary>
+    protected UserRepository() { }
+
+    public virtual async Task<User?> GetByEmailAsync(string email)
     {
         return await DbSet.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
     }
 
-    public async Task<IEnumerable<User>> GetActiveUsersAsync()
+    public virtual async Task<IEnumerable<User>> GetActiveUsersAsync()
     {
         return await DbSet.Where(u => u.IsActive).ToListAsync();
     }
 
-    public async Task<IEnumerable<User>> GetVerifiedUsersAsync()
+    public virtual async Task<IEnumerable<User>> GetVerifiedUsersAsync()
     {
         return await DbSet.Where(u => u.IsEmailVerified && u.IsActive).ToListAsync();
     }
 
-    public async Task<IEnumerable<User>> GetRecentlyActiveAsync(int days = 30)
+    public virtual async Task<IEnumerable<User>> GetRecentlyActiveAsync(int days = 30)
     {
         var cutoffDate = DateTime.UtcNow.AddDays(-days);
         return await DbSet
@@ -40,24 +43,24 @@ public sealed class UserRepository : RepositoryBase<User>
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<User>> GetUsersByCountryAsync(string country)
+    public virtual async Task<IEnumerable<User>> GetUsersByCountryAsync(string country)
     {
         return await DbSet
             .Where(u => u.Country == country && u.IsActive)
             .ToListAsync();
     }
 
-    public async Task<int> GetUserCountAsync()
+    public virtual async Task<int> GetUserCountAsync()
     {
         return await DbSet.CountAsync();
     }
 
-    public async Task<int> GetActiveUserCountAsync()
+    public virtual async Task<int> GetActiveUserCountAsync()
     {
         return await DbSet.CountAsync(u => u.IsActive);
     }
 
-    public async Task<bool> EmailExistsAsync(string email)
+    public virtual async Task<bool> EmailExistsAsync(string email)
     {
         return await DbSet.AnyAsync(u => u.Email.ToLower() == email.ToLower());
     }

@@ -7,6 +7,7 @@ using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
 using AspNetSpaTemplate.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -35,8 +36,8 @@ public sealed class OrderServiceIntegrationTests : IAsyncLifetime
 
         _orderRepository = new OrderRepository(_dbContext);
         _productRepository = new ProductRepository(_dbContext);
-        _orderService = new OrderService(_orderRepository, _productRepository);
-        _productService = new ProductService(_productRepository);
+        _orderService = new OrderService(_orderRepository, _productRepository, NullLogger<OrderService>.Instance);
+        _productService = new ProductService(_productRepository, NullLogger<ProductService>.Instance);
     }
 
     public async Task DisposeAsync()

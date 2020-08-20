@@ -2,18 +2,20 @@
 using AspNetSpaTemplate.Services;
 using AspNetSpaTemplate.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using AspNetSpaTemplate.Data;
 
-// Note: This example assumes you have an instance of AppDbContext 
-// and ProductRepository set up, or are running within the ASP.NET Core context.
+// Note: This example assumes you have an instance of AppDbContext,
+// ProductRepository, and an ILogger set up (typically via dependency
+// injection when running within the ASP.NET Core context).
 
 public class BasicUsage
 {
     private readonly ProductService _productService;
 
-    public BasicUsage(ProductRepository productRepository)
+    public BasicUsage(ProductRepository productRepository, ILogger<ProductService> logger)
     {
-        _productService = new ProductService(productRepository);
+        _productService = new ProductService(productRepository, logger);
     }
 
     public async Task RunExampleAsync()

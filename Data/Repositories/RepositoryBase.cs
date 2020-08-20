@@ -20,8 +20,20 @@ public abstract class RepositoryBase<T> : IRepository<T> where T : class
 
     protected RepositoryBase(AppDbContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
         Context = context;
         DbSet = context.Set<T>();
+    }
+
+    /// <summary>
+    /// Parameterless constructor that supports dynamic proxy generation in unit tests.
+    /// Leaves the context uninitialized; only proxied (overridden) members may be used.
+    /// </summary>
+    protected RepositoryBase()
+    {
+        Context = null!;
+        DbSet = null!;
     }
 
     public virtual async Task<T?> GetByIdAsync(int id)

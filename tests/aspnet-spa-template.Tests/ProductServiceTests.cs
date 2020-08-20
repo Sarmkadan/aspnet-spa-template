@@ -7,6 +7,7 @@ using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
 using AspNetSpaTemplate.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -20,7 +21,7 @@ public sealed class ProductServiceTests
     public ProductServiceTests()
     {
         _mockProductRepository = new Mock<ProductRepository>();
-        _productService = new ProductService(_mockProductRepository.Object);
+        _productService = new ProductService(_mockProductRepository.Object, NullLogger<ProductService>.Instance);
     }
 
     [Fact]

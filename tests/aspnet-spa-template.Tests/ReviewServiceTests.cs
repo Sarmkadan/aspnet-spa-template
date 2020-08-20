@@ -5,6 +5,7 @@ using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
 using AspNetSpaTemplate.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -20,7 +21,7 @@ public sealed class ReviewServiceTests
     {
         _mockReviewRepository = new Mock<IRepository<Review>>();
         _mockProductRepository = new Mock<ProductRepository>();
-        _reviewService = new ReviewService(_mockReviewRepository.Object, _mockProductRepository.Object);
+        _reviewService = new ReviewService(_mockReviewRepository.Object, _mockProductRepository.Object, NullLogger<ReviewService>.Instance);
     }
 
     [Fact]

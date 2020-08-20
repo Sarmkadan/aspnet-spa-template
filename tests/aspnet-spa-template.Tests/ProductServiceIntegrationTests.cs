@@ -7,6 +7,7 @@ using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
 using AspNetSpaTemplate.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -31,7 +32,7 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
         _dbContext = new AppDbContext(_dbOptions);
         await _dbContext.Database.EnsureCreatedAsync();
         _productRepository = new ProductRepository(_dbContext);
-        _productService = new ProductService(_productRepository);
+        _productService = new ProductService(_productRepository, NullLogger<ProductService>.Instance);
     }
 
     public async Task DisposeAsync()
@@ -246,7 +247,7 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
         {
             Name = "Expensive Item",
             Description = "Too expensive",
-            Price = 999999m,
+            Price = 1000000m, // exceeds AppConstants.Product.MaxPrice (999999.99)
             StockQuantity = 10,
             Category = ProductCategory.Electronics,
             ImageUrl = "",

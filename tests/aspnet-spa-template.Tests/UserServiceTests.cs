@@ -5,6 +5,7 @@ using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
 using AspNetSpaTemplate.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -18,7 +19,7 @@ public sealed class UserServiceTests
     public UserServiceTests()
     {
         _mockUserRepository = new Mock<UserRepository>();
-        _userService = new UserService(_mockUserRepository.Object);
+        _userService = new UserService(_mockUserRepository.Object, NullLogger<UserService>.Instance);
     }
 
     [Fact]

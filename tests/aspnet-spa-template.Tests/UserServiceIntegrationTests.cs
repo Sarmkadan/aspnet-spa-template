@@ -6,6 +6,7 @@ using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
 using AspNetSpaTemplate.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -30,7 +31,7 @@ public sealed class UserServiceIntegrationTests : IAsyncLifetime
         _dbContext = new AppDbContext(_dbOptions);
         await _dbContext.Database.EnsureCreatedAsync();
         _userRepository = new UserRepository(_dbContext);
-        _userService = new UserService(_userRepository);
+        _userService = new UserService(_userRepository, NullLogger<UserService>.Instance);
     }
 
     public async Task DisposeAsync()

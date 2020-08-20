@@ -4,6 +4,7 @@ using AspNetSpaTemplate.Models;
 using AspNetSpaTemplate.Services;
 using BenchmarkDotNet.Attributes;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AspNetSpaTemplate.Benchmarks;
 
@@ -22,7 +23,7 @@ public class ProductServiceBenchmarks
 
         _context = new AppDbContext(options);
         var repo = new ProductRepository(_context);
-        _productService = new ProductService(repo);
+        _productService = new ProductService(repo, NullLogger<ProductService>.Instance);
 
         // Seed data
         for (int i = 1; i <= 1000; i++)
