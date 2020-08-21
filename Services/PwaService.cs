@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AspNetSpaTemplate.Services;
 
-public class PwaService : IPwaService
+public sealed class PwaService : IPwaService
 {
     public Task<PwaStatusResponse> GetStatusAsync(int userId, CancellationToken ct = default)
     {

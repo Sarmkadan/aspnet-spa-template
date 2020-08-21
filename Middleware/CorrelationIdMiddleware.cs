@@ -13,7 +13,7 @@ namespace AspNetSpaTemplate.Middleware;
 /// Enables request tracing across multiple services and log aggregation.
 /// Each request gets a unique ID that flows through the entire request pipeline.
 /// </summary>
-public class CorrelationIdMiddleware
+public sealed class CorrelationIdMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<CorrelationIdMiddleware> _logger;
@@ -107,7 +107,7 @@ public static class CorrelationIdExtensions
 /// Structured logging context that includes correlation ID automatically.
 /// Simplifies logging by including context without repetition.
 /// </summary>
-public class CorrelationContext
+public sealed class CorrelationContext
 {
     public string CorrelationId { get; set; } = string.Empty;
     public string ClientIp { get; set; } = string.Empty;
