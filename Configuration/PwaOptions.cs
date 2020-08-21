@@ -9,7 +9,7 @@ namespace AspNetSpaTemplate.Configuration;
 /// <summary>
 /// Configuration root for the Progressive Web App subsystem.
 /// Bind this class against the <c>Pwa</c> section of <c>appsettings.json</c>
-/// via <see cref="PwaExtensions.AddPwaSupport"/>.
+/// via <see cref="OfflineSupportExtensions.AddOfflineSupport"/>.
 /// </summary>
 public sealed class PwaOptions
 {

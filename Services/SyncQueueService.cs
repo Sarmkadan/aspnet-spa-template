@@ -10,7 +10,7 @@ namespace AspNetSpaTemplate.Services;
 
 /// <summary>
 /// Thread-safe in-process implementation of <see cref="ISyncQueueService"/>.
-/// Entries are stored in a <see cref="ConcurrentDictionary"/> and are evicted
+/// Entries are stored in a <see cref="System.Collections.Concurrent.ConcurrentDictionary{TKey,TValue}"/> and are evicted
 /// automatically after a configurable retention window (default 72 hours) to
 /// prevent unbounded memory growth.
 /// </summary>

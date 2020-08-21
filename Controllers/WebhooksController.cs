@@ -12,7 +12,7 @@ namespace AspNetSpaTemplate.Controllers;
 /// <summary>
 /// API controller for receiving webhooks from external services.
 /// Validates signatures, queues processing, and returns immediate response.
-/// Should respond quickly (< 5 seconds) to avoid timeout.
+/// Should respond quickly (under 5 seconds) to avoid timeout.
 /// </summary>
 [ApiController]
 [Route("api/webhooks")]
