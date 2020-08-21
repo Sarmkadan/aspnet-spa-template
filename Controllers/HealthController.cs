@@ -15,8 +15,8 @@ namespace AspNetSpaTemplate.Controllers;
 /// Reports application health, cache status, and background worker status.
 /// Should respond quickly for use in Kubernetes/Docker health checks.
 /// </summary>
-[ApiController]
 [Route("api/[controller]")]
+[ApiController]
 public sealed class HealthController : ControllerBase
 {
     private readonly ICacheHealthMonitor _cacheHealthMonitor;
