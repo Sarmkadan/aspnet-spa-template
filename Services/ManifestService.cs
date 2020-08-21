@@ -22,6 +22,11 @@ public sealed class ManifestService : IManifestService
     private const string DefaultThemeColor = "#2563eb";
     private const string DefaultBackgroundColor = "#f8fafc";
 
+    private const string Icon192File = "icon-192.png";
+    private const string Icon512File = "icon-512.png";
+
+    private static readonly string[] DefaultCategories = new[] { "productivity", "utilities" };
+
     /// <inheritdoc/>
     public string ThemeColor => _config["Manifest:ThemeColor"] ?? DefaultThemeColor;
 
@@ -53,7 +58,7 @@ public sealed class ManifestService : IManifestService
             BackgroundColor = BackgroundColor,
             ThemeColor = ThemeColor,
             Lang = "en",
-            Categories = ["productivity", "utilities"],
+            Categories = DefaultCategories,
             PreferRelatedApplications = false,
             Icons = BuildIcons(baseUrl),
             Shortcuts = BuildShortcuts(baseUrl)
@@ -65,24 +70,21 @@ public sealed class ManifestService : IManifestService
 
     private static string BuildBaseUrl(string scheme, string? host)
     {
-        if (string.IsNullOrWhiteSpace(host))
-            return string.Empty;
-
-        return $"{scheme}://{host}";
+        return string.IsNullOrWhiteSpace(host) ? string.Empty : $"{scheme}://{host}";
     }
 
     private static IReadOnlyList<ManifestIcon> BuildIcons(string baseUrl) =>
     [
         new ManifestIcon
         {
-            Src = $"{baseUrl}/icons/icon-192.png",
+            Src = $"{baseUrl}/icons/{Icon192File}",
             Sizes = "192x192",
             Type = "image/png",
             Purpose = "any maskable"
         },
         new ManifestIcon
         {
-            Src = $"{baseUrl}/icons/icon-512.png",
+            Src = $"{baseUrl}/icons/{Icon512File}",
             Sizes = "512x512",
             Type = "image/png",
             Purpose = "any maskable"
@@ -99,7 +101,7 @@ public sealed class ManifestService : IManifestService
             Url = "/?page=products",
             Icons =
             [
-                new ManifestIcon { Src = $"{baseUrl}/icons/icon-192.png", Sizes = "192x192" }
+                new ManifestIcon { Src = $"{baseUrl}/icons/{Icon192File}", Sizes = "192x192" }
             ]
         },
         new ManifestShortcut
@@ -110,7 +112,7 @@ public sealed class ManifestService : IManifestService
             Url = "/?page=cart",
             Icons =
             [
-                new ManifestIcon { Src = $"{baseUrl}/icons/icon-192.png", Sizes = "192x192" }
+                new ManifestIcon { Src = $"{baseUrl}/icons/{Icon192File}", Sizes = "192x192" }
             ]
         }
     ];

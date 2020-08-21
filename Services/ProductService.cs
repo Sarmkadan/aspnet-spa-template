@@ -63,8 +63,7 @@ public sealed class ProductService
     {
         _logger.LogDebug("Getting all available products: page={PageNumber}, pageSize={PageSize}", pageNumber, pageSize);
 
-        pageSize = Math.Min(pageSize, AppConstants.Pagination.MaxPageSize);
-        pageSize = Math.Max(pageSize, AppConstants.Pagination.MinPageSize);
+        pageSize = Math.Clamp(pageSize, AppConstants.Pagination.MinPageSize, AppConstants.Pagination.MaxPageSize);
 
         var totalCount = await _productRepository.CountAsync(p => p.IsAvailable);
         var products = await _productRepository.GetPagedAsync(pageNumber, pageSize, p => p.IsAvailable);
@@ -155,32 +154,9 @@ public sealed class ProductService
 
         ValidateProductRequest(request);
 
-        var product = new Product
-        {
-            Name = request.Name,
-            Description = request.Description,
-            Price = request.Price,
-            StockQuantity = request.StockQuantity,
-            Category = request.Category,
-            ImageUrl = request.ImageUrl,
-            Sku = request.Sku,
-            IsAvailable = true,
-            CreatedAt = DateTime.UtcNow
-        };
+        var product = BuildProductEntity(request);
 
-        try
-        {
-            _productRepository.Add(product);
-            await _productRepository.SaveChangesAsync();
-
-            _logger.LogInformation("Product created successfully: {ProductId} - {ProductName}", product.Id, product.Name);
-            return MapToResponse(product);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            _logger.LogError(ex, "Failed to create product: {ProductName}", request.Name);
-            throw new BusinessException("Failed to create product due to database error", "PRODUCT_CREATION_FAILED", 500).WithData(ex);
-        }
+        return await SaveProductAsync(product, request.Name);
     }
 
     /// <summary>
@@ -209,9 +185,7 @@ public sealed class ProductService
 
         try
         {
-            product.UpdateDetails(request.Name, request.Description, request.Price, request.Category, request.ImageUrl);
-            product.SetAvailability(request.IsAvailable);
-
+            UpdateProductEntity(product, request);
             _productRepository.Update(product);
             await _productRepository.SaveChangesAsync();
 
@@ -350,5 +324,42 @@ public sealed class ProductService
             IsFeatured = product.IsFeatured,
             CreatedAt = product.CreatedAt
         };
+    }
+
+    private Product BuildProductEntity(CreateProductRequest request) =>
+        new Product
+        {
+            Name = request.Name,
+            Description = request.Description,
+            Price = request.Price,
+            StockQuantity = request.StockQuantity,
+            Category = request.Category,
+            ImageUrl = request.ImageUrl,
+            Sku = request.Sku,
+            IsAvailable = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+    private async Task<ProductResponse> SaveProductAsync(Product product, string productName)
+    {
+        try
+        {
+            _productRepository.Add(product);
+            await _productRepository.SaveChangesAsync();
+
+            _logger.LogInformation("Product created successfully: {ProductId} - {ProductName}", product.Id, productName);
+            return MapToResponse(product);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Failed to create product: {ProductName}", productName);
+            throw new BusinessException("Failed to create product due to database error", "PRODUCT_CREATION_FAILED", 500).WithData(ex);
+        }
+    }
+
+    private void UpdateProductEntity(Product product, UpdateProductRequest request)
+    {
+        product.UpdateDetails(request.Name, request.Description, request.Price, request.Category, request.ImageUrl);
+        product.SetAvailability(request.IsAvailable);
     }
 }
