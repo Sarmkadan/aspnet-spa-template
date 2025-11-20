@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AspNet SPA Template - E-Commerce Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container navbar-content">
+            <div class="logo">
+                <h1>AspNet SPA</h1>
+            </div>
+            <nav class="nav-links">
+                <a href="#" onclick="navigateTo('home')">Home</a>
+                <a href="#" onclick="navigateTo('products')">Products</a>
+                <a href="#" onclick="navigateTo('cart')">Cart</a>
+                <div class="auth-buttons">
+                    <a href="#" onclick="navigateTo('login')" id="loginLink">Login</a>
+                    <a href="#" onclick="navigateTo('register')" id="registerLink">Register</a>
+                    <a href="#" onclick="logout()" id="logoutLink" style="display:none;">Logout</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Home Page -->
+        <section id="home" class="page active">
+            <div class="hero">
+                <h2>Welcome to AspNet SPA Template</h2>
+                <p>A clean, vanilla JavaScript SPA with ASP.NET backend</p>
+                <button class="btn btn-primary" onclick="navigateTo('products')">Shop Now</button>
+            </div>
+
+            <section class="featured-products">
+                <h3>Featured Products</h3>
+                <div id="featuredList" class="product-grid">
+                    <!-- Featured products will be loaded here -->
+                </div>
+            </section>
+        </section>
+
+        <!-- Products Page -->
+        <section id="products" class="page">
+            <div class="filter-section">
+                <h3>Filter & Search</h3>
+                <input type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()">
+                <select id="categoryFilter" onchange="filterByCategory()">
+                    <option value="">All Categories</option>
+                    <option value="0">Electronics</option>
+                    <option value="1">Clothing</option>
+                    <option value="2">Home & Garden</option>
+                    <option value="3">Sports & Outdoors</option>
+                    <option value="4">Books</option>
+                    <option value="5">Food & Beverages</option>
+                    <option value="6">Beauty & Personal Care</option>
+                    <option value="7">Toys & Games</option>
+                </select>
+            </div>
+
+            <div id="productsList" class="product-grid">
+                <!-- Products will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Product Detail Page -->
+        <section id="productDetail" class="page">
+            <button class="btn btn-secondary" onclick="navigateTo('products')">← Back to Products</button>
+            <div id="productDetailContent" class="product-detail">
+                <!-- Product details will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Cart Page -->
+        <section id="cart" class="page">
+            <h2>Shopping Cart</h2>
+            <div id="cartContent">
+                <!-- Cart items will be displayed here -->
+            </div>
+        </section>
+
+        <!-- Login Page -->
+        <section id="login" class="page">
+            <div class="form-container">
+                <h2>Login</h2>
+                <form onsubmit="handleLogin(event)">
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+                <p>Don't have an account? <a href="#" onclick="navigateTo('register')">Register here</a></p>
+            </div>
+        </section>
+
+        <!-- Register Page -->
+        <section id="register" class="page">
+            <div class="form-container">
+                <h2>Create Account</h2>
+                <form onsubmit="handleRegister(event)">
+                    <input type="text" id="firstName" placeholder="First Name" required>
+                    <input type="text" id="lastName" placeholder="Last Name" required>
+                    <input type="email" id="registerEmail" placeholder="Email" required>
+                    <input type="password" id="registerPassword" placeholder="Password (min 8 characters)" required>
+                    <input type="text" id="phone" placeholder="Phone (optional)">
+                    <input type="text" id="address" placeholder="Address (optional)">
+                    <input type="text" id="city" placeholder="City (optional)">
+                    <input type="text" id="postalCode" placeholder="Postal Code (optional)">
+                    <input type="text" id="country" placeholder="Country (optional)">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </form>
+                <p>Already have an account? <a href="#" onclick="navigateTo('login')">Login here</a></p>
+            </div>
+        </section>
+
+        <!-- Profile Page -->
+        <section id="profile" class="page">
+            <h2>My Profile</h2>
+            <div id="profileContent">
+                <!-- Profile info will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 AspNet SPA Template. All rights reserved.</p>
+            <p>Made by <a href="https://sarmkadan.com" target="_blank">Vladyslav Zaiets</a></p>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
