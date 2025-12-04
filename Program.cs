@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using AspNetSpaTemplate.Configuration;
 using AspNetSpaTemplate.Data;
 using AspNetSpaTemplate.Data.Repositories;
 using AspNetSpaTemplate.Middleware;
@@ -29,6 +30,9 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<ReviewService>();
+
+// Offline support — asset versioning + HMR
+builder.Services.AddOfflineSupport();
 
 // API services
 builder.Services.AddControllers();
@@ -61,6 +65,7 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+app.UseOfflineSupport();
 app.UseStaticFiles();
 
 app.UseMiddleware<LoggingMiddleware>();

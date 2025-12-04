@@ -445,9 +445,65 @@ function showNotification(message, type) {
     setTimeout(() => notification.remove(), 5000);
 }
 
+// ── Service Worker & Offline Support ──────────────────────────────────────────
+
+const SW = {
+    registration: null,
+
+    async register() {
+        if (!('serviceWorker' in navigator)) return;
+        try {
+            this.registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+            this.registration.addEventListener('updatefound', () => {
+                const worker = this.registration.installing;
+                worker.addEventListener('statechange', () => {
+                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                        showSuccess('App updated — refresh for the latest version.');
+                    }
+                });
+            });
+        } catch (err) {
+            console.warn('[SW] Registration failed:', err);
+        }
+    },
+
+    evict(path) {
+        navigator.serviceWorker?.controller?.postMessage({ type: 'ASSET_UPDATED', path });
+    }
+};
+
+function initOfflineBanner() {
+    const banner = document.getElementById('offlineBanner');
+    if (!banner) return;
+    const sync = () => { banner.style.display = navigator.onLine ? 'none' : 'block'; };
+    window.addEventListener('online', sync);
+    window.addEventListener('offline', sync);
+    sync();
+}
+
+function initHmr() {
+    const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+    if (!isLocal) return;
+
+    const es = new EventSource('/__hmr');
+
+    es.addEventListener('asset-changed', (e) => {
+        const { path } = JSON.parse(e.data);
+        SW.evict(path);
+        if (/\.(html|js|css)$/.test(path)) {
+            window.location.reload();
+        }
+    });
+
+    es.onerror = () => es.close();
+}
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     AppState.init();
     updateAuthUI();
     navigateTo('home');
+    SW.register();
+    initOfflineBanner();
+    initHmr();
 });
