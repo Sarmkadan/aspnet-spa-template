@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -59,7 +60,7 @@ public static class CsvFormatter
     /// </summary>
     private static string EscapeCsvValue(object? value)
     {
-        if (value == null)
+        if (value is null)
             return string.Empty;
 
         var strValue = value.ToString() ?? string.Empty;

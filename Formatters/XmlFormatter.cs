@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -20,7 +21,7 @@ public static class XmlFormatter
     /// </summary>
     public static string ToXml<T>(T obj) where T : class
     {
-        if (obj == null)
+        if (obj is null)
             throw new ArgumentNullException(nameof(obj));
 
         var serializer = new XmlSerializer(typeof(T));
@@ -143,7 +144,7 @@ public static class XmlFormatter
         var doc = new XmlDocument();
         var element = doc.CreateElement(name);
 
-        if (attributes != null)
+        if (attributes is not null)
         {
             foreach (var attr in attributes)
             {

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace AspNetSpaTemplate.Data;
 /// <summary>
 /// Entity Framework Core database context for the application.
 /// </summary>
-public class AppDbContext : DbContext
+public sealed class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {

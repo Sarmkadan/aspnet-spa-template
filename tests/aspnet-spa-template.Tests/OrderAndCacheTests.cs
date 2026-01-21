@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
 
-public class OrderAndCacheTests
+public sealed class OrderAndCacheTests
 {
     [Fact]
     public void MarkAsProcessing_WhenStatusIsPending_ChangesStatusToProcessing()

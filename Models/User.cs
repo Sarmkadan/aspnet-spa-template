@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace AspNetSpaTemplate.Models;
 /// <summary>
 /// Represents a user in the system.
 /// </summary>
-public class User
+public sealed class User
 {
     public int Id { get; set; }
     public string FirstName { get; set; } = string.Empty;

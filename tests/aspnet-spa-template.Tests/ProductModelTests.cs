@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -9,7 +10,7 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
 
-public class ProductModelTests
+public sealed class ProductModelTests
 {
     [Fact]
     public void IsInStock_WhenAvailableAndHasStock_ReturnsTrue()

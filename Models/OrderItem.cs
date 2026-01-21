@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace AspNetSpaTemplate.Models;
 /// <summary>
 /// Represents a line item in an order.
 /// </summary>
-public class OrderItem
+public sealed class OrderItem
 {
     public int Id { get; set; }
     public int OrderId { get; set; }

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace AspNetSpaTemplate.Models;
 /// push notifications via the Web Push Protocol (RFC 8030).
 /// One user may hold multiple subscriptions — one per browser/device.
 /// </summary>
-public class PushSubscription
+public sealed class PushSubscription
 {
     /// <summary>Gets or sets the primary key.</summary>
     public int Id { get; set; }
@@ -98,7 +99,7 @@ public class PushSubscription
 /// had no network connectivity. Entries are replayed against the server API when
 /// connectivity is restored and a Background Sync event fires (WICG Background Sync spec).
 /// </summary>
-public class SyncQueueEntry
+public sealed class SyncQueueEntry
 {
     /// <summary>Gets or sets the primary key.</summary>
     public int Id { get; set; }

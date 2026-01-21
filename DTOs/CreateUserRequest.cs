@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace AspNetSpaTemplate.DTOs;
 /// <summary>
 /// Data transfer object for creating a new user.
 /// </summary>
-public class CreateUserRequest
+public sealed class CreateUserRequest
 {
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
@@ -24,7 +25,7 @@ public class CreateUserRequest
 /// <summary>
 /// Data transfer object for updating user profile.
 /// </summary>
-public class UpdateUserRequest
+public sealed class UpdateUserRequest
 {
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
@@ -38,7 +39,7 @@ public class UpdateUserRequest
 /// <summary>
 /// Data transfer object for user response.
 /// </summary>
-public class UserResponse
+public sealed class UserResponse
 {
     public int Id { get; set; }
     public string FirstName { get; set; } = string.Empty;
@@ -58,7 +59,7 @@ public class UserResponse
 /// <summary>
 /// Data transfer object for login request.
 /// </summary>
-public class LoginRequest
+public sealed class LoginRequest
 {
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
@@ -67,7 +68,7 @@ public class LoginRequest
 /// <summary>
 /// Data transfer object for login response with token.
 /// </summary>
-public class LoginResponse
+public sealed class LoginResponse
 {
     public int UserId { get; set; }
     public string Email { get; set; } = string.Empty;

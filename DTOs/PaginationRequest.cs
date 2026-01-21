@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -9,7 +10,7 @@ namespace AspNetSpaTemplate.DTOs;
 /// Standard request DTO for paginated API endpoints.
 /// Encapsulates pagination parameters with validation.
 /// </summary>
-public class PaginationRequest
+public sealed class PaginationRequest
 {
     private int _pageNumber = 1;
     private int _pageSize = 10;
@@ -55,7 +56,7 @@ public class PaginationRequest
 /// Standard response DTO for paginated data.
 /// Encapsulates data with pagination metadata.
 /// </summary>
-public class PaginationResponse<T>
+public sealed class PaginationResponse<T>
 {
     public List<T> Items { get; set; } = new();
     public int PageNumber { get; set; }
@@ -81,7 +82,7 @@ public class PaginationResponse<T>
 /// <summary>
 /// Filter criteria for advanced searching.
 /// </summary>
-public class FilterCriteria
+public sealed class FilterCriteria
 {
     public string Field { get; set; } = "";
     public string Operator { get; set; } = "="; // =, !=, >, <, >=, <=, contains, startswith, endswith
@@ -97,7 +98,7 @@ public class FilterCriteria
 /// <summary>
 /// Sort criteria for ordering results.
 /// </summary>
-public class SortCriteria
+public sealed class SortCriteria
 {
     public string Field { get; set; } = "";
     public SortDirection Direction { get; set; } = SortDirection.Ascending;

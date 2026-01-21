@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -14,7 +15,7 @@ namespace AspNetSpaTemplate.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/webhooks")]
-public class WebhooksController : ControllerBase
+public sealed class WebhooksController : ControllerBase
 {
     private readonly WebhookHandler _webhookHandler;
     private readonly ILogger<WebhooksController> _logger;
@@ -35,7 +36,7 @@ public class WebhooksController : ControllerBase
     [ProduceResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandlePaymentWebhook([FromBody] WebhookRequest request)
     {
-        if (request == null || string.IsNullOrEmpty(request.Payload))
+        if (request is null || string.IsNullOrEmpty(request.Payload))
         {
             _logger.LogWarning("Invalid webhook request: empty payload");
             return BadRequest(new WebhookResponse
@@ -141,7 +142,7 @@ public class WebhooksController : ControllerBase
             });
         }
 
-        if (request == null || string.IsNullOrEmpty(request.Payload))
+        if (request is null || string.IsNullOrEmpty(request.Payload))
         {
             return BadRequest(new WebhookResponse
             {
