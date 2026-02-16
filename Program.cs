@@ -64,6 +64,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Support hosting behind a reverse proxy at a sub-path prefix.
+// Set "PathBase": "/myapp" in appsettings.json (or via the PATHBASE env var)
+// and configure the proxy to forward X-Forwarded-* headers.
+// See docs/deployment.md for a full nginx/Caddy example.
+var pathBase = builder.Configuration["PathBase"];
+if (!string.IsNullOrWhiteSpace(pathBase))
+{
+    app.UsePathBase(pathBase);
+}
+
 // Middleware pipeline
 // UseRouting must precede UseCors so endpoint metadata is available when
 // the CORS middleware evaluates policies. UseCors must also run before

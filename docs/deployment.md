@@ -15,6 +15,7 @@ This guide covers deploying the aspnet-spa-template to production environments.
 - [AWS Deployment](#aws-deployment)
 - [IIS Deployment](#iis-deployment)
 - [Linux/VM Deployment](#linuxvm-deployment)
+- [Hosting Behind a Reverse Proxy at a Sub-Path](#hosting-behind-a-reverse-proxy-at-a-sub-path)
 - [Post-Deployment Verification](#post-deployment-verification)
 - [Monitoring and Maintenance](#monitoring-and-maintenance)
 
@@ -382,7 +383,69 @@ sudo systemctl enable nginx
 sudo systemctl start nginx
 ```
 
-## Post-Deployment Verification
+## Hosting Behind a Reverse Proxy at a Sub-Path
+
+When the app is served at a path prefix (e.g. `https://example.com/myapp/`), you need two coordinated changes so that routing and all API calls resolve correctly.
+
+### 1. Configure PathBase in appsettings.json
+
+```json
+{
+  "PathBase": "/myapp"
+}
+```
+
+Or pass it as an environment variable:
+
+```bash
+PathBase=/myapp dotnet run
+```
+
+`Program.cs` reads this value and calls `app.UsePathBase(pathBase)` automatically, so ASP.NET Core strips the prefix before matching routes and re-adds it to any generated URLs.
+
+### 2. Configure the Reverse Proxy to Forward Headers
+
+The proxy **must** forward `X-Forwarded-*` headers so the app can reconstruct absolute URLs correctly.
+
+**Nginx** (sub-path example):
+
+```nginx
+server {
+    listen 80;
+    server_name example.com;
+
+    location /myapp/ {
+        proxy_pass         http://127.0.0.1:5000/;   # trailing slash strips prefix
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade          $http_upgrade;
+        proxy_set_header   Connection       keep-alive;
+        proxy_set_header   Host             $host;
+        proxy_set_header   X-Real-IP        $remote_addr;
+        proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Prefix /myapp;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+### 3. Update the Frontend API Base Meta Tag
+
+In `wwwroot/index.html` (or your Razor layout), set the `api-base` meta tag to the full prefixed path:
+
+```html
+<meta name="api-base" content="/myapp/api/v1">
+```
+
+The vanilla JS in `app.js` reads this meta tag at startup, so all `fetch` calls use the correct base URL automatically. No other frontend changes are needed.
+
+### Checklist
+
+- [ ] `"PathBase": "/myapp"` set in `appsettings.json` or environment
+- [ ] Nginx/Caddy forwarding `X-Forwarded-*` headers
+- [ ] `<meta name="api-base" content="/myapp/api/v1">` in index.html
+
+
 
 ### Health Checks
 
