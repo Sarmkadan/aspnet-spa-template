@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <!-- Exclude the test project subtree from the SDK's default **/*.cs glob. -->
+    <Compile Remove="tests/**" />
   </ItemGroup>
 
   <ItemGroup>

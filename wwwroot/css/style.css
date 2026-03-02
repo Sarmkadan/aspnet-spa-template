@@ -511,6 +511,55 @@ button {
     }
 }
 
+/* ── Dark Mode ───────────────────────────────────────────────────────────────
+   Applied by setting data-theme="dark" on <html>.
+   Every component colour is driven by CSS custom properties so no component
+   needs its own dark-mode override rule.
+   ─────────────────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+    --background: #0f172a;
+    --text-color: #e2e8f0;
+    --border-color: #334155;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .navbar,
+[data-theme="dark"] .form-container,
+[data-theme="dark"] .product-card,
+[data-theme="dark"] .product-detail,
+[data-theme="dark"] .filter-section,
+[data-theme="dark"] .cart-item,
+[data-theme="dark"] .cart-summary {
+    background: #1e293b;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background: #0f172a;
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+/* Dark Mode Toggle Button */
+.dark-mode-toggle {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 0.35rem 0.9rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-color);
+    transition: background 0.2s ease, border-color 0.2s ease;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.dark-mode-toggle:hover {
+    background: var(--border-color);
+}
+
 /* Utility Classes */
 .loading {
     opacity: 0.6;
