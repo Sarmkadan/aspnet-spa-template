@@ -85,6 +85,17 @@ const API = {
 
             return data.data || data;
         } catch (error) {
+            // When offline, queue mutating requests for later replay.
+            if (!navigator.onLine && options.method && options.method !== 'GET') {
+                OfflineQueue.enqueue({
+                    url,
+                    method: options.method,
+                    headers: options.headers ?? {},
+                    body: options.body ?? null
+                });
+                showNotification('Saved offline — will sync when reconnected.', 'alert-info');
+                return null;
+            }
             console.error('API request failed:', error);
             showError('Network error occurred');
             return null;
@@ -448,6 +459,28 @@ function showNotification(message, type) {
 
     setTimeout(() => notification.remove(), 5000);
 }
+
+// ── Offline Queue ─────────────────────────────────────────────────────────────
+
+/**
+ * Forwards failed API requests to the service worker's offline queue via
+ * postMessage, where they are persisted in IndexedDB and replayed once the
+ * Background Sync event fires.
+ */
+const OfflineQueue = {
+    /**
+     * Adds a failed request to the persistent offline queue.
+     * @param {{ url: string, method: string, headers: object, body: string|null }} entry
+     */
+    enqueue(entry) {
+        if (!navigator.serviceWorker?.controller) return;
+
+        navigator.serviceWorker.controller.postMessage({
+            type: 'QUEUE_REQUEST',
+            entry: { ...entry, queuedAt: new Date().toISOString() }
+        });
+    }
+};
 
 // ── Dark Mode ─────────────────────────────────────────────────────────────────
 

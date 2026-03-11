@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>You are offline – AspNet SPA Template</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+        }
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --border: #334155;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 3rem 2.5rem;
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(0,0,0,.08);
+        }
+        [data-theme="dark"] .card { background: #1e293b; }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: .75rem;
+            color: var(--text);
+        }
+        p {
+            color: var(--muted);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            display: inline-block;
+            padding: .75rem 1.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity .2s;
+        }
+        .btn:hover { opacity: .85; }
+        .status {
+            margin-top: 1.5rem;
+            font-size: .85rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <span class="icon">📡</span>
+        <h1>You are offline</h1>
+        <p>
+            It looks like you lost your internet connection.
+            Your cart and preferences are safely stored on this device.
+            Connect again and the page will reload automatically.
+        </p>
+        <button class="btn" onclick="tryReload()">Try again</button>
+        <p class="status" id="statusMsg">Waiting for connection…</p>
+    </div>
+
+    <script>
+        // Apply saved dark-mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+
+        function tryReload() {
+            if (navigator.onLine) {
+                window.location.href = '/';
+            } else {
+                document.getElementById('statusMsg').textContent = 'Still offline — please check your connection.';
+            }
+        }
+
+        // Auto-redirect when connectivity is restored
+        window.addEventListener('online', () => {
+            document.getElementById('statusMsg').textContent = 'Connection restored! Redirecting…';
+            setTimeout(() => { window.location.href = '/'; }, 800);
+        });
+    </script>
+</body>
+</html>
