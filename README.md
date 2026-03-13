@@ -11,6 +11,9 @@ A production-ready template for building modern Single Page Applications with AS
 - [Overview](#overview)
 - [Architecture](#architecture)
 - [Features](#features)
+- [Dark Mode](#dark-mode)
+- [Progressive Web App (PWA)](#progressive-web-app-pwa)
+- [Offline-First](#offline-first)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Usage Examples](#usage-examples)
@@ -186,6 +189,9 @@ aspnet-spa-template/
 - ✅ Error handling and user feedback
 - ✅ Loading states
 - ✅ Accessibility support (semantic HTML)
+- ✅ **Dark mode toggle** with `prefers-color-scheme` detection and localStorage persistence
+- ✅ **Progressive Web App** — installable, manifest-driven, home screen shortcuts
+- ✅ **Offline-first** — cache-first for static assets, network-first for API calls, offline fallback page
 
 ### DevOps & Infrastructure
 - ✅ Docker support (Dockerfile included)
@@ -194,6 +200,126 @@ aspnet-spa-template/
 - ✅ Configurable environment support
 - ✅ Health check endpoints
 - ✅ Development/Production configurations
+
+---
+
+## Dark Mode
+
+The UI ships with a full dark-mode theme that activates via a toggle button in the navigation bar.
+
+### How it works
+
+| Layer | Mechanism |
+|---|---|
+| CSS | A set of `--background`, `--text-color`, `--border-color`, and shadow overrides inside `[data-theme="dark"]` |
+| HTML | `data-theme` attribute is set on `<html>` by JavaScript |
+| JS | `DarkMode.init()` reads `localStorage` first, then falls back to `window.matchMedia('(prefers-color-scheme: dark)')` |
+| Persistence | `localStorage` key `darkMode` holds `"true"` or `"false"`; absent means "follow OS" |
+
+### Backend service
+
+`IThemeService` / `ThemeService` store per-user colour scheme preferences server-side (backed by `ICacheService`) with a 30-day TTL. Three values are supported: `System`, `Light`, and `Dark`.
+
+```csharp
+// Retrieve the saved preference for a user
+ColourScheme scheme = await themeService.GetSchemeAsync(userId);
+
+// Persist an explicit choice
+await themeService.SetSchemeAsync(userId, ColourScheme.Dark);
+
+// Revert to system default
+await themeService.ClearSchemeAsync(userId);
+```
+
+---
+
+## Progressive Web App (PWA)
+
+The template includes a complete Web App Manifest so users can install the application on their home screen from any modern browser.
+
+### Manifest endpoint
+
+`GET /manifest.json` is served by `ManifestController` and returns an `application/manifest+json` document with absolute icon URLs derived from the current request host.
+
+### Configuration
+
+Override the defaults via `appsettings.json` (or environment variables):
+
+```json
+{
+  "Manifest": {
+    "Name": "My App",
+    "ShortName": "App",
+    "ThemeColor": "#2563eb",
+    "BackgroundColor": "#f8fafc"
+  }
+}
+```
+
+### Manifest contents
+
+| Field | Value |
+|---|---|
+| `display` | `standalone` |
+| `start_url` | `/` |
+| `icons` | 192 × 192 and 512 × 512 PNG |
+| `shortcuts` | Browse Products, Shopping Cart |
+
+---
+
+## Offline-First
+
+The service worker (`wwwroot/sw.js`) implements a dual-strategy caching approach:
+
+| Request type | Strategy |
+|---|---|
+| Static assets (HTML, CSS, JS, images) | **Cache-first** — serve from cache, update in background |
+| API calls (`/api/*`) | **Network-first** — try network, fall back to cache |
+| Navigation when offline | Serve `offline.html` |
+
+### Offline fallback page
+
+`wwwroot/offline.html` is a styled standalone page that:
+- Applies the saved dark-mode preference without JavaScript bundle overhead
+- Provides a "Try again" button
+- Automatically redirects to `/` when the browser fires the `online` event
+
+### Push Notifications
+
+The service worker handles `push` events and shows OS-level notifications. The payload format:
+
+```json
+{
+  "title": "Order shipped",
+  "body": "Your order #1234 has been dispatched.",
+  "icon": "/icons/icon-192.png",
+  "actionUrl": "/?page=orders"
+}
+```
+
+Clicking the notification opens (or focuses) the app at `actionUrl`.
+
+### Background Sync & Offline Queue
+
+When a mutating request (`POST`, `PUT`, `DELETE`) fails while offline, the client calls `OfflineQueue.enqueue(entry)` which posts a `QUEUE_REQUEST` message to the service worker. The request is persisted in **IndexedDB** and replayed automatically when the Background Sync event fires.
+
+The server-side `ISyncQueueService` / `SyncQueueService` provides:
+
+```csharp
+// Queue a captured offline request
+int id = syncQueue.Enqueue(userId, clientRequestId, "POST", "/api/orders", bodyJson);
+
+// Get all pending entries for a user
+IReadOnlyList<SyncQueueEntry> pending = syncQueue.GetPending(userId);
+
+// Mark as successfully replayed
+syncQueue.Complete(id);
+
+// Mark as permanently failed
+syncQueue.Fail(id, "Server returned 422");
+```
+
+Idempotency is enforced via `clientRequestId` — re-submitting the same key returns the existing entry ID without creating a duplicate.
 
 ---
 
