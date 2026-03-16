@@ -1,0 +1,74 @@
+# =============================================================================
+# Author: Vladyslav Zaiets | https://sarmkadan.com
+# CTO & Software Architect
+# Development docker-compose configuration for hot reload and debugging
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ASP.NET Core Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aspnet-spa-app-dev
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+      - "5678:5678"  # Debug port (VS Code)
+      - "13000:13000" # Debug port (JetBrains Rider)
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000;https://+:5001
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
+      ConnectionStrings__DefaultConnection: "Server=db;Database=AspNetSpaTemplate;User ID=sa;Password=YourSecurePassword123!;TrustServerCertificate=true;"
+      Logging__LogLevel__Default: Debug
+      Logging__LogLevel__Microsoft: Information
+      Logging__LogLevel__Microsoft__EntityFrameworkCore: Debug
+    volumes:
+      - .:/app:rw
+      - /app/bin
+      - /app/obj
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - aspnet-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # SQL Server Database
+  db:
+    image: mcr.microsoft.com/mssql/server:latest
+    container_name: aspnet-spa-db-dev
+    environment:
+      SA_PASSWORD: YourSecurePassword123!
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data_dev:/var/opt/mssql
+    networks:
+      - aspnet-network
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourSecurePassword123!", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  aspnet-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data_dev:
+    driver: local
