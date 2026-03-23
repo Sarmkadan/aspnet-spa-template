@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -14,7 +15,7 @@ namespace AspNetSpaTemplate.Services;
 /// <summary>
 /// Service for order-related business logic.
 /// </summary>
-public class OrderService
+public sealed class OrderService
 {
     private readonly OrderRepository _orderRepository;
     private readonly ProductRepository _productRepository;
@@ -28,7 +29,7 @@ public class OrderService
     public async Task<OrderResponse?> GetOrderByIdAsync(int id)
     {
         var order = await _orderRepository.GetByIdAsync(id);
-        if (order == null)
+        if (order is null)
             throw new NotFoundException("Order", id);
 
         return MapToResponse(order);
@@ -36,7 +37,7 @@ public class OrderService
 
     public async Task<OrderResponse> CreateOrderAsync(int userId, CreateOrderRequest request)
     {
-        if (request.Items == null || request.Items.Count == 0)
+        if (request.Items is null || request.Items.Count == 0)
             throw new ValidationException("Items", "Order must contain at least one item");
 
         var order = new Order
@@ -57,7 +58,7 @@ public class OrderService
         foreach (var itemRequest in request.Items)
         {
             var product = await _productRepository.GetByIdAsync(itemRequest.ProductId);
-            if (product == null)
+            if (product is null)
                 throw new NotFoundException("Product", itemRequest.ProductId);
 
             if (!product.CanPurchase(itemRequest.Quantity))
@@ -97,7 +98,7 @@ public class OrderService
     public async Task<OrderResponse> UpdateOrderStatusAsync(int id, UpdateOrderStatusRequest request)
     {
         var order = await _orderRepository.GetByIdAsync(id);
-        if (order == null)
+        if (order is null)
             throw new NotFoundException("Order", id);
 
         if (Enum.TryParse<OrderStatus>(request.Status, true, out var newStatus))
@@ -134,7 +135,7 @@ public class OrderService
     public async Task<OrderResponse> ApplyDiscountAsync(int id, ApplyDiscountRequest request)
     {
         var order = await _orderRepository.GetByIdAsync(id);
-        if (order == null)
+        if (order is null)
             throw new NotFoundException("Order", id);
 
         if (order.IsFinal())

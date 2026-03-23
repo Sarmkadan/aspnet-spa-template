@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace AspNetSpaTemplate.Integration;
 /// Handler for incoming webhooks from external services.
 /// Validates signatures, parses payloads, and triggers internal events.
 /// </summary>
-public class WebhookHandler
+public sealed class WebhookHandler
 {
     private readonly IEventBus _eventBus;
     private readonly ILogger<WebhookHandler> _logger;
@@ -45,7 +46,7 @@ public class WebhookHandler
 
             // Parse and process webhook
             var webhookData = JsonSerializationHelper.Deserialize<Dictionary<string, object>>(payload);
-            if (webhookData == null)
+            if (webhookData is null)
             {
                 _logger.LogError($"Failed to parse webhook payload from {provider}");
                 return false;
@@ -230,7 +231,7 @@ public class WebhookHandler
 /// <summary>
 /// Webhook request model for API endpoint.
 /// </summary>
-public class WebhookRequest
+public sealed class WebhookRequest
 {
     public string Provider { get; set; } = "";
     public string Payload { get; set; } = "";
@@ -240,7 +241,7 @@ public class WebhookRequest
 /// <summary>
 /// Webhook response model.
 /// </summary>
-public class WebhookResponse
+public sealed class WebhookResponse
 {
     public bool Acknowledged { get; set; }
     public string? Message { get; set; }

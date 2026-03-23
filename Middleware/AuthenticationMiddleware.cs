@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace AspNetSpaTemplate.Middleware;
 /// Supports both header-based and query parameter API keys.
 /// Sets up User principal for subsequent handlers.
 /// </summary>
-public class AuthenticationMiddleware
+public sealed class AuthenticationMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<AuthenticationMiddleware> _logger;

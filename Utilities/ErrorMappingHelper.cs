@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -128,7 +129,7 @@ public static class ErrorMappingHelper
         };
 
         // Include inner exception details
-        if (exception.InnerException != null)
+        if (exception.InnerException is not null)
         {
             details.InnerException = exception.InnerException.GetType().Name;
             details.InnerMessage = exception.InnerException.Message;

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -20,7 +21,7 @@ public static class ValidationHelper
     /// </summary>
     public static void NotNull(object? value, string fieldName)
     {
-        if (value == null)
+        if (value is null)
             throw new ValidationException(fieldName, $"{fieldName} cannot be null");
     }
 
@@ -100,7 +101,7 @@ public static class ValidationHelper
     /// </summary>
     public static void NotEmpty<T>(IEnumerable<T>? collection, string fieldName)
     {
-        if (collection == null || !collection.Any())
+        if (collection is null || !collection.Any())
             throw new ValidationException(fieldName, $"{fieldName} cannot be empty");
     }
 
@@ -110,7 +111,7 @@ public static class ValidationHelper
     /// </summary>
     public static void MaxItems<T>(IEnumerable<T>? collection, int maxItems, string fieldName)
     {
-        if (collection != null && collection.Count() > maxItems)
+        if (collection is not null && collection.Count() > maxItems)
             throw new ValidationException(fieldName, $"{fieldName} cannot contain more than {maxItems} items");
     }
 

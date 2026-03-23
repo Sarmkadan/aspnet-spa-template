@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace AspNetSpaTemplate.Services;
 /// <summary>
 /// Service for user-related business logic.
 /// </summary>
-public class UserService
+public sealed class UserService
 {
     private readonly UserRepository _userRepository;
 
@@ -25,7 +26,7 @@ public class UserService
     public async Task<UserResponse?> GetUserByIdAsync(int id)
     {
         var user = await _userRepository.GetByIdAsync(id);
-        if (user == null)
+        if (user is null)
             throw new NotFoundException("User", id);
 
         return MapToResponse(user);
@@ -62,7 +63,7 @@ public class UserService
     public async Task<UserResponse> UpdateUserAsync(int id, UpdateUserRequest request)
     {
         var user = await _userRepository.GetByIdAsync(id);
-        if (user == null)
+        if (user is null)
             throw new NotFoundException("User", id);
 
         user.UpdateProfile(
@@ -84,7 +85,7 @@ public class UserService
     public async Task DeactivateUserAsync(int id)
     {
         var user = await _userRepository.GetByIdAsync(id);
-        if (user == null)
+        if (user is null)
             throw new NotFoundException("User", id);
 
         user.Deactivate();
@@ -95,7 +96,7 @@ public class UserService
     public async Task ActivateUserAsync(int id)
     {
         var user = await _userRepository.GetByIdAsync(id);
-        if (user == null)
+        if (user is null)
             throw new NotFoundException("User", id);
 
         user.Activate();
@@ -106,7 +107,7 @@ public class UserService
     public async Task<LoginResponse> AuthenticateAsync(LoginRequest request)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
-        if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
+        if (user is null || !VerifyPassword(request.Password, user.PasswordHash))
             throw new BusinessException("Invalid email or password", "INVALID_CREDENTIALS");
 
         if (!user.IsActive)

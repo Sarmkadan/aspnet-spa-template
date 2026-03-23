@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace AspNetSpaTemplate.Exceptions;
 /// <summary>
 /// Exception thrown when business logic constraints are violated.
 /// </summary>
-public class BusinessException : Exception
+public sealed class BusinessException : Exception
 {
     public string? ErrorCode { get; }
     public int HttpStatusCode { get; set; } = 400;

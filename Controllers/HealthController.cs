@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -15,7 +16,7 @@ namespace AspNetSpaTemplate.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class HealthController : ControllerBase
+public sealed class HealthController : ControllerBase
 {
     private readonly ICacheHealthMonitor _cacheHealthMonitor;
     private readonly IBackgroundTaskScheduler _taskScheduler;
@@ -165,7 +166,7 @@ public class HealthController : ControllerBase
 /// <summary>
 /// Health check report structure.
 /// </summary>
-public class HealthCheckReport
+public sealed class HealthCheckReport
 {
     public DateTime Timestamp { get; set; }
     public string Status { get; set; } = "unknown";

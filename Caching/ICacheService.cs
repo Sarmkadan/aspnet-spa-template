@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -81,7 +82,7 @@ public interface ICacheService
 /// <summary>
 /// Cache statistics for monitoring and optimization.
 /// </summary>
-public class CacheStatistics
+public sealed class CacheStatistics
 {
     public long TotalRequests { get; set; }
     public long CacheHits { get; set; }

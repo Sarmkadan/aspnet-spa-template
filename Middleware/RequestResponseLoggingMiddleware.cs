@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace AspNetSpaTemplate.Middleware;
 /// Logs HTTP method, path, status code, and response time.
 /// Sensitive data (passwords, tokens, PII) is automatically masked.
 /// </summary>
-public class RequestResponseLoggingMiddleware
+public sealed class RequestResponseLoggingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<RequestResponseLoggingMiddleware> _logger;
@@ -176,7 +177,7 @@ public class RequestResponseLoggingMiddleware
 /// <summary>
 /// Request/Response logging configuration.
 /// </summary>
-public class LoggingMiddlewareOptions
+public sealed class LoggingMiddlewareOptions
 {
     public bool LogRequestHeaders { get; set; } = true;
     public bool LogResponseHeaders { get; set; } = false; // Be careful with sensitive response headers
