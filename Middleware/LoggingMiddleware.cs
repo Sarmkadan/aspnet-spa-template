@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ namespace AspNetSpaTemplate.Middleware;
 /// <summary>
 /// Middleware for logging HTTP requests and responses.
 /// </summary>
-public class LoggingMiddleware
+public sealed class LoggingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<LoggingMiddleware> _logger;

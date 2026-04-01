@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace AspNetSpaTemplate.Integration;
 /// Generic wrapper for consuming external APIs.
 /// Handles common concerns: retries, timeouts, error handling, logging.
 /// </summary>
-public class ExternalApiClient
+public sealed class ExternalApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<ExternalApiClient> _logger;
@@ -157,7 +158,7 @@ public class ExternalApiClient
 /// <summary>
 /// Configuration for external API clients.
 /// </summary>
-public class ExternalApiConfig
+public sealed class ExternalApiConfig
 {
     public string BaseUrl { get; set; } = "";
     public string ApiKey { get; set; } = "";

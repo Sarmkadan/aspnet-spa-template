@@ -28,6 +28,12 @@ csharp_space_between_square_brackets = false
 csharp_indent_case_contents = true
 csharp_indent_switch_labels = true
 csharp_indent_labels = one_less_than_current
+csharp_new_line_before_open_brace = all # Allman braces
+csharp_preferred_var_for_built_in_types = true
+csharp_preferred_var_when_type_is_apparent = true
+csharp_preferred_var_elsewhere = false
+csharp_style_namespace_declarations = file_scoped # file-scoped namespace declarations
+csharp_using_directives_placement = inside_namespace # using directives inside namespace
 
 # Wrapping
 csharp_preserve_single_line_statements = false

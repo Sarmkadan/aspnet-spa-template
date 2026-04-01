@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace AspNetSpaTemplate.DTOs;
 /// <summary>
 /// Standard error response format.
 /// </summary>
-public class ErrorResponse
+public sealed class ErrorResponse
 {
     public string Message { get; set; } = string.Empty;
     public string? ErrorCode { get; set; }
@@ -42,7 +43,7 @@ public class ErrorResponse
 /// <summary>
 /// Standard success response format.
 /// </summary>
-public class SuccessResponse<T>
+public sealed class SuccessResponse<T>
 {
     public T? Data { get; set; }
     public bool Success { get; set; } = true;
@@ -65,7 +66,7 @@ public class SuccessResponse<T>
 /// <summary>
 /// Paginated response wrapper.
 /// </summary>
-public class PaginatedResponse<T>
+public sealed class PaginatedResponse<T>
 {
     public List<T> Items { get; set; } = new();
     public int TotalCount { get; set; }

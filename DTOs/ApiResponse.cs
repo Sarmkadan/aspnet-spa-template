@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ namespace AspNetSpaTemplate.DTOs;
 /// Provides consistent structure for success and error responses.
 /// Includes metadata for debugging and client-side handling.
 /// </summary>
-public class ApiResponse<T>
+public sealed class ApiResponse<T>
 {
     public bool Success { get; set; }
     public T? Data { get; set; }
@@ -78,7 +79,7 @@ public class ApiResponse<T>
 /// <summary>
 /// Standard wrapper for non-generic responses.
 /// </summary>
-public class ApiResponse
+public sealed class ApiResponse
 {
     public bool Success { get; set; }
     public string? Message { get; set; }
@@ -110,7 +111,7 @@ public class ApiResponse
 /// <summary>
 /// Response for list/pagination endpoints.
 /// </summary>
-public class ApiListResponse<T>
+public sealed class ApiListResponse<T>
 {
     public bool Success { get; set; }
     public List<T> Items { get; set; } = new();
@@ -151,7 +152,7 @@ public class ApiListResponse<T>
 /// <summary>
 /// Response for batch operations.
 /// </summary>
-public class ApiBatchResponse
+public sealed class ApiBatchResponse
 {
     public bool Success { get; set; }
     public int TotalProcessed { get; set; }
@@ -161,7 +162,7 @@ public class ApiBatchResponse
     public string? Message { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
-    public class BatchOperationError
+    public sealed class BatchOperationError
     {
         public int ItemIndex { get; set; }
         public string Message { get; set; } = "";
@@ -172,7 +173,7 @@ public class ApiBatchResponse
 /// <summary>
 /// Response for long-running operations (async tasks).
 /// </summary>
-public class AsyncOperationResponse
+public sealed class AsyncOperationResponse
 {
     public string OperationId { get; set; } = "";
     public string Status { get; set; } = "Started"; // Started, InProgress, Completed, Failed
