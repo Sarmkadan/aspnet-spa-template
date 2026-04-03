@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Various edge cases found through testing
 
+## [2.0.1] - 2026-03-05
+### Security
+- Added input validation and length limits
+- Added request timeout configuration
+- Added security policy and vulnerability reporting
+
 ---
 
 
