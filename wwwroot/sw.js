@@ -3,11 +3,14 @@
 // CTO & Software Architect
 // =============================================================================
 
-const CACHE_VERSION = 'v1';
+// Cache version will be updated by the build process or can be made dynamic
+// For now, we'll use a timestamp-based approach that gets updated on each deploy
+const CACHE_VERSION = 'v1'; // This should be updated with each deployment
 const STATIC_CACHE = `spa-static-${CACHE_VERSION}`;
 const API_CACHE = `spa-api-${CACHE_VERSION}`;
 
-const PRECACHE_ASSETS = ['/', '/index.html', '/css/style.css', '/js/app.js'];
+// We'll populate this dynamically from the asset manifest
+let PRECACHE_ASSETS = ['/', '/index.html', '/css/style.css', '/js/app.js'];
 
 // ── Install ──────────────────────────────────────────────────────────────────
 
