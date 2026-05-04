@@ -19,11 +19,19 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _schedulerTask;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BackgroundTaskScheduler"/> class.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
     public BackgroundTaskScheduler(ILogger<BackgroundTaskScheduler> logger)
     {
         _logger = logger;
     }
 
+    /// <summary>
+    /// Registers a background task to be managed by the scheduler.
+    /// </summary>
+    /// <param name="task">The background task to register.</param>
     public void RegisterTask(IBackgroundTask task)
     {
         if (task is null)
@@ -34,6 +42,10 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
         _logger.LogInformation($"Registered background task: {task.TaskName}");
     }
 
+    /// <summary>
+    /// Starts the background task scheduler.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         if (_schedulerTask is not null)
@@ -46,6 +58,9 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Stops the background task scheduler.
+    /// </summary>
     public async Task StopAsync()
     {
         _logger.LogInformation("Stopping background task scheduler");
@@ -64,6 +79,10 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
         }
     }
 
+    /// <summary>
+    /// Gets the current status of all managed background tasks.
+    /// </summary>
+    /// <returns>A collection of <see cref="BackgroundTaskStatus"/> objects.</returns>
     public IEnumerable<BackgroundTaskStatus> GetStatus()
     {
         return _taskStates.Values.Select(s => new BackgroundTaskStatus
@@ -79,6 +98,10 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
         });
     }
 
+    /// <summary>
+    /// Manually triggers a specific background task to execute immediately.
+    /// </summary>
+    /// <param name="taskName">The name of the task to trigger.</param>
     public async Task TriggerTaskAsync(string taskName)
     {
         var task = _tasks.FirstOrDefault(t => t.TaskName == taskName);
@@ -169,6 +192,9 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
         }
     }
 
+    /// <summary>
+    /// Disposes of the resources used by the scheduler.
+    /// </summary>
     public void Dispose()
     {
         _cancellationTokenSource?.Dispose();
@@ -195,18 +221,34 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
 /// </summary>
 public static class BackgroundTaskExtensions
 {
+    /// <summary>
+    /// Adds the background task scheduler to the service collection.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddBackgroundTaskScheduler(this IServiceCollection services)
     {
         services.AddSingleton<IBackgroundTaskScheduler, BackgroundTaskScheduler>();
         return services;
     }
 
+    /// <summary>
+    /// Adds a background task type to the service collection.
+    /// </summary>
+    /// <typeparam name="T">The type of the background task.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddBackgroundTask<T>(this IServiceCollection services) where T : class, IBackgroundTask
     {
         services.AddSingleton<T>();
         return services;
     }
 
+    /// <summary>
+    /// Configures the application to use the background task scheduler.
+    /// </summary>
+    /// <param name="app">The application builder.</param>
+    /// <returns>The updated application builder.</returns>
     public static async Task<IApplicationBuilder> UseBackgroundTaskScheduler(this IApplicationBuilder app)
     {
         var scheduler = app.ApplicationServices.GetRequiredService<IBackgroundTaskScheduler>();
