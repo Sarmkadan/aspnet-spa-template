@@ -15,7 +15,14 @@ namespace AspNetSpaTemplate.BackgroundWorkers;
 /// </summary>
 public sealed class CacheMaintenanceWorker : IBackgroundTask
 {
+    /// <summary>
+    /// Gets the unique name of this background task.
+    /// </summary>
     public string TaskName => "CacheMaintenanceWorker";
+
+    /// <summary>
+    /// Gets the execution interval for this background task.
+    /// </summary>
     public TimeSpan? ExecutionInterval => TimeSpan.FromMinutes(5);
 
     private readonly ICacheService _cacheService;
@@ -23,6 +30,11 @@ public sealed class CacheMaintenanceWorker : IBackgroundTask
     private DateTime? _lastExecutedAt;
     private int _executionCount;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CacheMaintenanceWorker"/> class.
+    /// </summary>
+    /// <param name="cacheService">The cache service.</param>
+    /// <param name="logger">The logger instance.</param>
     public CacheMaintenanceWorker(
         ICacheService cacheService,
         ILogger<CacheMaintenanceWorker> logger)
@@ -31,6 +43,11 @@ public sealed class CacheMaintenanceWorker : IBackgroundTask
         _logger = logger;
     }
 
+    /// <summary>
+    /// Executes the cache maintenance background task asynchronously.
+    /// </summary>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous execution operation.</returns>
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         try
