@@ -1,3 +1,7 @@
+[![Build](https://github.com/sarmkadan/aspnet-spa-template/actions/workflows/build.yml/badge.svg)](https://github.com/sarmkadan/aspnet-spa-template/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
+
 # ASP.NET SPA Template
 
 A production-ready template for building modern Single Page Applications with ASP.NET Core backend and vanilla JavaScript frontend. No React, Vue, or Angular—just clean, semantic HTML, CSS, and JavaScript with a powerful RESTful API backend.
