@@ -18,7 +18,7 @@ A production-ready template for building modern Single Page Applications with AS
 - [Configuration](#configuration)
 - [Testing](#testing)
 - [Performance](#performance)
-- [Ecosystem](#ecosystem)
+- [Related Projects](#related-projects)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -651,7 +651,7 @@ hey -n 50000 -c 100 https://localhost:7001/api/products
 
 ---
 
-## Ecosystem
+## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
 

@@ -10,140 +10,179 @@ All notable changes to the aspnet-spa-template project are documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2025-01-20
+## [1.0.0] - 2025-06-09
 
 ### Added
-- Comprehensive documentation suite (docs/ directory)
-- Example implementations for common patterns
-- Docker and Docker Compose support
-- GitHub Actions CI/CD workflow
-- .editorconfig for consistent code formatting
-- Makefile for common development tasks
-- Health check endpoint with detailed diagnostics
-- Background task scheduler with multiple worker implementations
-- Event bus implementation for loose coupling
+- Comprehensive documentation suite (`docs/` directory: getting-started, architecture, api-reference, deployment, faq)
+- Example guides for common patterns (add-new-endpoint, authentication-jwt, background-tasks, database-seeding)
+- Docker support with Dockerfile and Docker Compose for multi-container setup
+- GitHub Actions CI/CD workflow with build, test, and NuGet publish jobs
+- CodeQL security scanning workflow
+- Dependabot configuration for NuGet and GitHub Actions updates
+- `.editorconfig` for consistent code style across editors
+- `Makefile` with common development targets
+- `SECURITY.md`, `CONTRIBUTING.md`, and `CODE_OF_CONDUCT.md`
+- NuGet packaging metadata in `.csproj`
 
 ### Changed
-- Updated to .NET 10 (latest LTS)
-- Improved error messages with error codes
-- Enhanced logging with correlation IDs
-- Refactored middleware pipeline for better modularity
-- Updated API response format for consistency
+- Promoted to stable v1.0.0 after beta validation
+- Polished API response format across all endpoints
+- Improved middleware pipeline ordering for correctness
 
 ### Fixed
-- Fixed race condition in cache invalidation
-- Improved rate limiting accuracy
-- Corrected timezone handling in database queries
-- Fixed CORS policy for localhost development
-
-## [1.1.0] - 2025-01-10
-
-### Added
-- JWT authentication support
-- Rate limiting middleware
-- Request correlation ID tracking
-- Webhook support for external integrations
-- External API client for third-party services
-- In-memory caching with TTL support
-- Data export functionality (CSV, XML)
-- Product review system
-- Order status tracking
-
-### Changed
-- Improved repository pattern implementation
-- Better separation of concerns in services
-- Enhanced DTO mapping with AutoMapper
-- Updated validation rules for stricter input validation
-- Improved exception handling strategy
-
-### Fixed
-- Fixed null reference exceptions in product filtering
-- Corrected order calculation logic
-- Improved database query performance
-- Fixed logging levels in development vs production
-
-### Deprecated
-- Legacy authentication method (use JWT instead)
-
-## [1.0.0] - 2025-01-01
-
-### Added
-- Initial project structure with layered architecture
-- ASP.NET Core 10 backend with REST API
-- SQL Server Entity Framework Core integration
-- Repository pattern for data access
-- Service layer for business logic
-- Controller endpoints for Products, Orders, Users
-- Vanilla JavaScript SPA frontend
-- DTOs for API data transfer
-- Custom exception types
-- Exception handling middleware
-- Request/response logging middleware
-- Authentication middleware stub
-- Dependency injection configuration
-- Database context and migrations setup
-
-### Features
-- Product management (CRUD operations)
-- Order management (create, track, update status)
-- User management (create, read, update)
-- Pagination support on list endpoints
-- Product reviews system
-- Category management
-- Basic frontend UI with HTML/CSS/JS
-- Health check endpoint
-- API response standardization
-
-## [0.9.0] - 2024-12-20 (Beta)
-
-### Added
-- Initial project template structure
-- Basic controller stubs
-- Database models
-- DTOs structure
-- Project configuration files
-
-### Changed
-- Initial version for community feedback
+- Race condition in cache invalidation under concurrent writes
+- CORS policy not applied correctly in development environment
+- Timezone handling inconsistency in database date comparisons
 
 ---
 
-## Version 1.2.0 Details
+## [0.9.0] - 2025-05-26
 
-### Breaking Changes
-None
+### Added
+- Unit and integration test project (`tests/aspnet-spa-template.Tests/`)
+- `ProductModelTests.cs` covering model validation and business rules
+- `OrderAndCacheTests.cs` covering order creation and cache invalidation paths
+- `StringExtensionsTests.cs` covering utility extension methods
+- `DataExportHelper` for CSV and XML data export
+- `PerformanceHelper` for timing and throughput measurement utilities
 
-### Migration Guide
-If upgrading from 1.1.0:
-1. Pull latest changes
-2. Update NuGet packages: `dotnet restore`
-3. Run database migrations: `dotnet ef database update`
-4. Review new configuration options in `appsettings.json`
+### Changed
+- Switched test framework to xunit with FluentAssertions and Moq
+- Improved `ValidationHelper` with additional guard methods
 
-### Performance Improvements
-- 30% faster API responses with improved caching
-- Reduced database query load through better pagination
-- Optimized background task scheduling
-
-### Security Updates
-- Enhanced JWT token validation
-- Improved rate limiting for DOS prevention
-- Better CORS configuration options
-- Added input sanitization helpers
+### Fixed
+- Null reference in product filtering when category is unset
+- Off-by-one error in pagination result counts
 
 ---
 
-## Upcoming Features (v1.3.0 - Planned)
+## [0.8.0] - 2025-05-12
 
-- [ ] Two-factor authentication
-- [ ] Role-based access control (RBAC)
-- [ ] Advanced search and filtering
-- [ ] File upload and management
-- [ ] Batch operations API
-- [ ] GraphQL support
-- [ ] WebSocket support for real-time updates
-- [ ] Audit logging
-- [ ] Compliance features (GDPR, HIPAA)
+### Added
+- Vanilla JavaScript SPA in `wwwroot/` (index.html, css/style.css, js/app.js)
+- Service Worker (`wwwroot/sw.js`) for offline support and asset caching
+- `OfflineSupportExtensions` for configuring PWA-related middleware
+- `AssetVersioningService` for cache-busting static file URLs
+- `HotReloadMiddleware` for development-time asset refresh
+- Responsive CSS layout with no external framework dependencies
+
+### Changed
+- Updated `Program.cs` to serve static files and fall back to `index.html` for SPA routing
+- Improved error display in the frontend with structured user notifications
+
+---
+
+## [0.7.0] - 2025-04-28
+
+### Added
+- `IEventBus` abstraction and `EventBusImplementation` for in-process event dispatch
+- `EventHandlers` with typed handlers for domain events
+- `WebhookHandler` and `WebhooksController` for outbound webhook delivery
+- `ExternalApiClient` and `IHttpClientFactory` abstraction for third-party HTTP calls
+- `NotificationService` for email/SMS notification dispatch
+- `CsvFormatter` and `XmlFormatter` output formatters
+
+### Changed
+- Decoupled order status transitions from direct service calls to event-driven pattern
+- Improved error propagation from external API failures
+
+### Fixed
+- Missing cancellation token propagation in async HTTP client calls
+
+---
+
+## [0.6.0] - 2025-04-14
+
+### Added
+- `IBackgroundTask` interface for pluggable background work units
+- `BackgroundTaskScheduler` hosted service for periodic task execution
+- `CacheMaintenanceWorker` for scheduled cache eviction
+- `NotificationWorker` for queued notification dispatch
+- `EncryptionHelper` and `RequestContextHelper` utilities
+
+### Changed
+- Registered background workers via `IHostedService` in DI configuration
+- Improved graceful shutdown handling in background workers
+
+---
+
+## [0.5.0] - 2025-04-01
+
+### Added
+- `ICacheService` abstraction and `MemoryCacheService` implementation
+- `CacheKeyBuilder` for consistent, collision-free cache key construction
+- Cache-aside pattern applied in `ProductService` and `OrderService`
+- `RateLimitingMiddleware` with configurable request-per-minute threshold
+- `CorrelationIdMiddleware` for request tracing across logs
+
+### Changed
+- Wrapped hot-path repository reads with cache layer
+- Increased default cache TTL to 1 hour for read-heavy list endpoints
+
+### Fixed
+- Rate limiter not resetting correctly after sliding window expiry
+
+---
+
+## [0.4.0] - 2025-03-17
+
+### Added
+- `AuthenticationMiddleware` with Bearer token extraction
+- `ExceptionHandlingMiddleware` returning structured `ErrorResponse` JSON
+- `LoggingMiddleware` and `RequestResponseLoggingMiddleware` for full request tracing
+- `BusinessException`, `NotFoundException`, and `ValidationException` custom types
+- `ErrorMappingHelper` for mapping exception types to HTTP status codes
+- `AppConstants`, `OrderStatus`, and `ProductCategory` constants
+
+### Changed
+- Replaced ad-hoc try/catch blocks in controllers with centralized exception middleware
+- Standardized all error responses to use `ErrorResponse` DTO
+
+---
+
+## [0.3.0] - 2025-03-03
+
+### Added
+- `IRepository<T>` generic interface and `RepositoryBase<T>` base implementation
+- `UserRepository`, `ProductRepository`, and `OrderRepository` concrete implementations
+- `AppDbContext` with EF Core entity registrations
+- `PaginationRequest` DTO and pagination support in repository queries
+- `CollectionExtensions` and `DateTimeExtensions` utility helpers
+
+### Changed
+- Moved all direct `DbContext` access out of services into repository layer
+- Applied `Nullable` reference types across all data and model files
+
+### Fixed
+- Missing index on `Orders.CreatedAt` causing slow sort queries
+
+---
+
+## [0.2.0] - 2025-02-17
+
+### Added
+- `ProductsController`, `OrdersController`, `UsersController`, and `HealthController`
+- `ApiControllerBase` with shared response helpers
+- `ProductService`, `OrderService`, `UserService`, and `ReviewService`
+- DTOs: `CreateProductRequest`, `UpdateProductRequest`, `CreateOrderRequest`, `CreateUserRequest`, `ApiResponse<T>`, `PaginationRequest`
+- `DependencyInjectionExtensions` and `ServiceConfiguration` for DI wiring
+- `JsonSerializationHelper` and `StringExtensions` utilities
+
+### Changed
+- Unified API response envelope: `{ success, data, message }` across all endpoints
+
+---
+
+## [0.1.0] - 2025-02-03
+
+### Added
+- Initial repository and solution structure (`aspnet-spa-template.sln`, `.slnx`)
+- `AspNetSpaTemplate.csproj` targeting .NET 10
+- Domain models: `Product`, `Order`, `OrderItem`, `User`, `Review`
+- `appsettings.json` and `appsettings.Development.json` configuration files
+- `.gitignore` and `.editorconfig` baseline
+- MIT `LICENSE`
+- Skeleton `Program.cs` with minimal ASP.NET Core host setup
 
 ---
 
