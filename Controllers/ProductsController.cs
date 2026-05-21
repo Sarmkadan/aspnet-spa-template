@@ -23,72 +23,93 @@ public sealed class ProductsController : ApiControllerBase
         _productService = productService;
     }
 
+    /// <summary>Retrieves a single product by its unique identifier.</summary>
+    /// <param name="id">The product ID.</param>
+    /// <response code="200">Returns the requested product.</response>
+    /// <response code="404">Product with the specified ID was not found.</response>
     [HttpGet("{id:int}")]
-    [ProduceResponseType(typeof(ProductResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SuccessResponse<ProductResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProduct(int id)
     {
         var product = await _productService.GetProductByIdAsync(id);
         return ApiSuccess(product);
     }
 
+    /// <summary>Retrieves a paginated list of available products.</summary>
+    /// <param name="pageNumber">Page number (1-based).</param>
+    /// <param name="pageSize">Number of items per page.</param>
     [HttpGet]
-    [ProduceResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SuccessResponse<ProductListResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetProducts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var products = await _productService.GetAllProductsAsync(pageNumber, pageSize);
         return ApiSuccess(products);
     }
 
+    /// <summary>Retrieves products filtered by category with pagination.</summary>
     [HttpGet("category/{category}")]
-    [ProduceResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SuccessResponse<ProductListResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetProductsByCategory(ProductCategory category, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var products = await _productService.GetProductsByCategoryAsync(category, pageNumber, pageSize);
         return ApiSuccess(products);
     }
 
+    /// <summary>Returns featured products (limited to <paramref name="limit"/>).</summary>
     [HttpGet("featured")]
-    [ProduceResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SuccessResponse<List<ProductResponse>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFeaturedProducts([FromQuery] int limit = 10)
     {
         var products = await _productService.GetFeaturedProductsAsync(limit);
         return ApiSuccess(products);
     }
 
+    /// <summary>Returns top-rated products sorted by average rating.</summary>
     [HttpGet("top-rated")]
-    [ProduceResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SuccessResponse<List<ProductResponse>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTopRatedProducts([FromQuery] int limit = 10)
     {
         var products = await _productService.GetTopRatedProductsAsync(limit);
         return ApiSuccess(products);
     }
 
+    /// <summary>Searches products by name or description.</summary>
+    /// <param name="searchTerm">Search query string.</param>
     [HttpGet("search")]
-    [ProduceResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SuccessResponse<List<ProductResponse>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> SearchProducts([FromQuery] string searchTerm)
     {
         var products = await _productService.SearchProductsAsync(searchTerm);
         return ApiSuccess(products);
     }
 
+    /// <summary>Creates a new product.</summary>
+    /// <response code="201">Product created successfully.</response>
+    /// <response code="400">Validation error in the request body.</response>
     [HttpPost]
-    [ProduceResponseType(typeof(ProductResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(SuccessResponse<ProductResponse>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
     {
         var product = await _productService.CreateProductAsync(request);
         return ApiSuccess(product, "Product created successfully", StatusCodes.Status201Created);
     }
 
+    /// <summary>Updates an existing product.</summary>
     [HttpPut("{id:int}")]
-    [ProduceResponseType(typeof(ProductResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SuccessResponse<ProductResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductRequest request)
     {
         var product = await _productService.UpdateProductAsync(id, request);
         return ApiSuccess(product, "Product updated successfully");
     }
 
+    /// <summary>Toggles product availability.</summary>
     [HttpPatch("{id:int}/availability")]
-    [ProduceResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SetAvailability(int id, [FromBody] Dictionary<string, bool> request)
     {
         if (!request.TryGetValue("isAvailable", out var isAvailable))
@@ -98,8 +119,10 @@ public sealed class ProductsController : ApiControllerBase
         return NoContent();
     }
 
+    /// <summary>Toggles product featured status.</summary>
     [HttpPatch("{id:int}/featured")]
-    [ProduceResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SetFeatured(int id, [FromBody] Dictionary<string, bool> request)
     {
         if (!request.TryGetValue("isFeatured", out var isFeatured))
@@ -109,8 +132,12 @@ public sealed class ProductsController : ApiControllerBase
         return NoContent();
     }
 
+    /// <summary>Permanently deletes a product.</summary>
+    /// <response code="204">Product deleted successfully.</response>
+    /// <response code="404">Product not found.</response>
     [HttpDelete("{id:int}")]
-    [ProduceResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         await _productService.DeleteProductAsync(id);
