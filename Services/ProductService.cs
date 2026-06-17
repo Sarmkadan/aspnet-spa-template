@@ -13,17 +13,26 @@ using AspNetSpaTemplate.Models;
 namespace AspNetSpaTemplate.Services;
 
 /// <summary>
-/// Service for product-related business logic.
+/// Service for product-related business logic, including querying, creation, and management.
 /// </summary>
 public sealed class ProductService
 {
     private readonly ProductRepository _productRepository;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="ProductService"/>.
+    /// </summary>
+    /// <param name="productRepository">The product repository.</param>
     public ProductService(ProductRepository productRepository)
     {
         _productRepository = productRepository;
     }
 
+    /// <summary>
+    /// Gets a product by its ID.
+    /// </summary>
+    /// <param name="id">The product ID.</param>
+    /// <returns>The product response, or throws NotFoundException.</returns>
     public async Task<ProductResponse?> GetProductByIdAsync(int id)
     {
         var product = await _productRepository.GetByIdAsync(id);
@@ -33,6 +42,12 @@ public sealed class ProductService
         return MapToResponse(product);
     }
 
+    /// <summary>
+    /// Gets all products with pagination.
+    /// </summary>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <returns>A paginated list response.</returns>
     public async Task<ProductListResponse> GetAllProductsAsync(int pageNumber = 1, int pageSize = 10)
     {
         pageSize = Math.Min(pageSize, AppConstants.Pagination.MaxPageSize);
@@ -51,6 +66,13 @@ public sealed class ProductService
         };
     }
 
+    /// <summary>
+    /// Gets products by category with pagination.
+    /// </summary>
+    /// <param name="category">The product category.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <returns>A paginated list response.</returns>
     public async Task<ProductListResponse> GetProductsByCategoryAsync(ProductCategory category, int pageNumber = 1, int pageSize = 10)
     {
         var products = await _productRepository.GetPagedByCategoryAsync(category, pageNumber, pageSize);
@@ -66,18 +88,33 @@ public sealed class ProductService
         };
     }
 
+    /// <summary>
+    /// Gets featured products.
+    /// </summary>
+    /// <param name="limit">The limit of products to return.</param>
+    /// <returns>A list of featured products.</returns>
     public async Task<List<ProductResponse>> GetFeaturedProductsAsync(int limit = 10)
     {
         var products = await _productRepository.GetFeaturedProductsAsync(limit);
         return products.Select(MapToResponse).ToList();
     }
 
+    /// <summary>
+    /// Gets top-rated products.
+    /// </summary>
+    /// <param name="limit">The limit of products to return.</param>
+    /// <returns>A list of top-rated products.</returns>
     public async Task<List<ProductResponse>> GetTopRatedProductsAsync(int limit = 10)
     {
         var products = await _productRepository.GetTopRatedAsync(limit);
         return products.Select(MapToResponse).ToList();
     }
 
+    /// <summary>
+    /// Searches products by term.
+    /// </summary>
+    /// <param name="searchTerm">The search term.</param>
+    /// <returns>A list of matching products.</returns>
     public async Task<List<ProductResponse>> SearchProductsAsync(string searchTerm)
     {
         if (string.IsNullOrWhiteSpace(searchTerm))
@@ -87,6 +124,11 @@ public sealed class ProductService
         return products.Select(MapToResponse).ToList();
     }
 
+    /// <summary>
+    /// Creates a new product.
+    /// </summary>
+    /// <param name="request">The create product request.</param>
+    /// <returns>The created product response.</returns>
     public async Task<ProductResponse> CreateProductAsync(CreateProductRequest request)
     {
         ValidateProductRequest(request);
@@ -110,6 +152,12 @@ public sealed class ProductService
         return MapToResponse(product);
     }
 
+    /// <summary>
+    /// Updates a product.
+    /// </summary>
+    /// <param name="id">The product ID.</param>
+    /// <param name="request">The update product request.</param>
+    /// <returns>The updated product response.</returns>
     public async Task<ProductResponse> UpdateProductAsync(int id, UpdateProductRequest request)
     {
         var product = await _productRepository.GetByIdAsync(id);
@@ -125,6 +173,11 @@ public sealed class ProductService
         return MapToResponse(product);
     }
 
+    /// <summary>
+    /// Sets product availability.
+    /// </summary>
+    /// <param name="id">The product ID.</param>
+    /// <param name="isAvailable">The availability status.</param>
     public async Task SetProductAvailabilityAsync(int id, bool isAvailable)
     {
         var product = await _productRepository.GetByIdAsync(id);
@@ -136,6 +189,11 @@ public sealed class ProductService
         await _productRepository.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Sets product featured status.
+    /// </summary>
+    /// <param name="id">The product ID.</param>
+    /// <param name="isFeatured">The featured status.</param>
     public async Task SetProductFeaturedAsync(int id, bool isFeatured)
     {
         var product = await _productRepository.GetByIdAsync(id);
@@ -147,6 +205,10 @@ public sealed class ProductService
         await _productRepository.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Deletes a product.
+    /// </summary>
+    /// <param name="id">The product ID.</param>
     public async Task DeleteProductAsync(int id)
     {
         var product = await _productRepository.GetByIdAsync(id);
