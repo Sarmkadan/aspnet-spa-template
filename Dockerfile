@@ -40,15 +40,15 @@ RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Expose ports
-EXPOSE 5000 5001
+EXPOSE 8080
 
 # Set environment
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:5000;https://+:5001
+ENV ASPNETCORE_URLS=http://+:8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
+    CMD curl -f http://localhost:8080/api/health || exit 1
 
 # Start application
 ENTRYPOINT ["dotnet", "AspNetSpaTemplate.dll"]

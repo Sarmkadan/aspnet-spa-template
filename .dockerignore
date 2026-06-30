@@ -3,3 +3,11 @@ obj
 .git
 tests
 docs
+*~
+*.user
+*.csproj.user
+node_modules
+.vs
+.vscode
+*.db
+*.sqlite

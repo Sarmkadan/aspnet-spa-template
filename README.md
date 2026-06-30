@@ -358,7 +358,7 @@ dotnet run
 # Build and run with Docker Compose
 docker-compose up --build
 
-# Application will be available at http://localhost:5000
+# Application will be available at http://localhost:8080
 # SQL Server will be available on port 1433
 ```
 
