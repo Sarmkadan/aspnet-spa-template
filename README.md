@@ -1506,6 +1506,60 @@ Product? product = orderItem.Product;
 
 ## API Reference
 
+### UpdateProductRequest
+
+The `UpdateProductRequest` DTO is used to update product details in the system. It encapsulates all updatable fields for a product with built-in validation rules that ensure data integrity before processing updates. The request supports updating core product information, pricing, inventory levels, category assignments, availability status, and product images.
+
+**Usage Example:**
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+using AspNetSpaTemplate.Constants;
+
+// Create an update request for a product
+var updateRequest = new UpdateProductRequest
+{
+    Name = "Premium Wireless Headphones Pro",
+    Description = "Premium noise-cancelling wireless headphones with 30-hour battery life and Bluetooth 5.2",
+    Price = 249.99m,
+    Category = ProductCategory.Electronics,
+    ImageUrl = "/images/headphones-pro.jpg",
+    StockQuantity = 25,
+    IsAvailable = true
+};
+
+// Validate the request before sending to the API
+updateRequest.Validate();
+
+// The request can then be sent to the ProductsController:
+// PUT /api/products/{id}
+// Body: UpdateProductRequest
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Name` | `string` | The product name (required, max 200 characters) |
+| `Description` | `string` | Detailed product description |
+| `Price` | `decimal` | Product price (must be between 0 and 1,000,000) |
+| `Category` | `ProductCategory` | Product category enum value |
+| `ImageUrl` | `string?` | URL to product image (optional) |
+| `StockQuantity` | `int` | Current inventory quantity (must be non-negative) |
+| `IsAvailable` | `bool` | Whether the product is available for purchase (default: true) |
+
+### Validation Rules
+
+- **Name**: Required, cannot be empty or whitespace, maximum 200 characters
+- **Price**: Must be non-negative and cannot exceed 1,000,000
+- **StockQuantity**: Must be non-negative
+- All fields are validated when `Validate()` method is called
+
+### Related Types
+
+- **ProductCategory**: Enum containing product categories (Electronics, Clothing, Books, Home, Sports)
+- Used in: ProductsController.Put(int id, UpdateProductRequest request)
+
 ## ExternalApiClient
 
 The `ExternalApiClient` class provides a robust, retry-capable HTTP client for consuming external APIs from your ASP.NET Core services. It handles common concerns like automatic retries on transient failures, configurable timeouts, structured error handling, and detailed logging—making external API calls more reliable and easier to debug.
