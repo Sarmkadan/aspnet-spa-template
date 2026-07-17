@@ -275,6 +275,75 @@ if (ErrorMappingHelper.IsCriticalError(exception))
 }
 ```
 
+## ValidationHelper
+
+Provides a comprehensive set of validation methods for common validation scenarios including null checks, range validation, string length validation, pattern matching, email validation, phone number validation, collection validation, and equality checks. This utility centralizes validation logic to ensure consistent error handling across controllers, services, and domain models.
+
+### Usage Example
+
+```csharp
+// In a controller action
+public IActionResult CreateUser([FromBody] CreateUserRequest request)
+{
+  try
+  {
+    // Validate input parameters
+    ValidationHelper.NotNull(request, nameof(request));
+    ValidationHelper.NotNullOrEmpty(request.Username, nameof(request.Username));
+    ValidationHelper.LengthBetween(request.Username, 3, 50, nameof(request.Username));
+    ValidationHelper.ValidEmail(request.Email, nameof(request.Email));
+    ValidationHelper.InRange(request.Age, 18, 120, nameof(request.Age));
+    ValidationHelper.Equal(request.Password, request.ConfirmPassword, nameof(request.ConfirmPassword));
+    ValidationHelper.MaxItems(request.Roles, 5, nameof(request.Roles));
+
+    // Process valid request
+    var user = _userService.CreateUser(request);
+    return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+  }
+  catch (ValidationException ex)
+  {
+    // Return validation errors to client
+    return BadRequest(new { errors = ex.Errors });
+  }
+}
+
+// In a service method
+public void ProcessOrder(Order order)
+{
+  ValidationHelper.NotNull(order, nameof(order));
+  ValidationHelper.NotNull(order.Customer, nameof(order.Customer));
+  ValidationHelper.NotEmpty(order.Items, nameof(order.Items));
+  ValidationHelper.InRange(order.TotalAmount, 0.01m, 10000m, nameof(order.TotalAmount));
+  ValidationHelper.MatchesPattern(order.PhoneNumber, @"^\+?[0-9\s\-\(\)]{10,15}$", nameof(order.PhoneNumber), "Invalid phone number format");
+
+  // Process valid order
+  _orderRepository.Add(order);
+}
+
+// Validate email and phone number
+ValidationHelper.ValidEmail("user@example.com");
+ValidationHelper.ValidPhoneNumber("+1 (555) 123-4567");
+
+// Validate collection length
+var tags = new List<string> { "csharp", "aspnet", "react" };
+ValidationHelper.MaxItems(tags, 10, nameof(tags));
+
+// Batch validation with error collection
+var validationErrors = ValidationHelper.ValidateAndCollectErrors(() => new Dictionary<string, string>
+{
+  [nameof(request.Username)] = request.Username,
+  [nameof(request.Email)] = request.Email,
+  [nameof(request.Age)] = request.Age.ToString(),
+  [nameof(request.Password)] = request.Password,
+  [nameof(request.ConfirmPassword)] = request.ConfirmPassword
+});
+
+if (validationErrors.Count > 0)
+{
+  throw new ValidationException(validationErrors);
+}
+```
+
 ## JsonSerializationHelper
 
 Provides consistent JSON serialization and deserialization utilities with standardized options across the application. Centralizes JSON configuration including camelCase naming policy, null value handling, and enum converter settings to ensure uniformity in API responses, logging, and data persistence.
