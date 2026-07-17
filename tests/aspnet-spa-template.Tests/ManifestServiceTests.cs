@@ -7,6 +7,9 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
 
+/// <summary>
+/// Tests for the <see cref="ManifestService"/> class.
+/// </summary>
 public sealed class ManifestServiceTests
 {
     private static ManifestService BuildSut(Dictionary<string, string?>? config = null)
@@ -22,6 +25,9 @@ public sealed class ManifestServiceTests
 
     // ── BuildManifest – required fields ───────────────────────────────────────
 
+    /// <summary>
+    /// Verifies that <see cref="ManifestService.BuildManifest(string,string?)"/> returns a valid manifest with default values when no configuration is provided.
+    /// </summary>
     [Fact]
     public void BuildManifest_WithDefaults_ReturnsValidManifest()
     {
@@ -35,6 +41,9 @@ public sealed class ManifestServiceTests
         manifest.Display.Should().Be("standalone");
     }
 
+    /// <summary>
+    /// Verifies that the default manifest contains exactly two icons with required properties.
+    /// </summary>
     [Fact]
     public void BuildManifest_WithDefaults_ContainsTwoIcons()
     {
@@ -51,6 +60,9 @@ public sealed class ManifestServiceTests
         });
     }
 
+    /// <summary>
+    /// Verifies that icon source URLs are absolute when a host is provided.
+    /// </summary>
     [Fact]
     public void BuildManifest_WithHost_IconSrcsAreAbsolute()
     {
@@ -62,6 +74,9 @@ public sealed class ManifestServiceTests
             i.Src.Should().StartWith("https://my.example.com"));
     }
 
+    /// <summary>
+    /// Verifies that icon source URLs are relative when no host is provided.
+    /// </summary>
     [Fact]
     public void BuildManifest_WithoutHost_IconSrcsAreRelative()
     {
@@ -73,6 +88,9 @@ public sealed class ManifestServiceTests
             i.Src.Should().StartWith("/icons/"));
     }
 
+    /// <summary>
+    /// Verifies that the manifest contains shortcuts with non-empty name and URL.
+    /// </summary>
     [Fact]
     public void BuildManifest_ContainsShortcuts()
     {
@@ -88,8 +106,11 @@ public sealed class ManifestServiceTests
         });
     }
 
-    // ── Configuration overrides ────────────────────────────────────────────────
+    // ── Configuration overrides ─────────────────────────────────────────────────
 
+    /// <summary>
+    /// Verifies that the manifest name is overridden by configuration.
+    /// </summary>
     [Fact]
     public void BuildManifest_WhenNameConfigured_UsesConfiguredName()
     {
@@ -103,6 +124,9 @@ public sealed class ManifestServiceTests
         manifest.Name.Should().Be("My Custom App");
     }
 
+    /// <summary>
+    /// Verifies that the manifest theme color is overridden by configuration.
+    /// </summary>
     [Fact]
     public void BuildManifest_WhenThemeColorConfigured_UsesConfiguredColor()
     {
@@ -118,6 +142,9 @@ public sealed class ManifestServiceTests
 
     // ── ThemeColor / BackgroundColor properties ───────────────────────────────
 
+    /// <summary>
+    /// Verifies that <see cref="ManifestService.ThemeColor"/> returns the default blue color when no configuration is set.
+    /// </summary>
     [Fact]
     public void ThemeColor_WithNoConfig_ReturnsDefaultBlue()
     {
@@ -126,6 +153,9 @@ public sealed class ManifestServiceTests
         sut.ThemeColor.Should().Be("#2563eb");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="ManifestService.BackgroundColor"/> returns the default light color when no configuration is set.
+    /// </summary>
     [Fact]
     public void BackgroundColor_WithNoConfig_ReturnsDefaultLight()
     {
@@ -134,6 +164,9 @@ public sealed class ManifestServiceTests
         sut.BackgroundColor.Should().Be("#f8fafc");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="ManifestService.ThemeColor"/> returns the configured value.
+    /// </summary>
     [Fact]
     public void ThemeColor_WhenConfigured_ReturnsConfiguredValue()
     {
@@ -147,6 +180,9 @@ public sealed class ManifestServiceTests
 
     // ── Scope and display ─────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Verifies that the manifest scope is set to root '/' by default.
+    /// </summary>
     [Fact]
     public void BuildManifest_ScopeIsRoot()
     {
@@ -157,6 +193,9 @@ public sealed class ManifestServiceTests
         manifest.Scope.Should().Be("/");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="ManifestService.PreferRelatedApplications"/> is false by default.
+    /// </summary>
     [Fact]
     public void BuildManifest_PreferRelatedApplicationsIsFalse()
     {
