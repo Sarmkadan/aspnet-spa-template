@@ -1431,6 +1431,36 @@ hey -n 50000 -c 100 https://localhost:7001/api/products
 
 ---
 
+## EventBusImplementation
+
+The `EventBusImplementation` class provides an in-process event bus implementation suitable for single-server deployments. It maintains subscribers in memory and dispatches events sequentially, making it ideal for loose coupling between application components without external message broker dependencies.
+
+### Usage Example
+```csharp
+// Subscribe to events
+eventBus.Subscribe<ProductCreatedEvent>(async @event => {
+    await _cache.RemoveAsync("products_list");
+    await _cache.RemoveAsync($"product_{@event.ProductId}");
+});
+
+// Publish events
+await eventBus.PublishAsync(new ProductCreatedEvent {
+    ProductId = 123,
+    ProductName = "Laptop",
+    Price = 999.99m,
+    AggregateType = "Product"
+});
+
+// Get subscriber count for monitoring
+int subscriberCount = eventBus.GetSubscriberCount<ProductCreatedEvent>();
+
+// Publish multiple events efficiently
+await eventBus.PublishManyAsync(new[] {
+    new UserRegisteredEvent { UserId = 1, Email = "user@example.com", FullName = "John Doe" },
+    new OrderPlacedEvent { OrderId = 456, UserId = 1, TotalAmount = 99.99m, ItemCount = 2 }
+});
+```
+
 ## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
