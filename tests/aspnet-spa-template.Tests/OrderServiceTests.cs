@@ -12,12 +12,21 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
 
+/// <summary>
+/// Contains unit tests for the <see cref="OrderService"/> class.
+/// Tests various order-related operations including retrieval, creation, status updates,
+/// discount application, and revenue calculations.
+/// </summary>
 public sealed class OrderServiceTests
 {
     private readonly Mock<OrderRepository> _mockOrderRepository;
     private readonly Mock<ProductRepository> _mockProductRepository;
     private readonly OrderService _orderService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OrderServiceTests"/> class.
+    /// Sets up mock repositories and creates an instance of <see cref="OrderService"/> for testing.
+    /// </summary>
     public OrderServiceTests()
     {
         _mockOrderRepository = new Mock<OrderRepository>();
@@ -25,6 +34,10 @@ public sealed class OrderServiceTests
         _orderService = new OrderService(_mockOrderRepository.Object, _mockProductRepository.Object, NullLogger<OrderService>.Instance);
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.GetOrderByIdAsync"/> method with a valid order ID.
+    /// Verifies that the service returns the correct order response when the order exists.
+    /// </summary>
     [Fact]
     public async Task GetOrderByIdAsync_WithValidId_ReturnsOrderResponse()
     {
@@ -42,6 +55,10 @@ public sealed class OrderServiceTests
         _mockOrderRepository.Verify(r => r.GetByIdAsync(orderId), Times.Once);
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.GetOrderByIdAsync"/> method with an invalid order ID.
+    /// Verifies that the service throws a <see cref="NotFoundException"/> when the order does not exist.
+    /// </summary>
     [Fact]
     public async Task GetOrderByIdAsync_WithInvalidId_ThrowsNotFoundException()
     {
@@ -56,6 +73,10 @@ public sealed class OrderServiceTests
         await act.Should().ThrowAsync<NotFoundException>();
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.CreateOrderAsync"/> method with a valid request.
+    /// Verifies that the service creates an order successfully with the correct calculations.
+    /// </summary>
     [Fact]
     public async Task CreateOrderAsync_WithValidRequest_CreatesOrder()
     {
@@ -86,6 +107,10 @@ public sealed class OrderServiceTests
         _mockOrderRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.CreateOrderAsync"/> method with an empty items list.
+    /// Verifies that the service throws a <see cref="ValidationException"/> when no items are provided.
+    /// </summary>
     [Fact]
     public async Task CreateOrderAsync_WithEmptyItems_ThrowsValidationException()
     {
@@ -100,6 +125,10 @@ public sealed class OrderServiceTests
         await act.Should().ThrowAsync<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.CreateOrderAsync"/> method with null items.
+    /// Verifies that the service throws a <see cref="ValidationException"/> when items are null.
+    /// </summary>
     [Fact]
     public async Task CreateOrderAsync_WithNullItems_ThrowsValidationException()
     {
@@ -114,6 +143,10 @@ public sealed class OrderServiceTests
         await act.Should().ThrowAsync<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.CreateOrderAsync"/> method with insufficient stock.
+    /// Verifies that the service throws a <see cref="BusinessException"/> when product stock is insufficient.
+    /// </summary>
     [Fact]
     public async Task CreateOrderAsync_WithInsufficientStock_ThrowsBusinessException()
     {
@@ -138,6 +171,10 @@ public sealed class OrderServiceTests
         await act.Should().ThrowAsync<BusinessException>().WithMessage("*Insufficient stock*");
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.UpdateOrderStatusAsync"/> method with a valid status.
+    /// Verifies that the service updates the order status successfully.
+    /// </summary>
     [Fact]
     public async Task UpdateOrderStatusAsync_WithValidStatus_UpdatesOrderStatus()
     {
@@ -158,6 +195,10 @@ public sealed class OrderServiceTests
         _mockOrderRepository.Verify(r => r.Update(It.IsAny<Order>()), Times.Once);
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.ApplyDiscountAsync"/> method with a valid discount.
+    /// Verifies that the service applies the discount to the order correctly.
+    /// </summary>
     [Fact]
     public async Task ApplyDiscountAsync_WithValidDiscount_AppliesToOrder()
     {
@@ -179,6 +220,10 @@ public sealed class OrderServiceTests
         _mockOrderRepository.Verify(r => r.Update(It.IsAny<Order>()), Times.Once);
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.ApplyDiscountAsync"/> method on a finalized order.
+    /// Verifies that the service throws a <see cref="BusinessException"/> when trying to apply discount to a delivered order.
+    /// </summary>
     [Fact]
     public async Task ApplyDiscountAsync_ToFinalizedOrder_ThrowsBusinessException()
     {
@@ -196,6 +241,10 @@ public sealed class OrderServiceTests
         await act.Should().ThrowAsync<BusinessException>().WithMessage("*Cannot apply discount*");
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.GetUserOrdersAsync"/> method with a valid user ID.
+    /// Verifies that the service returns the correct list of orders for the specified user.
+    /// </summary>
     [Fact]
     public async Task GetUserOrdersAsync_WithValidUserId_ReturnsUserOrders()
     {
@@ -215,6 +264,10 @@ public sealed class OrderServiceTests
         result.Should().HaveCount(2);
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.GetPendingOrdersAsync"/> method.
+    /// Verifies that the service returns all orders with Pending status.
+    /// </summary>
     [Fact]
     public async Task GetPendingOrdersAsync_ReturnsPendingOrders()
     {
@@ -233,6 +286,10 @@ public sealed class OrderServiceTests
         result.Should().HaveCount(2);
     }
 
+    /// <summary>
+    /// Tests the <see cref="OrderService.GetTotalRevenueAsync"/> method.
+    /// Verifies that the service returns the correct total revenue amount.
+    /// </summary>
     [Fact]
     public async Task GetTotalRevenueAsync_ReturnsCorrectTotal()
     {
