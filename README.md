@@ -1913,6 +1913,50 @@ public class MemoryCacheUsageExample
 }
 ```
 
+## OrderServiceTests
+
+The `OrderServiceTests` class provides comprehensive unit testing for the `OrderService`, covering order retrieval, creation, status updates, discount application, and revenue calculations. It ensures that order-related operations behave correctly under both valid and invalid scenarios, including validation failures, business rule violations, and data access errors.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using Xunit;
+
+// OrderServiceTests is designed for use within an xUnit test runner
+public class OrderServiceUsageExample
+{
+    private readonly OrderServiceTests _tests = new OrderServiceTests();
+
+    public async Task RunTestSuite()
+    {
+        // Retrieval tests
+        await _tests.GetOrderByIdAsync_WithValidId_ReturnsOrderResponse();
+        await _tests.GetOrderByIdAsync_WithInvalidId_ThrowsNotFoundException();
+
+        // Creation tests
+        await _tests.CreateOrderAsync_WithValidRequest_CreatesOrder();
+        await _tests.CreateOrderAsync_WithEmptyItems_ThrowsValidationException();
+        await _tests.CreateOrderAsync_WithNullItems_ThrowsValidationException();
+        await _tests.CreateOrderAsync_WithInsufficientStock_ThrowsBusinessException();
+
+        // Status update tests
+        await _tests.UpdateOrderStatusAsync_WithValidStatus_UpdatesOrderStatus();
+
+        // Discount tests
+        await _tests.ApplyDiscountAsync_WithValidDiscount_AppliesToOrder();
+        await _tests.ApplyDiscountAsync_ToFinalizedOrder_ThrowsBusinessException();
+
+        // Collection retrieval tests
+        await _tests.GetUserOrdersAsync_WithValidUserId_ReturnsUserOrders();
+        await _tests.GetPendingOrdersAsync_ReturnsPendingOrders();
+
+        // Revenue calculation tests
+        await _tests.GetTotalRevenueAsync_ReturnsCorrectTotal();
+    }
+}
+```
+
 ## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
