@@ -640,6 +640,61 @@ const response = await fetch('/api/users/profile', {
 
 ---
 
+## NotFoundExceptionExtensions
+
+The `NotFoundExceptionExtensions` class provides a set of extension methods for creating and working with `NotFoundException` instances. These methods simplify common patterns for constructing not-found exceptions and checking their details, making error handling more readable and maintainable throughout your application.
+
+The extension methods work with the `NotFoundException` class, which includes resource type and ID information for better error context and debugging.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Exceptions;
+
+// Create a not-found exception with a simple message
+var exception = "User not found".ToNotFound();
+
+// Create a not-found exception with resource type and ID
+var productException = "product".ToNotFound(123);
+
+// Create a not-found exception with formatted message
+var orderException = "order".ToNotFound(456, "Order with ID {0} was not found in the system", 456);
+
+// Create a not-found exception with an inner exception
+try
+{
+    // Some operation that might throw
+}
+catch (Exception ex)
+{
+    var notFound = "Customer".ToNotFound(ex);
+}
+
+// Create a strongly-typed not-found exception using generic method
+var userException = 789.ToNotFound<User>();
+
+// Check if an exception is for a specific resource type
+bool isUserNotFound = userException.IsNotFoundFor("User"); // true
+bool isProductNotFound = userException.IsNotFoundFor("Product"); // false
+
+// Check if an exception is for a specific resource type and ID
+bool isUser789NotFound = userException.IsNotFoundFor("User", 789); // true
+bool isUser123NotFound = userException.IsNotFoundFor("User", 123); // false
+
+// Check using generic method
+bool isUserTypeNotFound = userException.IsNotFoundFor<User>(); // true
+
+// Get the resource type from the exception
+string resourceType = userException.GetResourceType(); // "User"
+
+// Get the resource ID from the exception with type safety
+int userId = userException.GetResourceId<int>(); // 789
+```
+
+---
+
+## ValidationExceptionExtensions
+
 ## ValidationExceptionExtensions
 
 The `ValidationExceptionExtensions` class provides a set of extension methods for working with `ValidationException` objects in a fluent, readable manner. These methods simplify common validation scenarios such as adding errors, checking for specific field errors, and merging validation results.
