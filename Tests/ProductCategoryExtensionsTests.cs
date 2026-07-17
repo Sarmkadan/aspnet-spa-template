@@ -6,8 +6,17 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests
 {
+    /// <summary>
+    /// Contains unit tests for <see cref="ProductCategory"/> extension methods.
+    /// </summary>
     public class ProductCategoryExtensionsTests
     {
+        /// <summary>
+        /// Tests that <see cref="ProductCategory.GetTaxRate()"/> returns the expected tax rate for known categories
+        /// and the default rate for unknown categories.
+        /// </summary>
+        /// <param name="category">The product category to test.</param>
+        /// <param name="expectedRate">The expected tax rate for the given category.</param>
         [Theory]
         [InlineData(ProductCategory.Food, 0.05d)]
         [InlineData(ProductCategory.Books, 0.0d)]
@@ -22,6 +31,10 @@ namespace AspNetSpaTemplate.Tests
             actualRate.Should().Be((decimal)expectedRate);
         }
 
+        /// <summary>
+        /// Tests that the product category cache key contains all required parts:
+        /// "product", "category", and the category name itself.
+        /// </summary>
         [Fact]
         public void ProductCategoryCacheKey_ShouldContainAllParts()
         {
