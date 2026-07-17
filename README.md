@@ -7289,9 +7289,95 @@ public class ProductService
 
 ---
 
+## CollectionExtensions
+
+Provides a set of utility extension methods for working with collections and enumerables. These methods simplify common operations like batching, filtering, pagination, and type-safe casting, reducing boilerplate code in LINQ chains and collection processing scenarios.
+
+
+
+
+**Usage Example:**
+
+
+```csharp
+// Sample data: a list of products
+var products = new List<Product>
+{
+    new Product { Id = 1, Name = "Laptop", Category = "Electronics", Price = 999.99m },
+    new Product { Id = 2, Name = "Smartphone", Category = "Electronics", Price = 699.99m },
+    new Product { Id = 3, Name = "Desk Chair", Category = "Furniture", Price = 199.99m },
+    new Product { Id = 4, Name = "Monitor", Category = "Electronics", Price = 249.99m },
+    new Product { Id = 5, Name = "Keyboard", Category = "Electronics", Price = 89.99m }
+};
+
+// Batch products into groups of 2 for processing
+var batches = products.Batch(2);
+foreach (var batch in batches)
+{
+    Console.WriteLine($"Processing batch with {batch.Count()} items");
+}
+
+// Check if a collection is null or empty
+if (products.IsNullOrEmpty())
+{
+    Console.WriteLine("No products found");
+}
+
+// Safely handle potentially null collections
+IEnumerable<Product>? maybeNullProducts = GetProducts();
+var safeProducts = maybeNullProducts.OrEmpty();
+
+// Get distinct products by category
+var distinctCategories = products.DistinctBy(p => p.Category);
+foreach (var category in distinctCategories)
+{
+    Console.WriteLine($"Category: {category}");
+}
+
+// Paginate products (page 1, 3 items per page)
+var (paginatedItems, totalCount) = products.Paginate(1, 3);
+Console.WriteLine($"Showing {paginatedItems.Count()} of {totalCount} total items");
+
+// Apply action to each product (e.g., logging)
+products.ForEach(p => Console.WriteLine($"Processing: {p.Name}"));
+
+// Convert dictionary to key=value string
+var settings = new Dictionary<string, string>
+{
+    { "CacheDuration", "5m" },
+    { "MaxItems", "100" },
+    { "Enabled", "true" }
+};
+Console.WriteLine(settings.ToKeyValueString());
+
+// Safely cast heterogeneous collection
+var mixedItems = new List<object> { "string", 123, new Product(), 456.78 };
+var stringItems = mixedItems.SafeCast<object, string>();
+foreach (var str in stringItems)
+{
+    Console.WriteLine(str);
+}
+
+// Shuffle products for random selection
+var shuffledProducts = products.Shuffle();
+Console.WriteLine($"First shuffled product: {shuffledProducts.First().Name}");
+
+// Example class used in the example
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
+```
+
+
+
 ## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+
 
 ---
 
