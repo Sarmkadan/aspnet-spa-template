@@ -93,7 +93,8 @@ public static class EventBusImplementationExtensions
             var result = new Dictionary<Type, int>();
 
             // Use reflection to access the internal _subscribers dictionary
-            var subscribersField = typeof(EventBusImplementation).GetField("_subscribers",
+            var subscribersField = typeof(EventBusImplementation).GetField(
+                "_subscribers",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
             if (subscribersField?.GetValue(eventBus) is Dictionary<Type, List<Delegate>> subscribers)
@@ -121,7 +122,8 @@ public static class EventBusImplementationExtensions
 
         lock (eventBus.GetSubscriberCountLock())
         {
-            var subscribersField = typeof(EventBusImplementation).GetField("_subscribers",
+            var subscribersField = typeof(EventBusImplementation).GetField(
+                "_subscribers",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
             if (subscribersField?.GetValue(eventBus) is Dictionary<Type, List<Delegate>> subscribers)
@@ -137,10 +139,10 @@ public static class EventBusImplementationExtensions
     /// </summary>
     /// <typeparam name="TEvent">The event type to publish.</typeparam>
     /// <param name="eventBus">The event bus instance.</param>
-    /// <param name="@event">The event to publish.</param>
+    /// <param name="event">The event to publish.</param>
     /// <param name="delayMilliseconds">Delay in milliseconds before publishing.</param>
     /// <returns>A task representing the delayed publish operation.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="eventBus"/> or <paramref name="@event"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="eventBus"/> or <paramref name="event"/> is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="delayMilliseconds"/> is negative.</exception>
     public static async Task PublishWithDelayAsync<TEvent>(this EventBusImplementation eventBus, TEvent @event, int delayMilliseconds) where TEvent : DomainEvent
     {
@@ -162,10 +164,10 @@ public static class EventBusImplementationExtensions
     /// </summary>
     /// <typeparam name="TEvent">The event type to publish.</typeparam>
     /// <param name="eventBus">The event bus instance.</param>
-    /// <param name="@event">The event to publish.</param>
+    /// <param name="event">The event to publish.</param>
     /// <param name="delay">Delay before publishing.</param>
     /// <returns>A task representing the delayed publish operation.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="eventBus"/> or <paramref name="@event"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="eventBus"/> or <paramref name="event"/> is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="delay"/> is negative.</exception>
     public static async Task PublishWithDelayAsync<TEvent>(this EventBusImplementation eventBus, TEvent @event, TimeSpan delay) where TEvent : DomainEvent
     {
@@ -192,7 +194,8 @@ public static class EventBusImplementationExtensions
     {
         ArgumentNullException.ThrowIfNull(eventBus);
 
-        var lockField = typeof(EventBusImplementation).GetField("_subscriberLock",
+        var lockField = typeof(EventBusImplementation).GetField(
+            "_subscriberLock",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
         return lockField?.GetValue(eventBus) as object ?? throw new InvalidOperationException("Could not access subscriber lock.");
