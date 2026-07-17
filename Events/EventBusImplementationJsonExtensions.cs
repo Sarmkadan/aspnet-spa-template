@@ -14,6 +14,9 @@ namespace AspNetSpaTemplate.Events;
 /// Provides System.Text.Json serialization extensions for <see cref="EventBusImplementation"/>.
 /// Enables round-trip serialization of event bus instances for testing, debugging, and state persistence.
 /// </summary>
+/// <remarks>
+/// This class is static as it contains only extension methods for serialization.
+/// </remarks>
 public static class EventBusImplementationJsonExtensions
 {
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web)
@@ -36,9 +39,7 @@ public static class EventBusImplementationJsonExtensions
 
         var options = indented
             ? new JsonSerializerOptions(_jsonSerializerOptions)
-            {
-                WriteIndented = true
-            }
+            { WriteIndented = true }
             : _jsonSerializerOptions;
 
         return JsonSerializer.Serialize(value, options);
@@ -49,9 +50,12 @@ public static class EventBusImplementationJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>An <see cref="EventBusImplementation"/> instance, or null if the JSON is null or empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static EventBusImplementation? FromJson(string json)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         if (string.IsNullOrEmpty(json))
         {
             return null;
@@ -66,9 +70,12 @@ public static class EventBusImplementationJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">The deserialized event bus instance, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeds; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static bool TryFromJson(string json, out EventBusImplementation? value)
     {
         value = null;
+
+        ArgumentNullException.ThrowIfNull(json);
 
         if (string.IsNullOrEmpty(json))
         {
@@ -78,7 +85,7 @@ public static class EventBusImplementationJsonExtensions
         try
         {
             value = JsonSerializer.Deserialize<EventBusImplementation>(json, _jsonSerializerOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
