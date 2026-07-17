@@ -893,6 +893,103 @@ using (var profiler = PerformanceHelper.Profile("Database query"))
 // Console output: "Database query: 200ms"
 ```
 
+## HealthController
+
+Provides health monitoring endpoints for application liveness, readiness, and diagnostics. The controller exposes RESTful endpoints to check system health, cache status, background worker status, and comprehensive diagnostics for monitoring and load balancer integration.
+
+### Endpoints
+
+- `GET /api/health/live` - Simple liveness check returning 200 if application is running
+- `GET /api/health/ready` - Readiness check including dependencies (cache, background workers)
+- `GET /api/health/diagnostics` - Detailed diagnostics with system metrics and performance data
+- `POST /api/health/trigger-task/{taskName}` - Manually trigger a background task
+- `GET /api/health/workers` - Get current status of all background workers
+
+### Usage Example
+
+```csharp
+// Health check endpoints are typically called by monitoring systems
+
+// Simple liveness check (used by Kubernetes/Docker health probes)
+var livenessResponse = await client.GetFromJsonAsync<dynamic>("/api/health/live");
+Console.WriteLine($"Application status: {livenessResponse?.status}, timestamp: {livenessResponse?.timestamp}");
+
+// Readiness check (waits for dependencies to be ready)
+var readinessResponse = await client.GetFromJsonAsync<HealthCheckReport>("/api/health/ready");
+Console.WriteLine($"Readiness status: {readinessResponse?.Status}");
+if (readinessResponse?.Components != null)
+{
+    foreach (var component in readinessResponse.Components)
+    {
+        Console.WriteLine($"  {component.Key}: {component.Value}");
+    }
+}
+
+// Detailed diagnostics (admin-only in production)
+var diagnostics = await client.GetFromJsonAsync<HealthDiagnostics>("/api/health/diagnostics");
+Console.WriteLine($"Environment: {diagnostics?.Environment.AspNetCoreEnvironment}");
+Console.WriteLine($"Memory usage: {diagnostics?.Memory.WorkingSetMB} MB");
+
+// Trigger a background task for testing
+var triggerResponse = await client.PostAsJsonAsync("/api/health/trigger-task/sample-task", new { });
+Console.WriteLine($"Task triggered: {triggerResponse?.message}");
+
+// Get worker status
+var workersResponse = await client.GetFromJsonAsync<WorkerStatusResponse>("/api/health/workers");
+foreach (var worker in workersResponse?.workers ?? new List<WorkerStatus>())
+{
+    Console.WriteLine($"Worker {worker.TaskName}: {worker.Status}, executions: {worker.ExecutionCount}");
+}
+
+// Response models
+public class HealthCheckReport
+{
+    public DateTime Timestamp { get; set; }
+    public string Status { get; set; }
+    public Dictionary<string, string> Components { get; set; }
+}
+
+public class HealthDiagnostics
+{
+    public DateTime Timestamp { get; set; }
+    public EnvironmentInfo Environment { get; set; }
+    public CacheReport Cache { get; set; }
+    public List<BackgroundWorkerStatus> BackgroundWorkers { get; set; }
+    public MemoryInfo Memory { get; set; }
+}
+
+public class EnvironmentInfo
+{
+    public string AspNetCoreEnvironment { get; set; }
+    public string DotNetVersion { get; set; }
+    public int ProcessId { get; set; }
+    public string MachineName { get; set; }
+}
+
+public class MemoryInfo
+{
+    public long WorkingSetMB { get; set; }
+    public long PrivateMemoryMB { get; set; }
+}
+
+public class WorkerStatusResponse
+{
+    public List<WorkerStatus> workers { get; set; }
+}
+
+public class WorkerStatus
+{
+    public string TaskName { get; set; }
+    public bool IsRunning { get; set; }
+    public string Status { get; set; }
+    public DateTime? LastExecutedAt { get; set; }
+    public DateTime? NextExecutionAt { get; set; }
+    public int ExecutionCount { get; set; }
+    public int FailureCount { get; set; }
+    public double? LastDurationSeconds { get; set; }
+}
+```
+
 ## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
