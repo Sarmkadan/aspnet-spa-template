@@ -277,6 +277,57 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 ---
 
+## StringExtensions
+
+`StringExtensions` provides a collection of utility methods for string manipulation, validation, and formatting. These extension methods help standardize string handling across the application by offering consistent approaches to sanitization, slug generation, truncation, display naming, email validation, alphanumeric checks, fallback values, and HTML encoding. The methods are designed to be safe, efficient, and reusable throughout the codebase.
+
+
+### Usage Example
+
+```csharp
+// Sanitize user input to prevent XSS and SQL injection
+var userInput = "<script>alert('xss')</script>  Hello  World  ";
+var sanitized = userInput.Sanitize();
+// Result: "<script>alert('xss')</script> Hello World"
+
+// Convert title to URL-friendly slug
+var title = "My Awesome Blog Post!";
+var slug = title.ToSlug();
+// Result: "my-awesome-blog-post"
+
+// Truncate long text for display
+var longText = "This is a very long text that needs to be shortened for display purposes";
+var truncated = longText.Truncate(20);
+// Result: "This is a very long..."
+
+// Convert PascalCase to display name
+var pascalCase = "ProductName";
+var displayName = pascalCase.ToDisplayName();
+// Result: "Product Name"
+
+// Validate email format
+var email = "user@example.com";
+var isValid = email.IsValidEmail();
+// Result: true
+
+// Check if string is alphanumeric
+var alphanumeric = "Product123";
+var isAlphaNum = alphanumeric.IsAlphaNumeric();
+// Result: true
+
+// Provide fallback if string is empty
+var emptyString = "";
+var withFallback = emptyString.OrIfEmpty("No description available");
+// Result: "No description available"
+
+// HTML encode for safe display
+var htmlContent = "<div>Hello & Welcome</div>";
+var encoded = htmlContent.HtmlEncode();
+// Result: "&lt;div&gt;Hello &amp; Welcome&lt;/div&gt;"
+```
+
+---
+
 ## ProductRepository
 
 `ProductRepository` is a specialized repository for managing product entities in the e-commerce system. It extends `RepositoryBase<Product>` to provide product-specific query methods including retrieval by category, featured products, top-rated products, stock status, search functionality, and analytical methods for calculating average prices and product counts. The repository is essential for product management, catalog browsing, search functionality, and business intelligence operations.
