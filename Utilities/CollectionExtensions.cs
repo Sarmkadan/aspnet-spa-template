@@ -10,16 +10,27 @@ namespace AspNetSpaTemplate.Utilities;
 /// Extension methods for collections and enumerable operations.
 /// Provides utility methods for batching, filtering, and pagination.
 /// </summary>
+/// <remarks>
+/// This class is static to support extension methods and sealed to prevent instantiation.
+/// </remarks>
 public static class CollectionExtensions
 {
     /// <summary>
     /// Chunks a collection into smaller batches of specified size.
     /// Useful for batch processing database operations.
     /// </summary>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    /// <param name="source">The collection to batch.</param>
+    /// <param name="batchSize">The maximum size of each batch. Must be positive.</param>
+    /// <returns>An enumerable of batches, each containing up to <paramref name="batchSize"/> items.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="batchSize"/> is less than or equal to 0.</exception>
     public static IEnumerable<IEnumerable<T>> Batch<T>(this IEnumerable<T> source, int batchSize)
     {
+        ArgumentNullException.ThrowIfNull(source);
+
         if (batchSize <= 0)
-            throw new ArgumentException("Batch size must be positive", nameof(batchSize));
+            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be positive");
 
         var batch = new List<T>();
         foreach (var item in source)
@@ -40,6 +51,9 @@ public static class CollectionExtensions
     /// Checks if collection is null or empty.
     /// Cleaner than checking both conditions separately.
     /// </summary>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    /// <param name="source">The collection to check.</param>
+    /// <returns><see langword="true"/> if the collection is null or empty; otherwise, <see langword="false"/>.</returns>
     public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
     {
         return source is null || !source.Any();
@@ -49,17 +63,29 @@ public static class CollectionExtensions
     /// Returns the enumerable or an empty collection if null.
     /// Prevents null reference exceptions in LINQ chains.
     /// </summary>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    /// <param name="source">The collection to check.</param>
+    /// <returns>The original collection if not null; otherwise, an empty enumerable.</returns>
     public static IEnumerable<T> OrEmpty<T>(this IEnumerable<T>? source)
     {
         return source ?? Enumerable.Empty<T>();
     }
 
     /// <summary>
-    /// Distils duplicate items based on selector and returns unique items.
-    /// More flexible than DistinctBy for complex equality scenarios.
+    /// Returns distinct elements from a sequence by using a specified key selector function.
+    /// More flexible than LINQ's DistinctBy for complex equality scenarios.
     /// </summary>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    /// <typeparam name="TKey">The type of key used for distinct comparison.</typeparam>
+    /// <param name="source">The collection to process.</param>
+    /// <param name="keySelector">A function to extract the key for each element.</param>
+    /// <returns>An enumerable that contains the distinct elements from the source.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="source"/> or <paramref name="keySelector"/> is <see langword="null"/>.</exception>
     public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> source, Func<T, TKey> keySelector)
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(keySelector);
+
         var seenKeys = new HashSet<TKey>();
         foreach (var item in source)
         {
@@ -73,12 +99,20 @@ public static class CollectionExtensions
     /// Converts collection to paginated result.
     /// Centralizes pagination logic to prevent off-by-one errors.
     /// </summary>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    /// <param name="source">The collection to paginate.</param>
+    /// <param name="pageNumber">The 1-based page number. Values less than 1 are treated as 1.</param>
+    /// <param name="pageSize">The number of items per page. Values less than 1 are treated as 10.</param>
+    /// <returns>A tuple containing the paginated items and the total count of all items.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
     public static (IEnumerable<T> Items, int Total) Paginate<T>(this IEnumerable<T> source, int pageNumber, int pageSize)
     {
+        ArgumentNullException.ThrowIfNull(source);
+
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
 
-        var total = source.Count();
+        var total = source.TryGetNonEnumeratedCount(out var count) ? count : source.Count();
         var items = source.Skip((pageNumber - 1) * pageSize).Take(pageSize);
         return (items, total);
     }
@@ -87,8 +121,16 @@ public static class CollectionExtensions
     /// Applies action to each item in the collection (side effects).
     /// Used for logging, validation, or other non-mapping operations.
     /// </summary>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    /// <param name="source">The collection to process.</param>
+    /// <param name="action">The action to apply to each item.</param>
+    /// <returns>The original collection for method chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="source"/> or <paramref name="action"/> is <see langword="null"/>.</exception>
     public static IEnumerable<T> ForEach<T>(this IEnumerable<T> source, Action<T> action)
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(action);
+
         foreach (var item in source)
         {
             action(item);
@@ -100,22 +142,34 @@ public static class CollectionExtensions
     /// Converts dictionary to comma-separated key=value pairs.
     /// Useful for logging or debugging configuration values.
     /// </summary>
+    /// <typeparam name="TKey">The type of dictionary keys.</typeparam>
+    /// <typeparam name="TValue">The type of dictionary values.</typeparam>
+    /// <param name="source">The dictionary to convert.</param>
+    /// <returns>A string representation of the dictionary, or empty string if null or empty.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
     public static string ToKeyValueString<TKey, TValue>(this Dictionary<TKey, TValue> source)
         where TKey : notnull
     {
-        if (source is null || source.Count == 0)
-            return string.Empty;
+        ArgumentNullException.ThrowIfNull(source);
 
-        var pairs = source.Select(kvp => $"{kvp.Key}={kvp.Value}");
-        return string.Join(", ", pairs);
+        return source.Count == 0
+            ? string.Empty
+            : string.Join(", ", source.Select(kvp => $"{kvp.Key}={kvp.Value}"));
     }
 
     /// <summary>
     /// Safely casts collection to another type, filtering out invalid items.
     /// More forgiving than direct cast for heterogeneous collections.
     /// </summary>
-    public static IEnumerable<TTarget> SafeCast<TSource, TTarget>(this IEnumerable<TSource> source) where TTarget : class
+    /// <typeparam name="TSource">The source type.</typeparam>
+    /// <typeparam name="TTarget">The target type to cast to.</typeparam>
+    /// <param name="source">The collection to process.</param>
+    /// <returns>An enumerable containing only items that can be cast to <typeparamref name="TTarget"/>.</returns>
+    public static IEnumerable<TTarget> SafeCast<TSource, TTarget>(this IEnumerable<TSource> source)
+        where TTarget : class
     {
+        ArgumentNullException.ThrowIfNull(source);
+
         foreach (var item in source)
         {
             if (item is TTarget target)
@@ -127,8 +181,14 @@ public static class CollectionExtensions
     /// Shuffles collection using Fisher-Yates algorithm.
     /// Returns new collection, original is unchanged.
     /// </summary>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    /// <param name="source">The collection to shuffle.</param>
+    /// <returns>A new collection with elements in random order.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
     public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
     {
+        ArgumentNullException.ThrowIfNull(source);
+
         var items = source.ToList();
 
         for (int i = items.Count - 1; i > 0; i--)
