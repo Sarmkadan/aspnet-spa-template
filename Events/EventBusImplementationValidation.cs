@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =====================================================================
 
+using System;
 using System.Collections.Generic;
 
 namespace AspNetSpaTemplate.Events;
@@ -24,7 +25,27 @@ public static class EventBusImplementationValidation
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        return Array.Empty<string>();
+        var problems = new List<string>();
+
+        // Validate logger is not null
+        if (value.Logger is null)
+        {
+            problems.Add("Logger is not initialized.");
+        }
+
+        // Validate subscriber lock is not null
+        if (value.SubscriberLock is null)
+        {
+            problems.Add("Subscriber lock object is not initialized.");
+        }
+
+        // Validate subscribers dictionary is not null
+        if (value.Subscribers is null)
+        {
+            problems.Add("Subscribers dictionary is not initialized.");
+        }
+
+        return problems;
     }
 
     /// <summary>
