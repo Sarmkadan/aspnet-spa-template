@@ -512,6 +512,88 @@ using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
 var streamUser = await JsonSerializationHelper.DeserializeAsync<UserProfile>(stream);
 ```
 
+## PerformanceHelper
+
+Provides comprehensive performance measurement and profiling utilities for benchmarking operations, measuring execution time, memory usage, and query performance. The helper includes synchronous and asynchronous timing utilities, memory profiling, and detailed benchmarking statistics to help identify performance bottlenecks and optimize application performance.
+
+### Usage Example
+
+```csharp
+// Measure synchronous operation execution time
+var (result, elapsedMs) = PerformanceHelper.MeasureTime(() => 
+{
+    // Simulate CPU-intensive work
+    Thread.Sleep(100);
+    return "Operation completed";
+});
+
+Console.WriteLine($"Result: {result}, Time: {elapsedMs}ms");
+
+// Measure asynchronous operation execution time
+var (asyncResult, asyncElapsedMs) = await PerformanceHelper.MeasureTimeAsync(async () => 
+{
+    // Simulate async work
+    await Task.Delay(150);
+    return 42;
+});
+
+Console.WriteLine($"Async result: {asyncResult}, Time: {asyncElapsedMs}ms");
+
+// Measure memory allocation
+var (memoryResult, memoryBytes) = PerformanceHelper.MeasureMemory(() => 
+{
+    var list = new List<int>();
+    for (int i = 0; i < 1000; i++)
+    {
+        list.Add(i);
+    }
+    return list;
+});
+
+Console.WriteLine($"Memory allocated: {memoryBytes} bytes");
+
+// Get current memory usage
+double currentMemoryMb = PerformanceHelper.GetMemoryUsageMb();
+Console.WriteLine($"Current memory usage: {currentMemoryMb:F2} MB");
+
+// Benchmark an operation with detailed statistics
+var stats = PerformanceHelper.BenchmarkOperation(() => 
+{
+    // Simulate database query
+    var data = new List<string>();
+    for (int i = 0; i < 1000; i++)
+    {
+        data.Add($"Item {i}");
+    }
+    return data;
+}, iterations: 10);
+
+Console.WriteLine(stats);
+Console.WriteLine($"Average time: {stats.AverageMs:F2}ms");
+Console.WriteLine($"Min/Max: {stats.MinMs}/{stats.MaxMs}ms");
+Console.WriteLine($"Throughput: {stats.ThroughputPerSecond:F2} ops/sec");
+
+// Measure query performance
+var (queryResults, queryTimeMs, count) = PerformanceHelper.MeasureQueryTime(() => 
+{
+    var query = Enumerable.Range(1, 5000)
+        .Where(x => x % 2 == 0)
+        .Select(x => x * 2)
+        .ToList();
+    return query;
+});
+
+Console.WriteLine($"Processed {count} items in {queryTimeMs}ms");
+
+// Use IDisposable profiler for scoped performance measurement
+using (var profiler = PerformanceHelper.Profile("Database query"))
+{
+    // Simulate database operation
+    await Task.Delay(200);
+}
+// Console output: "Database query: 200ms"
+```
+
 ## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
