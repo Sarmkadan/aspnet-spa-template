@@ -990,6 +990,103 @@ public class WorkerStatus
 }
 ```
 
+## CsvFormatter
+
+Provides utilities for converting collections to CSV format and parsing CSV data back into structured objects. The formatter handles escaping of special characters and null values for safe CSV generation.
+
+### Public Members
+
+- `string ToCsv<T>(IEnumerable<T> items)` - Converts a collection of objects to CSV format using object properties as columns
+- `byte[] ToCsvBytes<T>(IEnumerable<T> items)` - Converts a collection to CSV bytes (UTF-8 encoded) for file downloads
+- `List<Dictionary<string, string>> ParseCsv(string csvContent)` - Parses CSV string back to structured data as dictionaries
+- `CsvExportOptions` - Configuration class with properties:
+  - `bool IncludeHeader { get; set; }` - Whether to include header row (default: true)
+  - `string Delimiter { get; set; }` - CSV delimiter character (default: ",")
+  - `string? DateFormat { get; set; }` - Date format string (default: "yyyy-MM-dd")
+  - `string? CurrencyFormat { get; set; }` - Currency format string (default: "F2")
+  - `List<string>? ColumnsToInclude { get; set; }` - Columns to include in output
+  - `List<string>? ColumnsToExclude { get; set; }` - Columns to exclude from output
+
+### Usage Example
+
+```csharp
+// Define a sample model
+public class ProductExport
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public decimal Price { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public string? Category { get; set; }
+    public int StockQuantity { get; set; }
+    public bool IsFeatured { get; set; }
+}
+
+// Sample data
+var products = new List<ProductExport>
+{
+    new ProductExport { Id = 1, Name = "Wireless Headphones", Price = 199.99m, CreatedDate = DateTime.UtcNow.AddDays(-30), Category = "Electronics", StockQuantity = 150, IsFeatured = true },
+    new ProductExport { Id = 2, Name = "Smartphone", Price = 899.99m, CreatedDate = DateTime.UtcNow.AddDays(-15), Category = "Electronics", StockQuantity = 75, IsFeatured = true },
+    new ProductExport { Id = 3, Name = "Coffee Mug", Price = 12.99m, CreatedDate = DateTime.UtcNow.AddDays(-7), Category = "Home", StockQuantity = 300, IsFeatured = false }
+};
+
+// Export to CSV string with default settings (includes header, uses comma delimiter)
+string csvString = CsvFormatter.ToCsv(products);
+Console.WriteLine(csvString);
+
+// Export to CSV bytes (useful for file downloads)
+byte[] csvBytes = CsvFormatter.ToCsvBytes(products);
+File.WriteAllBytes("products.csv", csvBytes);
+
+// Configure CSV export options
+var options = new CsvFormatter.CsvExportOptions
+{
+    IncludeHeader = true,
+    Delimiter = ",",
+    DateFormat = "yyyy-MM-dd",
+    CurrencyFormat = "F2",
+    ColumnsToInclude = null,  // Include all columns
+    ColumnsToExclude = null   // Exclude no columns
+};
+
+// Export with custom delimiter (semicolon)
+options.Delimiter = ";";
+string csvSemicolon = CsvFormatter.ToCsv(products);
+
+// Export without header
+options.IncludeHeader = false;
+string csvNoHeader = CsvFormatter.ToCsv(products);
+
+// Export with custom date format
+options.DateFormat = "yyyy-MM-dd HH:mm:ss";
+string csvCustomDate = CsvFormatter.ToCsv(products);
+
+// Export with custom currency format
+options.CurrencyFormat = "C2";
+string csvCustomCurrency = CsvFormatter.ToCsv(products);
+
+// Export including only specific columns
+options.ColumnsToInclude = new List<string> { "Id", "Name", "Price" };
+options.ColumnsToExclude = null;
+string csvSpecificColumns = CsvFormatter.ToCsv(products);
+
+// Export excluding specific columns
+options.ColumnsToInclude = null;
+options.ColumnsToExclude = new List<string> { "CreatedDate", "IsFeatured" };
+string csvExcludeColumns = CsvFormatter.ToCsv(products);
+
+// Parse CSV back to structured data
+string csvData = CsvFormatter.ToCsv(products);
+var parsedData = CsvFormatter.ParseCsv(csvData);
+Console.WriteLine($"Parsed {parsedData.Count} rows");
+
+// Access parsed data
+foreach (var row in parsedData)
+{
+    Console.WriteLine($"Product: {row["Name"]}, Price: {row["Price"]}");
+}
+```
+
 ## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
