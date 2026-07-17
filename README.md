@@ -1763,6 +1763,43 @@ public void Validate_Collection()
 }
 ```
 
+---
+
+## MemoryCacheServiceTestsExtensions
+
+The `MemoryCacheServiceTestsExtensions` class provides a set of extension methods for the `MemoryCacheServiceTests` class that simplify testing common caching patterns and operations. These methods encapsulate frequently used test scenarios like setting, getting, and removing cache entries, testing the GetOrSet pattern, verifying counter increments, and testing pattern-based cache removal, making test code more concise and readable.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using Xunit;
+
+public class CacheServiceTestsExample
+{
+    private readonly MemoryCacheServiceTests _tests = new MemoryCacheServiceTests();
+
+    public async Task RunCacheTests()
+    {
+        // Test basic set/get/remove operations
+        await _tests.SetGetAndRemoveAsync("test_key", "test_value");
+
+        // Test GetOrSet pattern - factory function should only be called once
+        await _tests.TestGetOrSetPatternAsync("cached_key", "cached_value");
+
+        // Test counter increment functionality
+        await _tests.TestIncrementAndVerifyAsync("counter_key", 8); // 1 + 1 + 5 + 1
+
+        // Test pattern-based removal
+        await _tests.TestRemoveByPatternAsync<TestData>(
+            pattern: "user:*",
+            matchingKeys: new[] { "user:123", "user:456", "user:admin" },
+            nonMatchingKeys: new[] { "product:1", "settings:general", "cache:stats" }
+        );
+    }
+}
+```
+
 ## OrderServiceIntegrationTests
 
 The `OrderServiceIntegrationTests` class provides comprehensive integration testing for order-related workflows, ensuring end-to-end functionality between the order service, repository, and database. It verifies complex business scenarios such as stock management, order calculations, and data isolation by utilizing the test server and database context.
