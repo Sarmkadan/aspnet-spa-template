@@ -4727,25 +4727,96 @@ The application uses the Options pattern for strongly-typed configuration. The m
 
 ```json
 {
-  "AspnetSpaTemplate": {
-    "Environment": "Production",
-    "JwtSecret": "REPLACE_WITH_A_SECURE_RANDOM_KEY",
-    "JwtExpiration": 3600,
-    "RequestLogging": {
-      "Enabled": true,
-      "VerbosityLevel": "Standard",
-      "SlowRequestThresholdMs": 1000
-    }
-  }
+"AspnetSpaTemplate": {
+"Environment": "Production",
+"JwtSecret": "REPLACE_WITH_A_SECURE_RANDOM_KEY",
+"JwtExpiration": 3600,
+"RequestLogging": {
+"Enabled": true,
+"VerbosityLevel": "Standard",
+"LogRequestHeaders": false,
+"LogResponseHeaders": false,
+"LogRequestBody": false,
+"LogResponseBody": false,
+"SlowRequestThresholdMs": 1000,
+"ExcludedPaths": []
 }
-
-```bash
+}
+}
+```
 # Use Development profile
 ASPNETCORE_ENVIRONMENT=Development dotnet run
 
 # Use Production profile
 ASPNETCORE_ENVIRONMENT=Production dotnet run
 ```
+
+## AspnetSpaTemplateOptions
+
+`AspnetSpaTemplateOptions` is the root configuration class for the ASP.NET SPA template. It provides application-wide settings including JWT authentication configuration, environment settings, and request logging configuration. This class is used with the Options pattern and can be configured through the `AspnetSpaTemplate` section in `appsettings.json` or via environment variables.
+
+### Usage Example
+
+```csharp
+// In Program.cs - configure AspnetSpaTemplateOptions
+builder.Services.AddOptions<AspnetSpaTemplateOptions>()
+    .Bind(builder.Configuration.GetSection(AspnetSpaTemplateOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+// Access the configured options in a service or controller
+public class AuthService
+{
+    private readonly AspnetSpaTemplateOptions _options;
+    
+    public AuthService(IOptions<AspnetSpaTemplateOptions> options)
+    {
+        _options = options.Value;
+    }
+    
+    public string GetJwtSecret()
+    {
+        return _options.JwtSecret;
+    }
+    
+    public bool IsDevelopmentEnvironment()
+    {
+        return _options.Environment.Equals("Development", StringComparison.OrdinalIgnoreCase);
+    }
+}
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `JwtSecret` | `string` | Secret key used for signing JWT tokens. Required field that should be set to a secure random value. |
+| `JwtExpiration` | `int` | JWT token expiration time in seconds. Must be between 60 and 86400 seconds (1 minute to 24 hours). Defaults to 3600 seconds (1 hour). |
+| `Environment` | `string` | Application environment name (e.g., "Development", "Production"). Required field. Defaults to "Production". |
+| `RequestLogging` | `RequestLoggingOptions` | Configuration for request/response logging middleware. Contains settings for enabling logging, verbosity level, and which parts of requests/responses to log. |
+
+### Nested Types
+
+#### RequestLoggingOptions
+
+Configuration options for request/response logging middleware. Controls which aspects of HTTP traffic are logged and when slow requests are flagged.
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `Enabled` | `bool` | Whether request/response logging is enabled. Defaults to `true`. |
+| `VerbosityLevel` | `string` | Logging detail level: "Minimal", "Standard", or "Verbose". Required field. Defaults to "Standard". |
+| `LogRequestHeaders` | `bool` | Whether to include request headers in logs. Defaults to `false`. |
+| `LogResponseHeaders` | `bool` | Whether to include response headers in logs. Defaults to `false`. |
+| `LogRequestBody` | `bool` | Whether to include request body in logs. Defaults to `false`. |
+| `LogResponseBody` | `bool` | Whether to include response body in logs. Defaults to `false`. |
+| `SlowRequestThresholdMs` | `int` | Request processing time threshold in milliseconds that triggers a "slow request" log entry. Must be between 0 and 10000. Defaults to 1000ms. |
+| `ExcludedPaths` | `List<string>` | List of request paths to exclude from logging. Empty by default. |
+
+### Related Types
+
+- **IOptions<AspnetSpaTemplateOptions>**: ASP.NET Core interface for accessing strongly-typed options
+- **RequestLoggingOptions**: Nested configuration class for request logging settings
+- Used in: Program.cs startup configuration, middleware setup, and application services that need access to configuration values
 
 ### Local Secrets with dotnet user-secrets
 
