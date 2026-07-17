@@ -8,8 +8,8 @@ using Xunit;
 namespace AspNetSpaTemplate.Tests;
 
 /// <summary>
-/// Extension methods for <see cref="ValidationHelperTests"/> that provide additional validation scenarios
-/// and helper methods for working with ValidationHelper in test scenarios.
+/// Extension methods for test scenarios that provide fluent validation helpers
+/// for working with <see cref="ValidationHelper"/> in unit tests.
 /// </summary>
 public static class ValidationHelperTestsExtensions
 {
@@ -20,11 +20,14 @@ public static class ValidationHelperTestsExtensions
     /// <param name="value">The value to validate.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated value for chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the value is null.</exception>
     public static T NotNull<T>(this T? value, string fieldName) where T : class
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ValidationHelper.NotNull(value, fieldName);
-        return value;
+        return value!;
     }
 
     /// <summary>
@@ -33,9 +36,12 @@ public static class ValidationHelperTestsExtensions
     /// <param name="value">The string to validate.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated string for chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the string is null or empty.</exception>
     public static string NotNullOrEmpty(this string? value, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ValidationHelper.NotNullOrEmpty(value, fieldName);
         return value!;
     }
@@ -48,9 +54,11 @@ public static class ValidationHelperTestsExtensions
     /// <param name="max">Maximum allowed value.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated value for chaining.</returns>
-    /// <exception cref="ValidationException">Thrown when the value is out of range.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is outside the range [min, max].</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     public static decimal InRange(this decimal value, decimal min, decimal max, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ValidationHelper.InRange(value, min, max, fieldName);
         return value;
     }
@@ -63,9 +71,11 @@ public static class ValidationHelperTestsExtensions
     /// <param name="max">Maximum allowed value.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated value for chaining.</returns>
-    /// <exception cref="ValidationException">Thrown when the value is out of range.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is outside the range [min, max].</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     public static int InRange(this int value, int min, int max, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ValidationHelper.InRange(value, min, max, fieldName);
         return value;
     }
@@ -78,9 +88,11 @@ public static class ValidationHelperTestsExtensions
     /// <param name="maxLength">Maximum allowed length.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated string for chaining.</returns>
-    /// <exception cref="ValidationException">Thrown when the string length is out of bounds.</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> length is outside the range [minLength, maxLength].</exception>
     public static string LengthBetween(this string value, int minLength, int maxLength, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ValidationHelper.LengthBetween(value, minLength, maxLength, fieldName);
         return value;
     }
@@ -93,9 +105,12 @@ public static class ValidationHelperTestsExtensions
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <param name="customMessage">Optional custom error message.</param>
     /// <returns>The validated string for chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="pattern"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the string doesn't match the pattern.</exception>
     public static string MatchesPattern(this string value, string pattern, string fieldName, string? customMessage = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ValidationHelper.MatchesPattern(value, pattern, fieldName, customMessage);
         return value;
     }
@@ -106,9 +121,12 @@ public static class ValidationHelperTestsExtensions
     /// <param name="email">The email address to validate.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated email address for chaining.</returns>
+    /// <exception cref="ArgumentException"><paramref name="email"/> is <see langword="null"/> or empty.</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the email format is invalid.</exception>
     public static string ValidEmail(this string email, string fieldName = "Email")
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ValidationHelper.ValidEmail(email, fieldName);
         return email;
     }
@@ -119,9 +137,12 @@ public static class ValidationHelperTestsExtensions
     /// <param name="phoneNumber">The phone number to validate.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated phone number for chaining.</returns>
+    /// <exception cref="ArgumentException"><paramref name="phoneNumber"/> is <see langword="null"/> or empty.</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the phone number is invalid.</exception>
     public static string ValidPhoneNumber(this string phoneNumber, string fieldName = "PhoneNumber")
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ValidationHelper.ValidPhoneNumber(phoneNumber, fieldName);
         return phoneNumber;
     }
@@ -133,9 +154,12 @@ public static class ValidationHelperTestsExtensions
     /// <param name="collection">The collection to validate.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated collection for chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="collection"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the collection is null or empty.</exception>
     public static IEnumerable<T> NotEmpty<T>(this IEnumerable<T>? collection, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ValidationHelper.NotEmpty(collection, fieldName);
         return collection!;
     }
@@ -148,9 +172,13 @@ public static class ValidationHelperTestsExtensions
     /// <param name="maxItems">Maximum allowed number of items.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated collection for chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxItems"/> is less than 0.</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the collection has too many items.</exception>
     public static IEnumerable<T> MaxItems<T>(this IEnumerable<T>? collection, int maxItems, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
+        ArgumentOutOfRangeException.ThrowIfNegative(maxItems);
         ValidationHelper.MaxItems(collection, maxItems, fieldName);
         return collection!;
     }
@@ -163,9 +191,11 @@ public static class ValidationHelperTestsExtensions
     /// <param name="value2">Second value to compare.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The first value for chaining.</returns>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the values are not equal.</exception>
     public static T Equal<T>(this T value1, T value2, string fieldName) where T : notnull
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ValidationHelper.Equal(value1, value2, fieldName);
         return value1;
     }
@@ -178,14 +208,21 @@ public static class ValidationHelperTestsExtensions
     /// <param name="expectedCount">Expected number of items.</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated collection for chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="collection"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="expectedCount"/> is less than 0.</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the collection doesn't have the expected count.</exception>
     public static IEnumerable<T> CountEquals<T>(this IEnumerable<T>? collection, int expectedCount, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedCount);
         ArgumentNullException.ThrowIfNull(collection);
+
         if (collection.Count() != expectedCount)
         {
             throw new ValidationException(fieldName, $"{fieldName} must contain exactly {expectedCount} items");
         }
+
         return collection;
     }
 
@@ -196,9 +233,11 @@ public static class ValidationHelperTestsExtensions
     /// <param name="min">Minimum allowed value (exclusive).</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated value for chaining.</returns>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the value is not greater than min.</exception>
     public static decimal GreaterThan(this decimal value, decimal min, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         if (value <= min)
         {
             throw new ValidationException(fieldName, $"{fieldName} must be greater than {min}");
@@ -213,9 +252,11 @@ public static class ValidationHelperTestsExtensions
     /// <param name="max">Maximum allowed value (exclusive).</param>
     /// <param name="fieldName">Name of the field being validated.</param>
     /// <returns>The validated value for chaining.</returns>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is <see langword="null"/> or empty.</exception>
     /// <exception cref="ValidationException">Thrown when the value is not less than max.</exception>
     public static decimal LessThan(this decimal value, decimal max, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
         if (value >= max)
         {
             throw new ValidationException(fieldName, $"{fieldName} must be less than {max}");
