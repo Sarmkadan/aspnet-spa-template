@@ -561,6 +561,79 @@ public class MyController : ControllerBase
 ---
 
 
+## IAssetVersioningService
+
+The `IAssetVersioningService` interface provides asset versioning and live-change notification capabilities for the offline-first SPA. It generates content-hash versions of static assets (JavaScript, CSS, HTML, images, fonts) and exposes them as an asset manifest for the service worker. In development mode, it watches the file system for changes and broadcasts them to all active HMR subscribers, enabling seamless hot module replacement without full page reloads.
+
+### Usage Example
+
+```csharp
+// Register IAssetVersioningService in Program.cs
+builder.Services.AddSingleton<IAssetVersioningService, AssetVersioningService>();
+builder.Services.AddHostedService<AssetVersioningService>();
+
+// Inject IAssetVersioningService in your controller or service
+public class AssetController : ControllerBase
+{
+    private readonly IAssetVersioningService _assetVersioningService;
+    private readonly ILogger<AssetController> _logger;
+
+    public AssetController(IAssetVersioningService assetVersioningService, ILogger<AssetController> logger)
+    {
+        _assetVersioningService = assetVersioningService;
+        _logger = logger;
+    }
+
+    [HttpGet("~/asset-manifest.json")]
+    public async Task<IActionResult> GetAssetManifest()
+    {
+        // Get the asset manifest with versioned file paths
+        var manifest = await _assetVersioningService.GetAssetManifestAsync();
+
+        // Return as JSON response for the service worker
+        return Ok(manifest);
+    }
+
+    [HttpGet("~/watch-assets")]
+    public async IAsyncEnumerable<string> WatchAssetChanges()
+    {
+        // Stream asset changes for HMR clients
+        await foreach (var changedAsset in _assetVersioningService.WatchForChangesAsync())
+        {
+            _logger.LogInformation("Asset changed: {AssetPath}", changedAsset);
+            yield return changedAsset;
+        }
+    }
+}
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `GetAssetManifestAsync(CancellationToken)` | `Task<IReadOnlyDictionary<string, string>>` | Returns a mapping of asset paths to their short content-hash versions for cache busting |
+| `WatchForChangesAsync(CancellationToken)` | `IAsyncEnumerable<string>` | Yields the relative path of each asset that changes while the caller holds a subscription |
+
+### Implementation Notes
+
+- **Asset Versioning**: Each asset file is hashed using SHA-256, and the first 8 characters of the hash are used as the version identifier
+- **Development Mode**: When `ASPNETCORE_ENVIRONMENT` is `Development`, the service starts a `FileSystemWatcher` to monitor `wwwroot` for changes
+- **Hot Module Replacement**: Subscribers receive real-time notifications when assets change, enabling instant browser updates without full page reloads
+- **Cache Busting**: The service worker uses the versioned asset paths to implement cache-first strategy for static assets
+- **Supported Extensions**: `.js`, `.css`, `.html`, `.json`, `.ico`, `.png`, `.svg`, `.webp`, `.woff2`
+
+### Related Types
+
+- **AssetVersioningService**: Concrete implementation that also implements `IHostedService` and `IDisposable` for lifecycle management
+- Used in: Service worker registration and HMR client implementations
+
+
+
+
+---
+
+
+
 ## Installation
 
 ### Prerequisites
