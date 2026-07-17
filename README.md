@@ -2,6 +2,82 @@
 
 A production-ready ASP.NET Core template with integrated React SPA, authentication, and modern tooling.
 
+## ProductsController
+
+Manages product catalog operations including CRUD operations, product search, category filtering, and featured product management. The controller provides RESTful endpoints for product lifecycle management with proper validation and response handling.
+
+### Endpoints
+
+- `GET /api/products/{id}` - Retrieve a single product by ID
+- `GET /api/products` - List all products with pagination
+- `GET /api/products/category/{category}` - List products by category with pagination
+- `GET /api/products/featured` - Get featured products (limited set)
+- `GET /api/products/top-rated` - Get top-rated products (limited set)
+- `GET /api/products/search` - Search products by search term
+- `POST /api/products` - Create a new product
+- `PUT /api/products/{id}` - Update an existing product
+- `PATCH /api/products/{id}/availability` - Update product availability status
+- `PATCH /api/products/{id}/featured` - Update product featured status
+- `DELETE /api/products/{id}` - Delete a product
+
+### Usage Example
+
+```csharp
+// Configure ProductService in Program.cs
+builder.Services.AddScoped<ProductService>();
+
+// Example: Get a single product
+var productResponse = await client.GetFromJsonAsync<ProductResponse>("/api/products/1");
+Console.WriteLine($"Product: {productResponse?.Name}, Price: {productResponse?.Price}");
+
+// Example: List all products with pagination
+var productsPage1 = await client.GetFromJsonAsync<ProductListResponse>("/api/products?pageNumber=1&pageSize=10");
+Console.WriteLine($"Total products: {productsPage1?.TotalCount}");
+
+// Example: Get products by category
+var electronics = await client.GetFromJsonAsync<ProductListResponse>(
+    "/api/products/category/electronics?pageNumber=1&pageSize=5");
+
+// Example: Get featured products
+var featured = await client.GetFromJsonAsync<List<ProductResponse>>("/api/products/featured?limit=5");
+
+// Example: Search products
+var searchResults = await client.GetFromJsonAsync<List<ProductResponse>>(
+    "/api/products/search?searchTerm=laptop");
+
+// Example: Create a new product
+var newProduct = new CreateProductRequest
+{
+    Name = "Premium Wireless Headphones",
+    Description = "Noise-cancelling wireless headphones with 30-hour battery",
+    Price = 299.99m,
+    Category = ProductCategory.Electronics,
+    StockQuantity = 50,
+    IsFeatured = true,
+    IsAvailable = true
+};
+var createdProduct = await client.PostAsJsonAsync<ProductResponse>("/api/products", newProduct);
+
+// Example: Update a product
+var updateRequest = new UpdateProductRequest
+{
+    Name = "Premium Wireless Headphones (Updated)",
+    Description = "Noise-cancelling wireless headphones with 30-hour battery - Updated model",
+    Price = 279.99m,
+    StockQuantity = 45
+};
+var updatedProduct = await client.PutAsJsonAsync<ProductResponse>("/api/products/1", updateRequest);
+
+// Example: Update product availability
+await client.PatchAsJsonAsync("/api/products/1/availability", new { isAvailable = false });
+
+// Example: Update product featured status
+await client.PatchAsJsonAsync("/api/products/1/featured", new { isFeatured = true });
+
+// Example: Delete a product
+await client.DeleteAsync("/api/products/1");
+```
+
 ## WebhooksController
 
 Receives and processes webhooks from external services including payment providers, email services, shipping providers, and custom integrations. Validates HMAC signatures, queues webhook payloads for asynchronous processing, and returns immediate HTTP responses. Designed to respond quickly (under 5 seconds) to avoid webhook timeouts from external providers.
