@@ -159,6 +159,122 @@ string maskedCard = EncryptionHelper.MaskSensitiveData("4532123456789012", 4); /
 string maskedEmail = EncryptionHelper.MaskSensitiveData("user@example.com", 3); // "use****@example.com"
 ```
 
+## ErrorMappingHelper
+
+Provides a centralized mechanism for mapping exceptions and error conditions to standardized HTTP status codes, error codes, user-friendly messages, and logging levels. This utility ensures consistent error handling across API controllers, services, and middleware by transforming raw exceptions into structured error responses that are both machine-readable and user-friendly.
+
+### Usage Example
+
+```csharp
+// In a controller action
+public IActionResult GetUser(int userId)
+{
+    try
+    {
+        var user = _userService.GetUser(userId);
+        if (user == null)
+        {
+            return NotFound();
+        }
+        
+        return Ok(user);
+    }
+    catch (Exception ex)
+    {
+        // Map exception to standardized error response
+        var errorDetails = ErrorMappingHelper.ExtractErrorDetails(ex);
+        
+        // Get HTTP status code for the exception type
+        int statusCode = ErrorMappingHelper.MapToStatusCode(ex);
+        
+        // Get error code for client-side handling
+        string errorCode = ErrorMappingHelper.MapToErrorCode(ex);
+        
+        // Get user-friendly message
+        string userMessage = ErrorMappingHelper.MapToUserMessage(ex);
+        
+        // Get appropriate log level
+        var logLevel = ErrorMappingHelper.GetLogLevel(ex);
+        
+        // Log the error appropriately
+        switch (logLevel)
+        {
+            case LogLevel.Error:
+                _logger.LogError(ex, "Error processing user request: {ErrorCode} - {UserMessage}", errorCode, userMessage);
+                break;
+            case LogLevel.Warning:
+                _logger.LogWarning(ex, "Warning: {ErrorCode} - {UserMessage}", errorCode, userMessage);
+                break;
+            case LogLevel.Information:
+                _logger.LogInformation(ex, "Information: {ErrorCode} - {UserMessage}", errorCode, userMessage);
+                break;
+        }
+        
+        // Check if error is transient/retryable
+        var retryInfo = ErrorMappingHelper.GetRetryInfo(ex);
+        if (retryInfo.Retryable)
+        {
+            _logger.LogWarning("Transient error occurred. Retry after {RetryAfterSeconds} seconds", retryInfo.RetryAfterSeconds);
+        }
+        
+        // Return standardized error response
+        return StatusCode(statusCode, new
+        {
+            ErrorCode = errorCode,
+            Message = userMessage,
+            Details = errorDetails.ToString(),
+            Timestamp = DateTime.UtcNow
+        });
+    }
+}
+
+// Example usage in a service
+public async Task<User> GetUserAsync(int userId)
+{
+    try
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with ID {userId} not found");
+        }
+        
+        return user;
+    }
+    catch (SqlException sqlEx) when (sqlEx.Number == 208) // Invalid object name
+    {
+        throw new InvalidOperationException("Database table not found", sqlEx);
+    }
+    catch (SqlException sqlEx) when (ErrorMappingHelper.IsTransientError(sqlEx))
+    {
+        throw new InvalidOperationException("Database operation failed due to transient error", sqlEx);
+    }
+    catch (Exception ex)
+    {
+        if (ErrorMappingHelper.IsCriticalError(ex))
+        {
+            _logger.LogCritical(ex, "Critical error in user service");
+        }
+        
+        throw;
+    }
+}
+
+// Check if specific error types are transient
+if (ErrorMappingHelper.IsTransientError(sqlException))
+{
+    // Implement retry logic
+    await RetryPolicy.ExecuteAsync(async () => await RetryOperation());
+}
+
+// Check if error is critical
+if (ErrorMappingHelper.IsCriticalError(exception))
+{
+    // Trigger incident response procedures
+    _alertService.TriggerCriticalAlert(exception);
+}
+```
+
 ## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
