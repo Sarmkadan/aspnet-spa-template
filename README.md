@@ -1954,6 +1954,52 @@ public class MemoryCacheUsageExample
 
 The `OrderServiceTests` class provides comprehensive unit testing for the `OrderService`, covering order retrieval, creation, status updates, discount application, and revenue calculations. It ensures that order-related operations behave correctly under both valid and invalid scenarios, including validation failures, business rule violations, and data access errors.
 
+## UserServiceTests
+
+The `UserServiceTests` class provides comprehensive unit testing for the `UserService`, covering user management operations including retrieval, creation, authentication, updates, and activation/deactivation. It ensures that user-related operations behave correctly under both valid and invalid scenarios, including validation failures, business rule violations, and data access errors.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using AspNetSpaTemplate.DTOs;
+using Xunit;
+
+// UserServiceTests is designed for use within an xUnit test runner
+public class UserServiceUsageExample
+{
+    private readonly UserServiceTests _tests = new UserServiceTests();
+
+    public async Task RunTestSuite()
+    {
+        // User retrieval tests
+        await _tests.GetUserByIdAsync_WithValidId_ReturnsUser();
+        await _tests.GetUserByIdAsync_WithInvalidId_ThrowsNotFoundException();
+        await _tests.GetAllUsersAsync_ReturnsActiveUsers();
+
+        // User creation tests
+        await _tests.CreateUserAsync_WithValidRequest_CreatesUser();
+        await _tests.CreateUserAsync_WithExistingEmail_ThrowsValidationException();
+        await _tests.CreateUserAsync_WithShortFirstName_ThrowsValidationException();
+        await _tests.CreateUserAsync_WithInvalidEmail_ThrowsValidationException();
+        await _tests.CreateUserAsync_WithShortPassword_ThrowsValidationException();
+
+        // User update tests
+        await _tests.UpdateUserAsync_WithValidRequest_UpdatesProfile();
+
+        // Authentication tests
+        await _tests.AuthenticateAsync_WithValidCredentials_ReturnsToken();
+        await _tests.AuthenticateAsync_WithInvalidPassword_ThrowsBusinessException();
+        await _tests.AuthenticateAsync_WithNonExistentUser_ThrowsBusinessException();
+        await _tests.AuthenticateAsync_WithInactiveUser_ThrowsBusinessException();
+
+        // User activation/deactivation tests
+        await _tests.DeactivateUserAsync_WithValidId_DeactivatesUser();
+        await _tests.ActivateUserAsync_WithValidId_ActivatesUser();
+    }
+}
+```
+
 ### Usage Example
 
 ```csharp
