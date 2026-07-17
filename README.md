@@ -2201,6 +2201,146 @@ public class MemoryCacheUsageExample
 
 ---
 
+## SyncQueueServiceTests
+
+The `SyncQueueServiceTests` class provides comprehensive unit tests for the `SyncQueueService`, which implements an in-memory queue for synchronizing offline requests with the server. These tests verify that the sync queue correctly handles request deduplication, user isolation, ordering, and state management, ensuring reliable offline-to-online request synchronization.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Services;
+using AspNetSpaTemplate.Tests;
+
+// SyncQueueServiceTests is designed for use within an xUnit test runner
+public class SyncQueueServiceUsageExample
+{
+    private readonly SyncQueueServiceTests _tests = new SyncQueueServiceTests();
+
+    public void RunTestSuite()
+    {
+        // Test basic queue operations
+        var id1 = _tests.Enqueue_ReturnsPositiveId();
+        var id2 = _tests.Enqueue_SecondCall_ReturnsHigherId();
+        
+        // Test deduplication
+        var duplicateId = _tests.Enqueue_DuplicateClientRequestId_ReturnsSameId();
+        
+        // Test HTTP method normalization
+        _tests.Enqueue_MethodIsNormalisedToUppercase();
+        
+        // Test pending queue operations
+        _tests.GetPending_WithNoEntries_ReturnsEmpty();
+        _tests.GetPending_OnlyReturnsPendingEntries();
+        _tests.GetPending_IsolatesEntriesByUser();
+        _tests.GetPending_OrderedByQueuedAtAscending();
+        
+        // Test completion operations
+        var completeResult = _tests.Complete_WithValidId_ReturnsTrue();
+        _tests.Complete_RemovesEntryFromPending();
+        var unknownCompleteResult = _tests.Complete_WithUnknownId_ReturnsFalse();
+        
+        // Test failure operations
+        var failResult = _tests.Fail_WithValidId_ReturnsTrue();
+        _tests.Fail_RecordsErrorMessage();
+        var unknownFailResult = _tests.Fail_WithUnknownId_ReturnsFalse();
+        
+        // Test queue depth tracking
+        var count1 = _tests.PendingCount_ReflectsCurrentQueueDepth();
+        _tests.PendingCount_DecreasesAfterComplete();
+    }
+}
+
+// Example usage in a real application service
+public class OrderSyncService
+{
+    private readonly ISyncQueueService _syncQueue;
+    
+    public OrderSyncService(ISyncQueueService syncQueue)
+    {
+        _syncQueue = syncQueue;
+    }
+    
+    public int QueueOrderCreation(int userId, string clientRequestId, OrderDto orderData)
+    {
+        // Queue the order creation request for offline synchronization
+        int queueId = _syncQueue.Enqueue(
+            userId: userId,
+            clientRequestId: clientRequestId,
+            method: "POST",
+            endpoint: "/api/orders",
+            payload: JsonSerializer.Serialize(orderData)
+        );
+        
+        return queueId;
+    }
+    
+    public IReadOnlyList<SyncQueueEntry> GetPendingOrders(int userId)
+    {
+        // Retrieve all pending order creation requests for a user
+        return _syncQueue.GetPending(userId);
+    }
+    
+    public bool MarkOrderAsCompleted(int queueId)
+    {
+        // Mark a queued order as successfully completed
+        return _syncQueue.Complete(queueId);
+    }
+    
+    public bool MarkOrderAsFailed(int queueId, string errorMessage)
+    {
+        // Mark a queued order as failed with error details
+        return _syncQueue.Fail(queueId, errorMessage);
+    }
+    
+    public int GetPendingOrderCount(int userId)
+    {
+        // Get the number of pending order requests
+        return _syncQueue.PendingCount(userId);
+    }
+}
+
+// Example usage in a background worker for processing queued requests
+public class SyncQueueWorker : BackgroundService
+{
+    private readonly ISyncQueueService _syncQueue;
+    private readonly IOrderService _orderService;
+    
+    public SyncQueueWorker(ISyncQueueService syncQueue, IOrderService orderService)
+    {
+        _syncQueue = syncQueue;
+        _orderService = orderService;
+    }
+    
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            // Process pending sync queue entries
+            var pendingEntries = _syncQueue.GetPending(userId: null); // null = all users
+            
+            foreach (var entry in pendingEntries)
+            {
+                try
+                {
+                    // Replay the queued request
+                    var result = await _orderService.CreateOrderFromPayloadAsync(entry.Payload);
+                    
+                    // Mark as completed on success
+                    _syncQueue.Complete(entry.Id);
+                }
+                catch (Exception ex)
+                {
+                    // Mark as failed on error
+                    _syncQueue.Fail(entry.Id, ex.Message);
+                }
+            }
+            
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        }
+    }
+}
+```
+
 ## ManifestServiceTests
 
 The `ManifestServiceTests` class provides comprehensive unit tests for the `ManifestService`, which generates Web App Manifest files for Progressive Web App (PWA) functionality. These tests verify that the manifest generation correctly handles various configurations including default values, host settings, theme colors, background colors, and shortcut definitions, ensuring the PWA can be properly installed and function across different environments.
