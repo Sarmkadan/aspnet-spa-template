@@ -2396,6 +2396,71 @@ public class OrderService
 
 ---
 
+## RateLimitingMiddleware
+
+The `RateLimitingMiddleware` implements request rate limiting to protect your API from excessive traffic and potential denial-of-service attacks. It tracks requests per client (either by IP address or API key) using a sliding window algorithm and enforces configurable limits for both minute and hour windows. When limits are exceeded, the middleware returns HTTP 429 (Too Many Requests) responses with appropriate retry-after headers.
+
+### Configuration
+
+The middleware supports the following configuration properties:
+- **RequestsPerMinute**: Maximum allowed requests per minute per client (default: 60)
+- **RequestsPerHour**: Maximum allowed requests per hour per client (default: 1000)
+- **ExemptPaths**: List of paths that bypass rate limiting
+- **EnableByIpAddress**: Whether to enable rate limiting by IP address (default: true)
+- **EnableByApiKey**: Whether to enable rate limiting by API key (default: true)
+
+### Usage Example
+
+```csharp
+// Register rate limiting middleware in Program.cs
+builder.Services.Configure<RateLimitConfig>(config =>
+{
+    config.RequestsPerMinute = 100;  // Allow 100 requests per minute
+    config.RequestsPerHour = 2000;   // Allow 2000 requests per hour
+    config.ExemptPaths = new List<string> { "/health", "/metrics" };
+    config.EnableByIpAddress = true;
+    config.EnableByApiKey = true;
+});
+
+// Add middleware to the pipeline
+app.UseMiddleware<RateLimitingMiddleware>();
+
+// In your API controllers or services, clients can now make requests within the rate limits
+// The middleware will automatically track requests and return 429 responses when limits are exceeded
+```
+
+### Response Headers
+
+When rate limiting is active, the middleware adds the following response headers:
+- **X-RateLimit-Limit**: Total allowed requests per minute
+- **X-RateLimit-Remaining**: Remaining requests before hitting the limit
+- **X-RateLimit-Reset**: Time when the rate limit resets
+- **Retry-After**: When provided with 429 responses, indicates how many seconds to wait before retrying
+
+### How It Works
+
+The middleware uses a sliding window algorithm to track requests:
+1. Each client is identified by API key (preferred) or IP address
+2. Request counts are tracked in memory with a 1-minute sliding window
+3. Old entries are automatically cleaned up when their window expires
+4. Clients exceeding limits receive HTTP 429 responses with appropriate headers
+
+### Notes
+
+- Rate limiting uses in-memory storage, so it's suitable for single-instance deployments
+- For distributed environments, consider using Redis or distributed cache for shared state
+- The middleware prioritizes API key identification over IP address for more reliable client tracking
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `RateLimitingMiddleware(RequestDelegate next, ILogger<RateLimitingMiddleware> logger)` | Constructor | Creates middleware instance |
+| `InvokeAsync(HttpContext context)` | Method | Processes HTTP request and applies rate limiting |
+| `RateLimitConfig` | Class | Configuration class for rate limiting behavior |
+
+---
+
 ## ErrorResponse
 
 The `ErrorResponse` class represents a standardized error response format used throughout the API to provide consistent error information to clients. It includes essential fields like error message, status code, optional error code, trace ID for debugging, and detailed validation errors when applicable.
