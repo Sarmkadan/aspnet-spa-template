@@ -605,6 +605,98 @@ services.AddHostedService<NotificationWorker>();
 
 ---
 
+## IBackgroundTask
+
+The `IBackgroundTask` interface defines the contract for background worker tasks that run periodically or on-demand within the application. It provides a standardized way to implement tasks like cache cleanup, notification sending, report generation, or data synchronization. Implementations should handle their own error logging and recovery mechanisms.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.BackgroundWorkers;
+using Microsoft.Extensions.DependencyInjection;
+
+// Create a custom background task
+public class DataCleanupTask : IBackgroundTask
+{
+    private readonly IServiceProvider _serviceProvider;
+    private readonly BackgroundTaskStatus _status = new();
+
+    public string TaskName => "DataCleanupTask";
+    public TimeSpan? ExecutionInterval => TimeSpan.FromHours(6);
+
+    public DataCleanupTask(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
+
+    public async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        _status.IsRunning = true;
+        _status.LastExecutedAt = DateTime.UtcNow;
+
+        try
+        {
+            // Perform cleanup logic
+            using var scope = _serviceProvider.CreateScope();
+            var repository = scope.ServiceProvider.GetRequiredService<IProductRepository>();
+            
+            await repository.CleanupOldProductsAsync(TimeSpan.FromDays(365));
+            
+            _status.LastExecutionDuration = TimeSpan.FromSeconds(2);
+            _status.ExecutionCount++;
+        }
+        catch (Exception ex)
+        {
+            _status.LastError = ex.Message;
+            _status.FailureCount++;
+            
+            // Log the error (implementation-specific)
+            Console.WriteLine($"DataCleanupTask failed: {ex.Message}");
+            throw; // Re-throw to ensure scheduler marks as failed
+        }
+        finally
+        {
+            _status.IsRunning = false;
+        }
+    }
+
+    public BackgroundTaskStatus GetStatus() => _status;
+}
+
+// Register the task in Program.cs
+builder.Services.AddSingleton<DataCleanupTask>();
+builder.Services.AddSingleton<IBackgroundTask>(provider => provider.GetRequiredService<DataCleanupTask>());
+
+// Start the scheduler
+var scheduler = new BackgroundTaskScheduler();
+scheduler.RegisterTask(new DataCleanupTask(serviceProvider));
+await scheduler.StartAsync(cancellationToken);
+```
+
+### Monitoring Task Status
+
+```csharp
+// Get status for all registered tasks
+var statuses = scheduler.GetStatus();
+
+foreach (var status in statuses)
+{
+    Console.WriteLine($"Task: {status.TaskName}");
+    Console.WriteLine($"  Status: {status.Status}");
+    Console.WriteLine($"  Last executed: {status.LastExecutedAt}");
+    Console.WriteLine($"  Next execution: {status.NextExecutionAt}");
+    Console.WriteLine($"  Execution count: {status.ExecutionCount}");
+    Console.WriteLine($"  Failures: {status.FailureCount}");
+    
+    if (status.LastError != null)
+    {
+        Console.WriteLine($"  Last error: {status.LastError}");
+    }
+}
+```
+
+---
+
 ## CacheMaintenanceWorker
 
 The `CacheMaintenanceWorker` is a background service that monitors and maintains the health of the in-memory cache system. It periodically checks cache performance metrics, identifies potential issues like excessive memory usage or low hit rates, and provides detailed health reports. The worker helps ensure optimal cache performance and prevents memory leaks by tracking key metrics such as hit rate, item count, and memory usage.
