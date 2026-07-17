@@ -21,6 +21,12 @@ public static class ExternalApiExceptionJsonExtensions
         WriteIndented = false,
     };
 
+    private static readonly JsonSerializerOptions _jsonOptionsIndented = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+    };
+
     /// <summary>
     /// Serializes an <see cref="ExternalApiException"/> to a JSON string.
     /// </summary>
@@ -41,8 +47,11 @@ public static class ExternalApiExceptionJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized exception, or null if the JSON is null or empty.</returns>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static ExternalApiException? FromJson(string json)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         if (string.IsNullOrEmpty(json))
         {
             return null;
@@ -57,9 +66,12 @@ public static class ExternalApiExceptionJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized exception if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static bool TryFromJson(string json, out ExternalApiException? value)
     {
         value = null;
+
+        ArgumentNullException.ThrowIfNull(json);
 
         if (string.IsNullOrEmpty(json))
         {
@@ -76,10 +88,4 @@ public static class ExternalApiExceptionJsonExtensions
             return false;
         }
     }
-
-    private static readonly JsonSerializerOptions _jsonOptionsIndented = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-    };
 }
