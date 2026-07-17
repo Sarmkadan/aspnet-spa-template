@@ -277,6 +277,110 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 ---
 
+## OrderRepository
+
+`OrderRepository` is a specialized repository for managing order entities in the e-commerce system. It extends `RepositoryBase<Order>` to provide order-specific query methods including retrieval by order number, user ID, status, and date ranges. The repository also includes analytical methods for calculating revenue metrics, order counts, and average order values, making it essential for order management, reporting, and business intelligence operations.
+
+### Usage Example
+
+```csharp
+// Register OrderRepository in Program.cs
+builder.Services.AddScoped<OrderRepository>();
+
+// Inject OrderRepository in your controller or service
+public class OrderController : ControllerBase
+{
+    private readonly OrderRepository _orderRepository;
+    private readonly ILogger<OrderController> _logger;
+
+    public OrderController(OrderRepository orderRepository, ILogger<OrderController> logger)
+    {
+        _orderRepository = orderRepository;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> GetOrderByNumber(string orderNumber)
+    {
+        // Retrieve an order by its order number
+        var order = await _orderRepository.GetByOrderNumberAsync(orderNumber);
+
+        if (order == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(order);
+    }
+
+    public async Task<IActionResult> GetUserOrders(int userId, int pageNumber = 1, int pageSize = 10)
+    {
+        // Retrieve paginated orders for a specific user
+        var orders = await _orderRepository.GetUserOrdersAsync(userId, pageNumber, pageSize);
+        return Ok(orders);
+    }
+
+    public async Task<IActionResult> GetPendingOrders()
+    {
+        // Retrieve all pending orders
+        var pendingOrders = await _orderRepository.GetPendingOrdersAsync();
+        return Ok(pendingOrders);
+    }
+
+    public async Task<IActionResult> GetRecentOrders(int days = 30)
+    {
+        // Retrieve orders from the last N days
+        var recentOrders = await _orderRepository.GetRecentOrdersAsync(days);
+        return Ok(recentOrders);
+    }
+
+    public async Task<IActionResult> GetTotalRevenue()
+    {
+        // Calculate total revenue from all completed orders
+        var totalRevenue = await _orderRepository.GetTotalRevenueAsync();
+        return Ok(new { totalRevenue });
+    }
+
+    public async Task<IActionResult> GetAverageOrderValue()
+    {
+        // Calculate average order value
+        var averageOrderValue = await _orderRepository.GetAverageOrderValueAsync();
+        return Ok(new { averageOrderValue });
+    }
+
+    public async Task<IActionResult> GetOrderCount(int userId)
+    {
+        // Get the number of orders for a specific user
+        var orderCount = await _orderRepository.GetOrderCountAsync(userId);
+        return Ok(new { orderCount });
+    }
+}
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `GetByOrderNumberAsync(string orderNumber)` | `Task<Order?>` | Retrieves an order by its unique order number. Returns null if the order doesn't exist. |
+| `GetByUserIdAsync(int userId)` | `Task<IEnumerable<Order>>` | Retrieves all orders for a specific user, ordered by most recent first. |
+| `GetByStatusAsync(OrderStatus status)` | `Task<IEnumerable<Order>>` | Retrieves all orders with the specified status, ordered by most recent first. |
+| `GetUserOrdersAsync(int userId, int pageNumber, int pageSize)` | `Task<IEnumerable<Order>>` | Retrieves paginated orders for a specific user, ordered by most recent first. |
+| `GetRecentOrdersAsync(int days = 30)` | `Task<IEnumerable<Order>>` | Retrieves orders from the last N days (default: 30), ordered by most recent first. |
+| `GetPendingOrdersAsync()` | `Task<IEnumerable<Order>>` | Retrieves all pending orders (Pending or Confirmed status), ordered by most recent first. |
+| `GetTotalRevenueAsync()` | `Task<decimal>` | Calculates and returns the total revenue from all completed orders (excluding cancelled and refunded orders). |
+| `GetTotalRevenueAsync(int days)` | `Task<decimal>` | Calculates and returns the total revenue for the last N days (excluding cancelled and refunded orders). |
+| `GetOrderCountAsync(int userId)` | `Task<int>` | Returns the total number of orders for a specific user. |
+| `GetAverageOrderValueAsync()` | `Task<decimal>` | Calculates and returns the average order value (excluding cancelled and refunded orders). |
+| `GetByIdAsync(int id)` | `Task<Order?>` | Retrieves an order by its primary key ID. Overrides base implementation to include order items. |
+
+### Related Types
+
+- **Order**: Entity representing an order with properties like `Id`, `OrderNumber`, `UserId`, `Status`, `SubTotal`, `TaxAmount`, `ShippingCost`, `Discount`, `Total`, `ShippingAddress`, `Notes`, `OrderedAt`, `ShippedAt`, `DeliveredAt`, and `Items` (list of `OrderItem`)
+- **OrderStatus**: Enum containing order status values like `Pending`, `Processing`, `Shipped`, `Delivered`, and `Cancelled`
+- **OrderItem**: Entity representing an item within an order with properties like `Id`, `OrderId`, `ProductId`, `Quantity`, `UnitPrice`, `TaxAmount`, `Discount`, and `Total`
+- Used in: OrderService, OrderController, revenue reporting systems, dashboard analytics, and user order history
+
+---
+
 ## Features
 
 ### Backend Features
