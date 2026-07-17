@@ -1806,6 +1806,36 @@ public class OrderIntegrationTests : IAsyncLifetime
     }
 }
 ```
+## ReviewServiceTests
+
+The `ReviewServiceTests` class provides comprehensive unit testing for the `ReviewService`, covering CRUD operations and business logic validations. It ensures that review creation, retrieval, approval, and deletion behave correctly under both valid and invalid scenarios.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+
+// ReviewServiceTests is designed for use within an xUnit test runner
+public class ReviewServiceUsageExample
+{
+    private readonly ReviewServiceTests _tests = new ReviewServiceTests();
+
+    public async Task RunTestSuite()
+    {
+        // CRUD tests
+        await _tests.CreateReviewAsync_WithValidRequest_CreatesReview();
+        await _tests.GetReviewByIdAsync_WithValidId_ReturnsReview();
+        await _tests.ApproveReviewAsync_WithValidId_ApprovesReview();
+        await _tests.DeleteReviewAsync_WithValidId_DeletesReview();
+
+        // Validation tests
+        await _tests.CreateReviewAsync_WithInvalidRating_ThrowsValidationException();
+        await _tests.CreateReviewAsync_WithShortTitle_ThrowsValidationException();
+        await _tests.CreateReviewAsync_WithShortContent_ThrowsValidationException();
+        await _tests.CreateReviewAsync_WithDuplicateReview_ThrowsBusinessException();
+    }
+}
+```
 
 ## Related Projects
 
