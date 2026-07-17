@@ -491,6 +491,207 @@ public class OrderController : ControllerBase
 
 ---
 
+## UserService
+
+The `UserService` handles core user management operations including registration, authentication, profile updates, and account status management. It provides methods for creating, retrieving, updating, and deactivating users, along with authentication and user listing functionality. The service handles password hashing, email uniqueness validation, and maps between domain entities and DTOs for API responses.
+
+### Usage Examples
+
+**Register a new user:**
+
+```csharp
+// Register UserService in Program.cs
+builder.Services.AddScoped<UserService>();
+
+// Inject UserService in your controller or service
+public class UserController : ControllerBase
+{
+    private readonly UserService _userService;
+    private readonly ILogger<UserController> _logger;
+
+    public UserController(UserService userService, ILogger<UserController> logger)
+    {
+        _userService = userService;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> RegisterUser(CreateUserRequest request)
+    {
+        try
+        {
+            // Create a new user
+            var userResponse = await _userService.CreateUserAsync(request);
+
+            return Ok(new { userResponse.Id, userResponse.Email, userResponse.FullName });
+        }
+        catch (ValidationException ex) when (ex.HasErrorFor("Email"))
+        {
+            return BadRequest(new { message = "Email already exists" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create user");
+            return StatusCode(500, new { message = "User creation failed" });
+        }
+    }
+}
+```
+
+**Authenticate a user and get a token:**
+
+```csharp
+public async Task<IActionResult> Login(LoginRequest request)
+{
+    try
+    {
+        var loginResponse = await _userService.AuthenticateAsync(request);
+
+        // Set auth token in response
+        Response.Cookies.Append("authToken", loginResponse.Token, 
+            new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSite.Strict });
+
+        return Ok(new {
+            userId = loginResponse.UserId,
+            email = loginResponse.Email,
+            fullName = loginResponse.FullName,
+            token = loginResponse.Token
+        });
+    }
+    catch (BusinessException ex) when (ex.ErrorCode == "INVALID_CREDENTIALS")
+    {
+        return Unauthorized(new { message = "Invalid email or password" });
+    }
+    catch (BusinessException ex) when (ex.ErrorCode == "ACCOUNT_INACTIVE")
+    {
+        return StatusCode(403, new { message = "Account is inactive" });
+    }
+}
+```
+
+**Get a user by ID:**
+
+```csharp
+public async Task<IActionResult> GetUserProfile(int userId)
+{
+    var userResponse = await _userService.GetUserByIdAsync(userId);
+    
+    if (userResponse == null)
+    {
+        return NotFound();
+    }
+
+    return Ok(new {
+        userResponse.Id,
+        userResponse.Email,
+        userResponse.FullName,
+        userResponse.PhoneNumber,
+        userResponse.Address,
+        userResponse.City,
+        userResponse.Country,
+        userResponse.IsActive
+    });
+}
+```
+
+**Update a user profile:**
+
+```csharp
+public async Task<IActionResult> UpdateProfile(int userId, UpdateUserRequest request)
+{
+    try
+    {
+        var updatedUser = await _userService.UpdateUserAsync(userId, request);
+        return Ok(updatedUser);
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "User not found" });
+    }
+}
+```
+
+**Deactivate a user account:**
+
+```csharp
+public async Task<IActionResult> DeactivateUser(int userId)
+{
+    try
+    {
+        await _userService.DeactivateUserAsync(userId);
+        return Ok(new { message = "User deactivated successfully" });
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "User not found" });
+    }
+}
+```
+
+**Activate a user account:**
+
+```csharp
+public async Task<IActionResult> ActivateUser(int userId)
+{
+    try
+    {
+        await _userService.ActivateUserAsync(userId);
+        return Ok(new { message = "User activated successfully" });
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "User not found" });
+    }
+}
+```
+
+**Get all active users:**
+
+```csharp
+public async Task<IActionResult> GetAllUsers()
+{
+    var users = await _userService.GetAllUsersAsync();
+    return Ok(users);
+}
+```
+
+**Get users active in the last 30 days:**
+
+```csharp
+public async Task<IActionResult> GetRecentlyActiveUsers()
+{
+    var users = await _userService.GetRecentlyActiveUsersAsync(days: 30);
+    return Ok(users);
+}
+```
+
+### Public Methods
+
+| Method | Description |
+|--------|-------------|
+| `GetUserByIdAsync(int id)` | Retrieves a user by their unique identifier and maps to a response DTO. Throws `NotFoundException` if the user doesn't exist. |
+| `CreateUserAsync(CreateUserRequest request)` | Creates a new user after validating the request and checking email uniqueness. Returns a `UserResponse` DTO for the newly created user. Throws `ValidationException` if email already exists or request data is invalid. |
+| `UpdateUserAsync(int id, UpdateUserRequest request)` | Updates an existing user's profile fields (excluding email and password). Returns the updated `UserResponse` DTO. Throws `NotFoundException` if the user doesn't exist. |
+| `DeactivateUserAsync(int id)` | Deactivates a user account by setting `IsActive` to false. Throws `NotFoundException` if the user doesn't exist. |
+| `ActivateUserAsync(int id)` | Activates a user account by setting `IsActive` to true. Throws `NotFoundException` if the user doesn't exist. |
+| `AuthenticateAsync(LoginRequest request)` | Authenticates a user with email and password. Returns a `LoginResponse` with user details and authentication token. Throws `BusinessException` for invalid credentials or inactive accounts. |
+| `GetAllUsersAsync()` | Retrieves all active users and maps them to `UserResponse` DTOs. |
+| `GetRecentlyActiveUsersAsync(int days = 30)` | Retrieves users active within the specified number of days (default: 30). Maps results to `UserResponse` DTOs. |
+
+### Related Types
+
+- **UserResponse**: Response DTO containing user details like `Id`, `FirstName`, `LastName`, `Email`, `PhoneNumber`, `Address`, `City`, `PostalCode`, `Country`, `IsActive`, `IsEmailVerified`, `CreatedAt`, and `LastLoginAt`
+- **CreateUserRequest**: Request DTO for user registration with required fields like `FirstName`, `LastName`, `Email`, `Password`, and optional fields like `PhoneNumber`, `Address`, `City`, `PostalCode`, and `Country`
+- **UpdateUserRequest**: Request DTO for profile updates with optional fields for updating user profile information
+- **LoginRequest**: Request DTO for user authentication containing `Email` and `Password`
+- **LoginResponse**: Response DTO containing authentication results with `UserId`, `Email`, `FullName`, and `Token`
+- Used in: UserController, authentication middleware, and user management services
+
+
+
+
+---
+
+
 ## PwaService
 
 The `PwaService` provides Progressive Web App (PWA) functionality including push notification management, subscription handling, and offline sync queue operations. It serves as the backend service layer for PWA features that enable users to receive real-time notifications, maintain offline functionality, and synchronize data across devices.
