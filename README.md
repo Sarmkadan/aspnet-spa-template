@@ -813,6 +813,58 @@ The service worker handles `push` events and shows OS-level notifications. The p
 
 Clicking the notification opens (or focuses) the app at `actionUrl`.
 
+---
+
+## PwaOptions
+
+`PwaOptions` is the configuration class for Progressive Web App (PWA) settings in the ASP.NET SPA template. It controls push notification delivery, offline synchronization behavior, and VAPID authentication keys for Web Push protocol. Use this class to configure PWA features through the `Pwa` section in `appsettings.json`.
+
+### Usage Example
+
+```csharp
+// In Program.cs - configure PWA settings
+builder.Services.Configure<PwaOptions>(builder.Configuration.GetSection(PwaOptions.SectionName));
+
+// In appsettings.json
+{
+  "Pwa": {
+    "EnablePushNotifications": true,
+    "EnableOfflineSync": true,
+    "MaxNotificationsPerBatch": 200,
+    "MaxSyncRetries": 5,
+    "SyncRetryBaseDelaySeconds": 30,
+    "SyncQueueMaxAgeHours": 72,
+    "PushDeliveryTimeoutSeconds": 10,
+    "InactiveSubscriptionPurgeDays": 30,
+    "Vapid": {
+      "PublicKey": "BLM8xgL5F2JGqgJqgJqgJqgJqgJqgJqgJq",
+      "PrivateKey": "secret-private-key-here",
+      "Subject": "mailto:admin@example.com"
+    }
+  }
+}
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `Vapid` | `VapidOptions` | VAPID key material used for Web Push authentication (RFC 8292). Contains `PublicKey`, `PrivateKey`, and `Subject` properties. |
+| `EnablePushNotifications` | `bool` | When `false`, all push notification delivery is silently skipped. Useful for test environments. Defaults to `true`. |
+| `EnableOfflineSync` | `bool` | When `false`, the offline sync queue worker performs no replay operations. Defaults to `true`. |
+| `MaxNotificationsPerBatch` | `int` | Upper bound on push subscription records processed in a single broadcast operation. Defaults to 200. |
+| `MaxSyncRetries` | `int` | Maximum number of replay attempts for a sync queue entry before marking it as failed. Defaults to 5. |
+| `SyncRetryBaseDelaySeconds` | `int` | Base delay in seconds between sync replay retries (exponential back-off). Defaults to 30 seconds. |
+| `SyncQueueMaxAgeHours` | `int` | Age threshold in hours beyond which completed or failed sync entries are purged. Defaults to 72 hours. |
+| `PushDeliveryTimeoutSeconds` | `int` | Per-delivery HTTP timeout in seconds when posting to a push service endpoint. Defaults to 10 seconds. |
+| `InactiveSubscriptionPurgeDays` | `int` | Number of days after which inactive subscriptions are considered stale and eligible for deactivation. Defaults to 30 days. |
+
+### Related Types
+
+- **VapidOptions**: Contains VAPID key material (`PublicKey`, `PrivateKey`, `Subject`) for Web Push authentication
+- **PwaOptions**: Main configuration class for PWA settings
+- Used in: PWA service configuration, push notification delivery, and offline synchronization
+
 ### Background Sync & Offline Queue
 
 When a mutating request (`POST`, `PUT`, `DELETE`) fails while offline, the client calls `OfflineQueue.enqueue(entry)` which posts a `QUEUE_REQUEST` message to the service worker. The request is persisted in **IndexedDB** and replayed automatically when the Background Sync event fires.
