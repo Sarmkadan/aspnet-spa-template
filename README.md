@@ -861,6 +861,226 @@ public async Task<IActionResult> GetRecentlyActiveUsers()
 
 
 
+---
+
+
+## ProductService
+
+
+The `ProductService` handles core product management operations including querying, creation, updating, and deletion of products. It provides methods for retrieving products by ID, searching, filtering by category, and managing featured products. The service includes validation, logging, and proper error handling for all operations.
+
+### Usage Examples
+
+**Get a product by ID:**
+
+```csharp
+// Register ProductService in Program.cs
+builder.Services.AddScoped<ProductService>();
+
+// Inject ProductService in your controller or service
+public class ProductController : ControllerBase
+{
+    private readonly ProductService _productService;
+    private readonly ILogger<ProductController> _logger;
+
+    public ProductController(ProductService productService, ILogger<ProductController> logger)
+    {
+        _productService = productService;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> GetProduct(int productId)
+    {
+        try
+        {
+            var product = await _productService.GetProductByIdAsync(productId);
+            
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(product);
+        }
+        catch (NotFoundException)
+        {
+            return NotFound(new { message = "Product not found" });
+        }
+    }
+}
+```
+
+**Get all available products with pagination:**
+
+```csharp
+public async Task<IActionResult> GetAllProducts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+{
+    var products = await _productService.GetAllProductsAsync(pageNumber, pageSize);
+    
+    return Ok(new {
+        products.Products,
+        products.TotalCount,
+        products.PageNumber,
+        products.PageSize,
+        hasNextPage = products.PageNumber * products.PageSize < products.TotalCount
+    });
+}
+```
+
+**Get products by category:**
+
+```csharp
+public async Task<IActionResult> GetProductsByCategory([FromQuery] ProductCategory category, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+{
+    var products = await _productService.GetProductsByCategoryAsync(category, pageNumber, pageSize);
+    
+    return Ok(products);
+}
+```
+
+**Get featured products:**
+
+```csharp
+public async Task<IActionResult> GetFeaturedProducts()
+{
+    var featuredProducts = await _productService.GetFeaturedProductsAsync(limit: 8);
+    
+    return Ok(featuredProducts);
+}
+```
+
+**Search products:**
+
+```csharp
+public async Task<IActionResult> SearchProducts([FromQuery] string searchTerm)
+{
+    var results = await _productService.SearchProductsAsync(searchTerm);
+    
+    return Ok(new { results, count = results.Count });
+}
+```
+
+**Create a new product:**
+
+```csharp
+public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
+{
+    try
+    {
+        var product = await _productService.CreateProductAsync(request);
+        
+        return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+    }
+    catch (ValidationException ex) when (ex.HasErrorFor("Name"))
+    {
+        return BadRequest(new { message = "Product name is required" });
+    }
+    catch (ValidationException ex) when (ex.HasErrorFor("Price"))
+    {
+        return BadRequest(new { message = "Price must be between 0.01 and 999999.99" });
+    }
+}
+```
+
+**Update a product:**
+
+```csharp
+public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductRequest request)
+{
+    try
+    {
+        var updatedProduct = await _productService.UpdateProductAsync(id, request);
+        return Ok(updatedProduct);
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Product not found" });
+    }
+    catch (ValidationException ex)
+    {
+        return BadRequest(new { message = ex.Message });
+    }
+}
+```
+
+**Set product availability:**
+
+```csharp
+public async Task<IActionResult> SetProductAvailability(int id, [FromBody] bool isAvailable)
+{
+    try
+    {
+        await _productService.SetProductAvailabilityAsync(id, isAvailable);
+        return Ok(new { message = "Product availability updated successfully" });
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Product not found" });
+    }
+}
+```
+
+**Set product featured status:**
+
+```csharp
+public async Task<IActionResult> SetProductFeatured(int id, [FromBody] bool isFeatured)
+{
+    try
+    {
+        await _productService.SetProductFeaturedAsync(id, isFeatured);
+        return Ok(new { message = "Product featured status updated successfully" });
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Product not found" });
+    }
+}
+```
+
+**Delete a product:**
+
+```csharp
+public async Task<IActionResult> DeleteProduct(int id)
+{
+    try
+    {
+        await _productService.DeleteProductAsync(id);
+        return NoContent();
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Product not found" });
+    }
+}
+```
+
+### Public Methods
+
+| Method | Description |
+|--------|-------------|
+| `GetProductByIdAsync(int id)` | Retrieves a product by its unique identifier. Returns `ProductResponse` if found, or throws `NotFoundException` if the product doesn't exist. |
+| `GetAllProductsAsync(int pageNumber = 1, int pageSize = 10)` | Retrieves all available products with pagination support. Returns a `ProductListResponse` containing the products and total count. |
+| `GetProductsByCategoryAsync(ProductCategory category, int pageNumber = 1, int pageSize = 10)` | Retrieves products filtered by category with pagination support. Returns a `ProductListResponse` with matching products and total count. |
+| `GetFeaturedProductsAsync(int limit = 10)` | Retrieves featured products. Returns a list of `ProductResponse` objects limited by the specified count. |
+| `GetTopRatedProductsAsync(int limit = 10)` | Retrieves top-rated products based on rating scores. Returns a list of `ProductResponse` objects limited by the specified count. |
+| `SearchProductsAsync(string searchTerm)` | Searches products by name, description, or SKU. Returns a list of matching `ProductResponse` objects. Empty list returned for empty or whitespace search terms. |
+| `CreateProductAsync(CreateProductRequest request)` | Creates a new product in the system. Validates the request and returns the created `ProductResponse`. Throws `ValidationException` for invalid data. |
+| `UpdateProductAsync(int id, UpdateProductRequest request)` | Updates an existing product. Validates the request and returns the updated `ProductResponse`. Throws `NotFoundException` if product doesn't exist. |
+| `SetProductAvailabilityAsync(int id, bool isAvailable)` | Sets the availability status of a product. Throws `NotFoundException` if product doesn't exist. |
+| `SetProductFeaturedAsync(int id, bool isFeatured)` | Sets the featured status of a product. Throws `NotFoundException` if product doesn't exist. |
+| `DeleteProductAsync(int id)` | Deletes a product from the system. Throws `NotFoundException` if product doesn't exist. |
+
+### Related Types
+
+- **ProductResponse**: Response DTO containing product details like `Id`, `Name`, `Description`, `Price`, `StockQuantity`, `Category`, `ImageUrl`, `Sku`, `Rating`, `ReviewCount`, `IsAvailable`, `IsFeatured`, and `CreatedAt`
+- **ProductListResponse**: Response DTO containing a paginated list of products with `Products` (list of `ProductResponse`), `TotalCount`, `PageNumber`, and `PageSize` properties
+- **CreateProductRequest**: Request DTO for creating a new product with required fields like `Name`, `Price`, `StockQuantity`, `Category` and optional fields like `Description`, `ImageUrl`, and `Sku`
+- **UpdateProductRequest**: Request DTO for updating a product with optional fields for updating product details
+- **ProductCategory**: Enum containing product categories like `Electronics`, `Clothing`, `Books`, `Home`, `Sports`, `Beauty`, `Groceries`, `Toys`
+- Used in: ProductController, shopping cart services, recommendation engines, and admin panels
+
+
+
 
 ---
 
