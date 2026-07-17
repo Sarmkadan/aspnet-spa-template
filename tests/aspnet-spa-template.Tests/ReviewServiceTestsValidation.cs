@@ -97,6 +97,10 @@ public static class ReviewServiceTestsValidation
 
     private static void ValidateField(ReviewServiceTests instance, FieldInfo? field, string fieldName, List<string> problems)
     {
+        ArgumentNullException.ThrowIfNull(instance);
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
+        ArgumentNullException.ThrowIfNull(problems);
+
         if (field is null)
         {
             problems.Add($"Field '{fieldName}' is not found on ReviewServiceTests.");
@@ -112,6 +116,9 @@ public static class ReviewServiceTestsValidation
 
     private static void ValidateMethod(MethodInfo? method, string methodName, List<string> problems)
     {
+        ArgumentNullException.ThrowIfNull(problems);
+        ArgumentException.ThrowIfNullOrEmpty(methodName);
+
         if (method is null)
         {
             problems.Add($"Method '{methodName}' is not found.");
