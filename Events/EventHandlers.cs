@@ -6,6 +6,7 @@
 
 using AspNetSpaTemplate.Caching;
 using AspNetSpaTemplate.Integration;
+using System.Text.Json.Serialization;
 
 namespace AspNetSpaTemplate.Events;
 
@@ -14,10 +15,15 @@ namespace AspNetSpaTemplate.Events;
 /// These are registered in the DI container and called by the event bus.
 /// Keeps business logic decoupled from event publishing.
 /// </summary>
-public class DomainEventHandlers
+public sealed class DomainEventHandlers
 {
+    [JsonIgnore]
     private readonly ICacheService _cacheService;
+
+    [JsonIgnore]
     private readonly NotificationService _notificationService;
+
+    [JsonIgnore]
     private readonly ILogger<DomainEventHandlers> _logger;
 
     public DomainEventHandlers(

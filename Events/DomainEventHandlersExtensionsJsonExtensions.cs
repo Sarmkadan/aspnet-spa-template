@@ -6,7 +6,7 @@
 // ====================================================================
 
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
+using System.Text.Json.Serialization;
 
 namespace AspNetSpaTemplate.Events;
 
@@ -20,7 +20,7 @@ public static class DomainEventHandlersExtensionsJsonExtensions
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false,
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     /// <summary>
@@ -35,10 +35,7 @@ public static class DomainEventHandlersExtensionsJsonExtensions
         ArgumentNullException.ThrowIfNull(value);
 
         var options = indented
-            ? new JsonSerializerOptions(_jsonSerializerOptions)
-            {
-                WriteIndented = true,
-            }
+            ? new JsonSerializerOptions(_jsonSerializerOptions) { WriteIndented = true }
             : _jsonSerializerOptions;
 
         return JsonSerializer.Serialize(value, options);
@@ -55,12 +52,9 @@ public static class DomainEventHandlersExtensionsJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(json);
 
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return null;
-        }
-
-        return JsonSerializer.Deserialize<DomainEventHandlers>(json, _jsonSerializerOptions);
+        return string.IsNullOrWhiteSpace(json)
+            ? null
+            : JsonSerializer.Deserialize<DomainEventHandlers>(json, _jsonSerializerOptions);
     }
 
     /// <summary>
@@ -76,13 +70,13 @@ public static class DomainEventHandlersExtensionsJsonExtensions
 
         value = null;
 
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return true;
+        }
+
         try
         {
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return true;
-            }
-
             value = JsonSerializer.Deserialize<DomainEventHandlers>(json, _jsonSerializerOptions);
             return true;
         }
