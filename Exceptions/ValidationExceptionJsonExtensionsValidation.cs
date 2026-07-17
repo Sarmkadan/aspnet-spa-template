@@ -6,6 +6,7 @@
 // =====================================================================
 
 using System.Globalization;
+using System.Linq;
 
 namespace AspNetSpaTemplate.Exceptions;
 
@@ -45,19 +46,16 @@ public static class ValidationExceptionJsonExtensionsValidation
         }
         else
         {
-            // Check for null keys - would cause issues in JSON
+            // Check for null or empty keys - would cause issues in JSON
             foreach (var key in value.Errors.Keys)
             {
                 if (key is null)
                 {
                     problems.Add("Errors dictionary contains a null key.");
-                    break;
                 }
-
-                if (string.IsNullOrWhiteSpace(key))
+                else if (string.IsNullOrWhiteSpace(key))
                 {
                     problems.Add("Errors dictionary contains an empty or whitespace key.");
-                    break;
                 }
             }
 
@@ -67,27 +65,24 @@ public static class ValidationExceptionJsonExtensionsValidation
                 if (kvp.Value is null)
                 {
                     problems.Add($"Errors dictionary contains a null error list for key '{kvp.Key}'.");
-                    break;
                 }
-
-                if (kvp.Value.Count == 0)
+                else if (kvp.Value.Count == 0)
                 {
                     problems.Add($"Errors dictionary contains an empty error list for key '{kvp.Key}'.");
                 }
-
-                // Check for null or empty error messages - would cause issues in JSON
-                foreach (var error in kvp.Value)
+                else
                 {
-                    if (error is null)
+                    // Check for null or empty error messages - would cause issues in JSON
+                    foreach (var error in kvp.Value)
                     {
-                        problems.Add($"Errors dictionary contains a null error message for key '{kvp.Key}'.");
-                        break;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(error))
-                    {
-                        problems.Add($"Errors dictionary contains an empty or whitespace error message for key '{kvp.Key}'.");
-                        break;
+                        if (error is null)
+                        {
+                            problems.Add($"Errors dictionary contains a null error message for key '{kvp.Key}'.");
+                        }
+                        else if (string.IsNullOrWhiteSpace(error))
+                        {
+                            problems.Add($"Errors dictionary contains an empty or whitespace error message for key '{kvp.Key}'.");
+                        }
                     }
                 }
             }
