@@ -13,6 +13,11 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
 
+/// <summary>
+/// Contains unit tests for the <see cref="ProductService"/> class.
+/// Tests various operations including retrieval, creation, updating, and deletion of products,
+/// as well as validation scenarios and error handling.
+/// </summary>
 public sealed class ProductServiceTests
 {
     private readonly Mock<ProductRepository> _mockProductRepository;
@@ -25,6 +30,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetProductByIdAsync(int)"/> returns a product when given a valid ID.
+    /// Verifies that the product data is correctly retrieved from the repository.
+    /// </summary>
     public async Task GetProductByIdAsync_WithValidId_ReturnsProduct()
     {
         // Arrange
@@ -50,6 +59,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetProductByIdAsync(int)"/> throws a <see cref="NotFoundException"/> when given an invalid ID.
+    /// Verifies that the service properly handles non-existent products.
+    /// </summary>
     public async Task GetProductByIdAsync_WithInvalidId_ThrowsNotFoundException()
     {
         // Arrange
@@ -64,6 +77,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetAllProductsAsync()"/> returns a paged result of products.
+    /// Verifies that the repository is called with correct parameters and the result contains expected data.
+    /// </summary>
     public async Task GetAllProductsAsync_ReturnsPagedProducts()
     {
         // Arrange
@@ -85,6 +102,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetProductsByCategoryAsync(ProductCategory)"/> returns products filtered by category.
+    /// Verifies that the repository is called with the correct category filter.
+    /// </summary>
     public async Task GetProductsByCategoryAsync_ReturnsProductsInCategory()
     {
         // Arrange
@@ -105,6 +126,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetFeaturedProductsAsync()"/> returns a list of featured products.
+    /// Verifies that the repository is called to retrieve featured products.
+    /// </summary>
     public async Task GetFeaturedProductsAsync_ReturnsFeaturedProducts()
     {
         // Arrange
@@ -122,6 +147,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetTopRatedProductsAsync()"/> returns a list of top-rated products.
+    /// Verifies that the repository is called to retrieve products with the highest ratings.
+    /// </summary>
     public async Task GetTopRatedProductsAsync_ReturnsTopRatedProducts()
     {
         // Arrange
@@ -139,6 +168,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.SearchProductsAsync(string)"/> returns products matching the search term.
+    /// Verifies that the repository is called with the search term and returns matching products.
+    /// </summary>
     public async Task SearchProductsAsync_WithValidTerm_ReturnsMatchingProducts()
     {
         // Arrange
@@ -157,6 +190,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.SearchProductsAsync(string)"/> returns an empty list when given an empty search term.
+    /// Verifies that the service handles empty search terms gracefully.
+    /// </summary>
     public async Task SearchProductsAsync_WithEmptyTerm_ReturnsEmptyList()
     {
         // Arrange
@@ -170,6 +207,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.SearchProductsAsync(string)"/> returns an empty list when given a null search term.
+    /// Verifies that the service handles null search terms gracefully by treating them as empty strings.
+    /// </summary>
     public async Task SearchProductsAsync_WithNullTerm_ReturnsEmptyList()
     {
         // Arrange
@@ -183,6 +224,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.CreateProductAsync(CreateProductRequest)"/> creates a product when given a valid request.
+    /// Verifies that the repository's Add method is called and the product is returned with correct properties.
+    /// </summary>
     public async Task CreateProductAsync_WithValidRequest_CreatesProduct()
     {
         // Arrange
@@ -210,6 +255,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.CreateProductAsync(CreateProductRequest)"/> throws a <see cref="ValidationException"/> when given a request with an empty name.
+    /// Verifies that the service validates the product name and rejects invalid requests.
+    /// </summary>
     public async Task CreateProductAsync_WithEmptyName_ThrowsValidationException()
     {
         // Arrange
@@ -232,6 +281,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.CreateProductAsync(CreateProductRequest)"/> throws a <see cref="ValidationException"/> when given a request with an invalid (negative) price.
+    /// Verifies that the service validates the product price and rejects requests with negative values.
+    /// </summary>
     public async Task CreateProductAsync_WithInvalidPrice_ThrowsValidationException()
     {
         // Arrange
@@ -254,6 +307,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.UpdateProductAsync(int, UpdateProductRequest)"/> updates a product when given a valid ID and request.
+    /// Verifies that the repository's Update method is called and the product is updated with new values.
+    /// </summary>
     public async Task UpdateProductAsync_WithValidId_UpdatesProduct()
     {
         // Arrange
@@ -281,6 +338,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.SetProductAvailabilityAsync(int, bool)"/> updates a product's availability status when given a valid ID and availability value.
+    /// Verifies that the repository's Update method is called to change the product's availability.
+    /// </summary>
     public async Task SetProductAvailabilityAsync_WithValidId_UpdatesAvailability()
     {
         // Arrange
@@ -298,6 +359,10 @@ public sealed class ProductServiceTests
     }
 
     [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.DeleteProductAsync(int)"/> deletes a product when given a valid ID.
+    /// Verifies that the repository's Remove method is called and SaveChangesAsync is invoked to persist the deletion.
+    /// </summary>
     public async Task DeleteProductAsync_WithValidId_DeletesProduct()
     {
         // Arrange
