@@ -1443,6 +1443,43 @@ Product? product = orderItem.Product;
 
 ---
 
+## PushSubscription
+
+The `PushSubscription` class represents a browser Web Push subscription for a user device. It stores the VAPID endpoint URL and encryption keys required to deliver push notifications via the Web Push Protocol (RFC 8030). Each user can have multiple subscriptions — one per browser/device combination.
+
+
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Models;
+
+// Create a new push subscription for a user
+var subscription = new PushSubscription
+{
+    UserId = 123,
+    Endpoint = "https://fcm.googleapis.com/fcm/send/device-token-123",
+    P256dhKey = "BLM8xgL5F2JGqgJqgJqgJqgJqgJqgJqgJqgJq",
+    AuthKey = "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB",
+    DeviceLabel = "Home Chrome Browser",
+    UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+};
+
+// Record a successful push delivery
+subscription.RecordDelivery();
+
+// Check if subscription is active
+bool isActive = subscription.IsActive; // true
+
+// Deactivate subscription when endpoint becomes invalid
+subscription.Deactivate();
+
+// Access navigation property
+User? user = subscription.User;
+```
+
+---
+
 ## API Reference
 
 ### Base URL
