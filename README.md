@@ -640,6 +640,52 @@ const response = await fetch('/api/users/profile', {
 
 ---
 
+## ValidationExceptionExtensions
+
+The `ValidationExceptionExtensions` class provides a set of extension methods for working with `ValidationException` objects in a fluent, readable manner. These methods simplify common validation scenarios such as adding errors, checking for specific field errors, and merging validation results.
+
+The extension methods work with the standard `ValidationException` class, which maintains a dictionary of field names to lists of error messages, making it easy to manage and retrieve validation errors throughout your application.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Exceptions;
+
+// Create a validation exception using the WithError extension method
+var validationException = "email".WithError("Email is required");
+
+// Add additional errors to the same exception
+validationException.AddError("email", "Email format is invalid");
+validationException.AddError("password", "Password must be at least 8 characters");
+
+// Check if a specific field has errors
+bool hasEmailErrors = validationException.HasErrorFor("email"); // returns true
+bool hasPhoneErrors = validationException.HasErrorFor("phone"); // returns false
+
+// Get all error messages for a specific field
+string emailErrors = validationException.GetErrorMessages("email");
+// "Email is required; Email format is invalid"
+
+// Get all errors as a dictionary
+var allErrors = validationException.GetAllErrors();
+// Returns: {"email": ["Email is required", "Email format is invalid"], "password": ["Password must be at least 8 characters"]}
+
+// Check if the exception contains any errors
+bool hasAnyErrors = validationException.HasErrors(); // returns true
+
+// Merge errors from another validation exception
+var anotherException = "username".WithError("Username is already taken");
+validationException.MergeErrors(anotherException);
+
+// Access the underlying Errors dictionary directly
+foreach (var fieldErrors in validationException.GetAllErrors())
+{
+    Console.WriteLine($"{fieldErrors.Key}: {string.Join(", ", fieldErrors.Value)}");
+}
+```
+
+---
+
 ## ValidationExceptionJsonExtensions
 
 The `ValidationExceptionJsonExtensions` class provides extension methods for serializing and deserializing `ValidationException` objects to/from JSON strings. This is particularly useful when you need to transmit validation errors across API boundaries or persist them in storage.
