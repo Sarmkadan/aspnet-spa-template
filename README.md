@@ -741,6 +741,53 @@ foreach (var fieldErrors in validationException.GetAllErrors())
 
 ---
 
+## ValidationExceptionExtensionsValidation
+
+The `ValidationExceptionExtensionsValidation` class provides validation helper methods specifically designed for validating parameters and exception instances used with `ValidationExceptionExtensions` extension methods. These methods ensure that field names and error messages are properly formatted before being used in validation operations, helping to prevent runtime errors and improve code reliability.
+
+The class includes methods for validating both parameter combinations (field name and error message) and complete `ValidationException` instances, with options to check validity, validate with exceptions, and get detailed validation problems.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Exceptions;
+
+// Validate parameter combinations before using ValidationExceptionExtensions methods
+var parameterProblems = ValidationExceptionExtensionsValidation.ValidateParameters("email", "Email address is required");
+bool areValid = ValidationExceptionExtensionsValidation.AreParametersValid("username", "Username cannot be empty");
+
+// Use EnsureParametersValid to throw an exception if parameters are invalid
+try
+{
+    ValidationExceptionExtensionsValidation.EnsureParametersValid(" ", "Error message");
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($"Parameter validation failed: {ex.Message}");
+}
+
+// Validate a complete ValidationException instance
+var validationException = new ValidationException(new Dictionary<string, List<string>>
+{
+    { "email", new List<string> { "Email is required" } }
+});
+
+var exceptionProblems = ValidationExceptionExtensionsValidation.ValidateException(validationException);
+bool isExceptionValid = ValidationExceptionExtensionsValidation.IsExceptionValid(validationException);
+
+// Use EnsureExceptionValid to throw an exception if the ValidationException is not valid
+try
+{
+    ValidationExceptionExtensionsValidation.EnsureExceptionValid(validationException);
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($"Exception validation failed: {ex.Message}");
+}
+```
+
+---
+
 ## ValidationExceptionJsonExtensions
 
 The `ValidationExceptionJsonExtensions` class provides extension methods for serializing and deserializing `ValidationException` objects to/from JSON strings. This is particularly useful when you need to transmit validation errors across API boundaries or persist them in storage.
