@@ -3,7 +3,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System.Text.Json;
 
@@ -32,10 +32,7 @@ public static class ValidationExceptionJsonExtensions
         ArgumentNullException.ThrowIfNull(value);
 
         var options = indented
-            ? new JsonSerializerOptions(_jsonOptions)
-            {
-                WriteIndented = true,
-            }
+            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true, }
             : _jsonOptions;
 
         return JsonSerializer.Serialize(value, options);
@@ -46,9 +43,12 @@ public static class ValidationExceptionJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A <see cref="ValidationException"/> instance, or null if the JSON is empty or whitespace.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="json"/> is null.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static ValidationException? FromJson(string json)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         if (string.IsNullOrWhiteSpace(json))
         {
             return null;
@@ -64,8 +64,11 @@ public static class ValidationExceptionJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized exception, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="json"/> is null.</exception>
     public static bool TryFromJson(string json, out ValidationException? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         value = null;
 
         if (string.IsNullOrWhiteSpace(json))
@@ -95,13 +98,11 @@ public static class ValidationExceptionJsonExtensions
 
         public ValidationException ToException()
         {
-            if (Errors is null)
+            return Errors switch
             {
-                return new ValidationException(Message ?? "Validation failed");
-            }
-
-            var exception = new ValidationException(Errors);
-            return exception;
+                null => new ValidationException(Message ?? "Validation failed"),
+                _ => new ValidationException(Errors),
+            };
         }
     }
 }
