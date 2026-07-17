@@ -37,9 +37,9 @@ namespace AspNetSpaTemplate.Exceptions
             ArgumentNullException.ThrowIfNull(exception);
             ArgumentNullException.ThrowIfNull(message);
 
-            return exception.ConfigurationKey is { } key
-                ? new ConfigurationException(key, message)
-                : new ConfigurationException(message);
+    return exception.ConfigurationKey is string key
+        ? new ConfigurationException(key, message)
+        : new ConfigurationException(message);
         }
 
         /// <summary>
@@ -60,9 +60,9 @@ namespace AspNetSpaTemplate.Exceptions
             ArgumentException.ThrowIfNullOrEmpty(configurationKey);
             ArgumentNullException.ThrowIfNull(message);
 
-            return exception.ConfigurationKey is { } existingKey
-                ? new ConfigurationException($"{existingKey}.{configurationKey}", message)
-                : new ConfigurationException(configurationKey, message);
+    return exception.ConfigurationKey is string existingKey
+        ? new ConfigurationException($"{existingKey}.{configurationKey}", message)
+        : new ConfigurationException(configurationKey, message);
         }
 
         /// <summary>
@@ -70,18 +70,16 @@ namespace AspNetSpaTemplate.Exceptions
         /// ordered from most specific to least specific.
         /// </summary>
         /// <param name="exception">The exception instance.</param>
-        /// <returns>An enumerable of configuration keys, or empty if none.</returns>
+/// <returns>An enumerable containing the configuration key if present; otherwise empty.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="exception"/> is null.</exception>
         public static IEnumerable<string> GetConfigurationKeyHierarchy(this ConfigurationException exception)
         {
             ArgumentNullException.ThrowIfNull(exception);
 
-            if (exception.ConfigurationKey is not { } key)
-            {
-                yield break;
-            }
-
-            yield return key;
+    if (exception.ConfigurationKey is string key)
+    {
+        yield return key;
+    }
         }
     }
 }
