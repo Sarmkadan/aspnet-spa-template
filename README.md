@@ -122,6 +122,43 @@ string? customHeader = context.Request.GetHeaderValue("X-Custom-Header");
 bool wantsJson = context.Request.WantsJson();
 ```
 
+## EncryptionHelper
+
+Provides secure cryptographic operations including random string generation, hashing, HMAC signatures, and data masking. Uses modern algorithms (SHA256, HMAC, PBKDF2) for data protection and integrity verification. These utilities are essential for password storage, API authentication, and sensitive data handling.
+
+### Usage Example
+
+```csharp
+// Generate secure random tokens for API keys and session management
+string apiKey = EncryptionHelper.GenerateRandomString(64);
+byte[] secureBytes = EncryptionHelper.GenerateRandomBytes(32);
+
+// Compute hashes for data integrity and password storage
+string passwordHash = EncryptionHelper.ComputeSHA256Hash("userPassword123");
+string hmacSignature = EncryptionHelper.ComputeHmacSha256(
+    "messageData", 
+    "secretKey123"
+);
+
+// Secure password hashing with salt
+var saltedHash = EncryptionHelper.GenerateSaltedHash("userPassword");
+bool isValid = EncryptionHelper.VerifySaltedHash(
+    "userPassword",
+    saltedHash.Hash,
+    saltedHash.Salt
+);
+
+// Generate checksums for data tampering detection
+string fileChecksum = EncryptionHelper.ComputeChecksum(File.ReadAllBytes("data.bin"));
+
+// Convert data to hexadecimal for logging
+string hexValue = EncryptionHelper.ToHex("sensitiveData");
+
+// Mask sensitive data in logs
+string maskedCard = EncryptionHelper.MaskSensitiveData("4532123456789012", 4); // "4532****9012"
+string maskedEmail = EncryptionHelper.MaskSensitiveData("user@example.com", 3); // "use****@example.com"
+```
+
 ## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
