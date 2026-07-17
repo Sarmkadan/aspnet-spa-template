@@ -65,8 +65,11 @@ public static class ValidationExceptionJsonExtensionsJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized exception, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="json"/> is null.</exception>
     public static bool TryFromJson(string json, out ValidationException? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         value = null;
 
         if (string.IsNullOrWhiteSpace(json))
@@ -92,17 +95,23 @@ public static class ValidationExceptionJsonExtensionsJsonExtensions
     private sealed class ValidationExceptionJsonModel
     {
         public string? Message { get; set; }
+
         public Dictionary<string, List<string>>? Errors { get; set; }
 
         public ValidationException ToException()
         {
-            if (Errors is null)
+            if (Errors is null || Errors.Count == 0)
             {
                 return new ValidationException(Message ?? "Validation failed");
             }
 
-            var exception = new ValidationException(Errors);
-            return exception;
+            if (Errors.Count == 1 && Errors.First().Value.Count == 1)
+            {
+                var singleError = Errors.First();
+                return new ValidationException(singleError.Key, singleError.Value[0]);
+            }
+
+            return new ValidationException(Errors);
         }
     }
 }
