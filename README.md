@@ -2215,6 +2215,93 @@ public class UserServiceUsageExample
 }
 ```
 
+## UserServiceIntegrationTests
+
+The `UserServiceIntegrationTests` class provides comprehensive integration testing for user management workflows, ensuring end-to-end functionality between the user service, repository, and database. It verifies complex business scenarios such as user registration, authentication, profile updates, account lifecycle operations, and data integrity by utilizing the test server and in-memory database context.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using AspNetSpaTemplate.DTOs;
+
+// UserServiceIntegrationTests is designed for use within an xUnit test runner
+public class UserServiceIntegrationTestsExample : IAsyncLifetime
+{
+    private readonly UserServiceIntegrationTests _tests = new UserServiceIntegrationTests();
+
+    public async Task InitializeAsync() => await _tests.InitializeAsync();
+    public async Task DisposeAsync() => await _tests.DisposeAsync();
+
+    public async Task RunIntegrationTests()
+    {
+        // Initialize test database and services
+        await _tests.InitializeAsync();
+
+        // Execute end-to-end user workflows
+        await _tests.EndToEnd_RegisterUserLoginAndUpdate_CompleteAuthFlow();
+        await _tests.MultipleUsersWithUniqueEmails_CanAllBeCreated();
+        await _tests.DuplicateEmail_PreventSecondUserCreation();
+        await _tests.DeactivateAndReactivate_UserAccessibility();
+        await _tests.LastLoginTimestamp_UpdatedOnAuthentication();
+        await _tests.PasswordValidation_EnforcesMinimumLength();
+        await _tests.GetActiveUsers_ExcludesInactiveUsers();
+
+        // Clean up
+        await _tests.DisposeAsync();
+    }
+}
+
+// Example usage within a test method
+[Fact]
+public async Task TestUserRegistrationFlow()
+{
+    // Arrange
+    var tests = new UserServiceIntegrationTests();
+    await tests.InitializeAsync();
+
+    try
+    {
+        var registerRequest = new CreateUserRequest
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john.doe@example.com",
+            Password = "SecurePassword123!",
+            PhoneNumber = "1234567890",
+            Address = "123 Main St",
+            City = "Boston",
+            PostalCode = "02101",
+            Country = "USA"
+        };
+
+        // Act - Register user
+        var userResponse = await tests.CreateUserAsync(registerRequest);
+
+        // Assert - User created successfully
+        Assert.NotNull(userResponse);
+        Assert.Equal("john.doe@example.com", userResponse.Email);
+        Assert.True(userResponse.IsActive);
+
+        // Act - Login
+        var loginRequest = new LoginRequest
+        {
+            Email = "john.doe@example.com",
+            Password = "SecurePassword123!"
+        };
+        var loginResponse = await tests.AuthenticateAsync(loginRequest);
+
+        // Assert - Login successful
+        Assert.NotNull(loginResponse.Token);
+        Assert.True(loginResponse.UserId > 0);
+    }
+    finally
+    {
+        await tests.DisposeAsync();
+    }
+}
+```
+
 ### Usage Example
 
 ```csharp
