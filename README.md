@@ -2031,6 +2031,54 @@ public class MemoryCacheUsageExample
 }
 ```
 
+---
+
+## ManifestServiceTests
+
+The `ManifestServiceTests` class provides comprehensive unit tests for the `ManifestService`, which generates Web App Manifest files for Progressive Web App (PWA) functionality. These tests verify that the manifest generation correctly handles various configurations including default values, host settings, theme colors, background colors, and shortcut definitions, ensuring the PWA can be properly installed and function across different environments.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using Xunit;
+
+// ManifestServiceTests is designed for use within an xUnit test runner
+public class ManifestServiceUsageExample
+{
+    private readonly ManifestServiceTests _tests = new ManifestServiceTests();
+
+    public async Task RunTestSuite()
+    {
+        // Test default manifest generation
+        await _tests.BuildManifest_WithDefaults_ReturnsValidManifest();
+        await _tests.BuildManifest_WithDefaults_ContainsTwoIcons();
+
+        // Test host configuration
+        await _tests.BuildManifest_WithHost_IconSrcsAreAbsolute();
+        await _tests.BuildManifest_WithoutHost_IconSrcsAreRelative();
+
+        // Test shortcuts
+        await _tests.BuildManifest_ContainsShortcuts();
+
+        // Test configuration overrides
+        await _tests.BuildManifest_WhenNameConfigured_UsesConfiguredName();
+        await _tests.BuildManifest_WhenThemeColorConfigured_UsesConfiguredColor();
+
+        // Test default color values
+        await _tests.ThemeColor_WithNoConfig_ReturnsDefaultBlue();
+        await _tests.BackgroundColor_WithNoConfig_ReturnsDefaultLight();
+
+        // Test configured color values
+        await _tests.ThemeColor_WhenConfigured_ReturnsConfiguredValue();
+
+        // Test manifest scope
+        await _tests.BuildManifest_ScopeIsRoot();
+        await _tests.BuildManifest_PreferRelatedApplicationsIsFalse();
+    }
+}
+```
+
 ## OrderServiceTests
 
 The `OrderServiceTests` class provides comprehensive unit testing for the `OrderService`, covering order retrieval, creation, status updates, discount application, and revenue calculations. It ensures that order-related operations behave correctly under both valid and invalid scenarios, including validation failures, business rule violations, and data access errors.
