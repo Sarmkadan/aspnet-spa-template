@@ -7201,6 +7201,94 @@ public class ProductService
 
 ---
 
+## ICacheService
+
+`ICacheService` is an interface that abstracts the caching layer, providing a unified API for distributed caching operations. It supports time-to-live (TTL) expiration, cache invalidation, bulk operations, and provides detailed cache statistics for monitoring and optimization. The interface is designed to work with different cache implementations (in-memory, Redis, etc.) while maintaining a consistent contract for consumers.
+
+### Usage Example
+
+```csharp
+// Register ICacheService in Program.cs
+builder.Services.AddScoped<ICacheService, CacheService>();
+
+// Inject ICacheService in your controller or service
+public class ProductService
+{
+    private readonly ICacheService _cacheService;
+
+    public ProductService(ICacheService cacheService)
+    {
+        _cacheService = cacheService;
+    }
+
+    public async Task<Product?> GetProductByIdAsync(int productId)
+    {
+        const string cacheKey = "products:123";
+
+        // Try to get from cache first
+        var cachedProduct = await _cacheService.GetAsync<Product>(cacheKey);
+
+        if (cachedProduct != null)
+        {
+            Console.WriteLine("Retrieved product from cache");
+            return cachedProduct;
+        }
+
+        // Cache miss - fetch from database
+        var product = await _dbContext.Products.FindAsync(productId);
+
+        if (product is not null)
+        {
+            // Cache with 5-minute expiration
+            await _cacheService.SetAsync(cacheKey, product, TimeSpan.FromMinutes(5));
+            Console.WriteLine("Cached product");
+        }
+
+        return product;
+    }
+
+    public async Task<Product> GetProductWithFallbackAsync(int id)
+    {
+        const string cacheKey = "products:fallback:456";
+
+        // Get or set with factory pattern (prevents cache stampede)
+        return await _cacheService.GetOrSetAsync(
+            cacheKey,
+            async () => await _dbContext.Products.FindAsync(id),
+            TimeSpan.FromMinutes(10)
+        );
+    }
+
+    public async Task IncrementViewCountAsync(int productId)
+    {
+        const string cacheKey = "product:views";
+        await _cacheService.IncrementAsync(cacheKey);
+    }
+
+    public async Task<bool> IsProductCachedAsync(int id)
+    {
+        const string cacheKey = "products:789";
+        return await _cacheService.ExistsAsync(cacheKey);
+    }
+
+    public async Task ClearProductCacheAsync()
+    {
+        // Remove all keys matching pattern
+        await _cacheService.RemoveByPatternAsync("products:*");
+    }
+
+    public async Task DisplayCacheStatsAsync()
+    {
+        var stats = await _cacheService.GetStatisticsAsync();
+        Console.WriteLine($"Cache Stats: {stats.TotalRequests} requests, " + 
+        $"{stats.CacheHits} hits ({stats.HitRate:P}), " + 
+        $"{stats.ItemCount} items");
+    }
+}
+```
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
