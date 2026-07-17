@@ -2026,6 +2026,89 @@ Application health status.
 
 ---
 
+## ErrorResponse
+
+The `ErrorResponse` class represents a standardized error response format used throughout the API to provide consistent error information to clients. It includes essential fields like error message, status code, optional error code, trace ID for debugging, and detailed validation errors when applicable.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+
+// Create a basic error response for a 400 Bad Request
+var errorResponse = new ErrorResponse("Invalid request data", 400);
+
+// Create an error response with error code for business rule violations
+var businessError = new ErrorResponse(
+    "Product stock cannot be negative", 
+    "PRODUCT_STOCK_NEGATIVE", 
+    400
+);
+
+// Create an error response with validation errors
+var validationErrors = new Dictionary<string, List<string>>
+{
+    { "email", new List<string> { "Email is required", "Email format is invalid" } },
+    { "password", new List<string> { "Password must be at least 8 characters" } }
+};
+var validationError = new ErrorResponse(
+    "Validation failed", 
+    validationErrors, 
+    422
+);
+
+// Access error properties
+Console.WriteLine(errorResponse.Message); // "Invalid request data"
+Console.WriteLine(errorResponse.StatusCode); // 400
+Console.WriteLine(errorResponse.Timestamp); // Current UTC timestamp
+Console.WriteLine(errorResponse.ErrorCode); // null (not set)
+
+// For validation errors
+if (validationError.Errors != null)
+{
+    foreach (var fieldErrors in validationError.Errors)
+    {
+        Console.WriteLine($"{fieldErrors.Key}: {string.Join(", ", fieldErrors.Value)}");
+    }
+}
+```
+
+**JSON Response Example:**
+
+```json
+{
+  "message": "Validation failed",
+  "errorCode": null,
+  "errors": {
+    "email": ["Email is required", "Email format is invalid"],
+    "password": ["Password must be at least 8 characters"]
+  },
+  "traceId": "abc123-xyz456",
+  "statusCode": 422,
+  "timestamp": "2024-07-19T14:30:00Z"
+}
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Message` | `string` | The error message describing what went wrong |
+| `ErrorCode` | `string?` | Optional error code for business rule violations or specific error types |
+| `Errors` | `Dictionary<string, List<string>>?` | Dictionary of field-specific validation errors (e.g., `{\"email\": [\"required\", \"invalid format\"]}`) |
+| `TraceId` | `string?` | Correlation ID for tracing the request across services |
+| `StatusCode` | `int` | HTTP status code (e.g., 400, 404, 500) |
+| `Timestamp` | `DateTime` | When the error occurred (UTC) |
+
+### Constructors
+
+- `ErrorResponse()` - Default constructor
+- `ErrorResponse(string message, int statusCode = 400)` - Basic error with message and status code
+- `ErrorResponse(string message, string errorCode, int statusCode = 400)` - Error with message, error code, and status code  
+- `ErrorResponse(string message, Dictionary<string, List<string>> errors, int statusCode = 400)` - Error with validation errors
+
+---
+
 ## Configuration
 
 ### Environment-Specific Settings
