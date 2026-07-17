@@ -234,6 +234,74 @@ await themeService.ClearSchemeAsync(userId);
 
 ---
 
+## ThemeService
+
+The `ThemeService` manages per-user UI theme preferences in a server-side cache, enabling the ASP.NET backend to pre-render the correct theme class before the client-side JavaScript executes. This eliminates the flash of unstyled content on page load while maintaining user preferences with automatic cache expiration.
+
+The service persists theme preferences with a 30-day TTL using the `ICacheService` abstraction, ensuring preferences are automatically evicted without requiring separate cleanup jobs.
+
+### Usage Example
+
+```csharp
+// Register ThemeService in Program.cs
+builder.Services.AddScoped<IThemeService, ThemeService>();
+
+// Inject IThemeService in your controller or service
+public class ThemeController : ControllerBase
+{
+    private readonly IThemeService _themeService;
+    private readonly ILogger<ThemeController> _logger;
+
+    public ThemeController(IThemeService themeService, ILogger<ThemeController> logger)
+    {
+        _themeService = themeService;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> GetUserTheme(int userId)
+    {
+        // Retrieve the saved theme preference for a user
+        ColourScheme scheme = await _themeService.GetSchemeAsync(userId);
+        
+        return Ok(new { scheme });
+    }
+
+    public async Task<IActionResult> SetUserTheme(int userId, ColourScheme scheme)
+    {
+        // Save the user's theme preference
+        await _themeService.SetSchemeAsync(userId, scheme);
+        
+        return Ok(new { success = true });
+    }
+
+    public async Task<IActionResult> ClearUserTheme(int userId)
+    {
+        // Clear the user's theme preference (revert to system default)
+        await _themeService.ClearSchemeAsync(userId);
+        
+        return Ok(new { success = true });
+    }
+}
+```
+
+### Public Methods
+
+| Method | Description |
+|--------|-------------|
+| `GetSchemeAsync(int userId, CancellationToken ct)` | Retrieves the saved colour scheme for the given user. Returns `ColourScheme.System` when no explicit preference has been stored. |
+| `SetSchemeAsync(int userId, ColourScheme scheme, CancellationToken ct)` | Persists the user's explicit theme choice. Passing `ColourScheme.System` clears any saved preference. |
+| `ClearSchemeAsync(int userId, CancellationToken ct)` | Removes any saved preference for the given user, resetting to `ColourScheme.System`. |
+
+### Related Types
+
+- **ColourScheme**: Enum containing supported UI colour schemes (`System`, `Light`, `Dark`)
+- **IThemeService**: Interface defining the theme management contract
+- **ThemeService**: Concrete implementation using in-memory caching with 30-day TTL
+- Used in: ThemeController and any service that needs to manage user theme preferences
+
+
+---
+
 ## Progressive Web App (PWA)
 
 The template includes a complete Web App Manifest so users can install the application on their home screen from any modern browser.
