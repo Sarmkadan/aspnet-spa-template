@@ -64,14 +64,20 @@ public static class DomainEventHandlersValidationJsonExtensions
     /// Attempts to deserialize a <see cref="DomainEventHandlers"/> instance from a JSON string.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">The deserialized domain event handlers instance, or null if deserialization fails.</param>
-    /// <returns>True if deserialization succeeds; otherwise, false.</returns>
+    /// <param name="value">
+    /// When this method returns, contains the deserialized <see cref="DomainEventHandlers"/> instance if deserialization succeeds; otherwise, <see langword="null"/>.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> if deserialization succeeds; otherwise, <see langword="false"/>.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
     public static bool TryFromJson(string json, out DomainEventHandlers? value)
     {
-        value = null;
+        ArgumentNullException.ThrowIfNull(json);
 
         if (string.IsNullOrWhiteSpace(json))
         {
+            value = null;
             return true;
         }
 
@@ -82,6 +88,7 @@ public static class DomainEventHandlersValidationJsonExtensions
         }
         catch (JsonException)
         {
+            value = null;
             return false;
         }
     }
