@@ -2439,6 +2439,68 @@ public class OrderSyncService
     }
 }
 
+---
+
+## IHttpClientFactory
+
+The `IHttpClientFactory` interface and its `DefaultHttpClientFactory` implementation provide a centralized way to create and manage `HttpClient` instances for making HTTP requests to external services. This pattern prevents socket exhaustion by reusing `HttpClient` instances and allows for centralized configuration of HTTP settings like timeouts, headers, and retry policies.
+
+The factory creates named clients that can be configured differently for various external services (e.g., payment gateways, weather APIs, authentication services), and provides extension methods for common operations like JSON serialization/deserialization and safe request handling.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Integration;
+using Microsoft.Extensions.DependencyInjection;
+
+// In Program.cs - register the factory
+builder.Services.AddSingleton<IHttpClientFactory, DefaultHttpClientFactory>();
+
+// In your service constructor
+public class PaymentService
+{
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    public PaymentService(IHttpClientFactory httpClientFactory)
+    {
+        _httpClientFactory = httpClientFactory;
+    }
+
+    public async Task ProcessPaymentAsync(decimal amount, string currency)
+    {
+        // Get a configured HTTP client for the payment gateway
+        var paymentClient = _httpClientFactory.GetClient("payment-gateway");
+        
+        // Use extension methods for JSON operations
+        var apiKey = await paymentClient.GetAsJsonAsync<string>("https://api.payment-provider.com/v1/key");
+        
+        // POST with JSON body
+        var paymentResponse = await paymentClient.PostAsJsonAsync<PaymentResult>(
+            "https://api.payment-provider.com/v1/payments",
+            new { amount, currency, cardToken = "tok_visa_1234567890" }
+        );
+        
+        // Safe GET request that doesn't throw on errors
+        var (isSuccess, statusCode, content) = await paymentClient.SafeGetAsync(
+            "https://api.payment-provider.com/v1/status"
+        );
+        
+        if (isSuccess)
+        {
+            Console.WriteLine($"Payment successful: {content}");
+        }
+        else
+        {
+            Console.WriteLine($"Payment failed with status {statusCode}: {content}");
+        }
+    }
+}
+
+// During application shutdown
+var factory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+factory.Dispose(); // Clean up all managed HttpClient instances
+```
+
 // Example usage in a background worker for processing queued requests
 public class SyncQueueWorker : BackgroundService
 {
