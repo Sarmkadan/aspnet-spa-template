@@ -11,6 +11,11 @@ namespace AspNetSpaTemplate.Tests;
 /// Extension methods for <see cref="ReviewServiceTests"/> that provide convenient assertions and helper methods
 /// for testing review service functionality.
 /// </summary>
+/// <remarks>
+/// This static class contains extension methods and helper methods for creating and asserting
+/// review-related entities in unit tests. All methods include proper null checking and
+/// provide clear error messages for test failures.
+/// </remarks>
 public static class ReviewServiceTestsExtensions
 {
     /// <summary>
@@ -21,6 +26,7 @@ public static class ReviewServiceTestsExtensions
     /// <param name="expectedTitle">The expected title.</param>
     /// <param name="expectedContent">The expected content.</param>
     /// <param name="expectedIsApproved">The expected approval status.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="review"/> is <see langword="null"/>.</exception>
     public static void ShouldHaveReviewProperties(
         this Review? review,
         int expectedRating,
@@ -41,6 +47,8 @@ public static class ReviewServiceTestsExtensions
     /// </summary>
     /// <param name="actual">The actual review.</param>
     /// <param name="expected">The expected review.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="actual"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="expected"/> is <see langword="null"/>.</exception>
     public static void ShouldMatchReview(this Review? actual, Review expected)
     {
         ArgumentNullException.ThrowIfNull(actual);
@@ -60,6 +68,8 @@ public static class ReviewServiceTestsExtensions
     /// </summary>
     /// <param name="reviews">The collection of reviews.</param>
     /// <param name="expectedReviews">The expected reviews.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="reviews"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="expectedReviews"/> is <see langword="null"/>.</exception>
     public static void ShouldContainExactly(this IEnumerable<Review> reviews, IEnumerable<Review> expectedReviews)
     {
         ArgumentNullException.ThrowIfNull(reviews);
@@ -79,6 +89,7 @@ public static class ReviewServiceTestsExtensions
     /// </summary>
     /// <param name="reviews">The collection of reviews.</param>
     /// <param name="expectedRating">The expected rating.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="reviews"/> is <see langword="null"/>.</exception>
     public static void ShouldContainRating(this IEnumerable<Review> reviews, int expectedRating)
     {
         ArgumentNullException.ThrowIfNull(reviews);
@@ -92,6 +103,7 @@ public static class ReviewServiceTestsExtensions
     /// </summary>
     /// <param name="reviews">The collection of reviews.</param>
     /// <param name="expectedUserId">The expected user ID.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="reviews"/> is <see langword="null"/>.</exception>
     public static void ShouldContainUserReviews(this IEnumerable<Review> reviews, int expectedUserId)
     {
         ArgumentNullException.ThrowIfNull(reviews);
@@ -104,6 +116,7 @@ public static class ReviewServiceTestsExtensions
     /// Asserts that a collection of reviews contains only approved reviews.
     /// </summary>
     /// <param name="reviews">The collection of reviews.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="reviews"/> is <see langword="null"/>.</exception>
     public static void ShouldContainOnlyApprovedReviews(this IEnumerable<Review> reviews)
     {
         ArgumentNullException.ThrowIfNull(reviews);
@@ -117,6 +130,7 @@ public static class ReviewServiceTestsExtensions
     /// </summary>
     /// <param name="reviews">The collection of reviews.</param>
     /// <param name="expectedProductId">The expected product ID.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="reviews"/> is <see langword="null"/>.</exception>
     public static void ShouldContainOnlyProductReviews(this IEnumerable<Review> reviews, int expectedProductId)
     {
         ArgumentNullException.ThrowIfNull(reviews);
@@ -129,6 +143,7 @@ public static class ReviewServiceTestsExtensions
     /// Asserts that a collection of reviews is empty.
     /// </summary>
     /// <param name="reviews">The collection of reviews.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="reviews"/> is <see langword="null"/>.</exception>
     public static void ShouldBeEmpty(this IEnumerable<Review> reviews)
     {
         ArgumentNullException.ThrowIfNull(reviews);
@@ -189,6 +204,8 @@ public static class ReviewServiceTestsExtensions
     /// </summary>
     /// <param name="validationException">The validation exception.</param>
     /// <param name="expectedErrors">The expected error messages.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="validationException"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="expectedErrors"/> is <see langword="null"/>.</exception>
     public static void ShouldHaveValidationErrors(this ValidationException validationException, params string[] expectedErrors)
     {
         ArgumentNullException.ThrowIfNull(validationException);
@@ -210,6 +227,8 @@ public static class ReviewServiceTestsExtensions
     /// </summary>
     /// <param name="businessException">The business exception.</param>
     /// <param name="expectedMessage">The expected error message.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="businessException"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="expectedMessage"/> is <see langword="null"/> or empty.</exception>
     public static void ShouldHaveBusinessExceptionMessage(this BusinessException businessException, string expectedMessage)
     {
         ArgumentNullException.ThrowIfNull(businessException);
