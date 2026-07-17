@@ -24,7 +24,7 @@ public static class ExternalApiExceptionExtensions
     public static bool IsClientError(this ExternalApiException exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return exception.StatusCode >= 400 && exception.StatusCode < 500;
+        return exception.StatusCode is >= 400 and < 500;
     }
 
     /// <summary>
@@ -36,7 +36,7 @@ public static class ExternalApiExceptionExtensions
     public static bool IsServerError(this ExternalApiException exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return exception.StatusCode >= 500 && exception.StatusCode < 600;
+        return exception.StatusCode is >= 500 and < 600;
     }
 
     /// <summary>
@@ -44,36 +44,23 @@ public static class ExternalApiExceptionExtensions
     /// or user display. Includes endpoint, method, status code, and message.
     /// </summary>
     /// <param name="exception">The exception to format.</param>
-    /// <returns>A formatted error message string.</returns>
+    /// <returns>A formatted error message string containing the base message and additional context.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="exception"/> is null.</exception>
     public static string FormatForDisplay(this ExternalApiException exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
 
-        var message = exception.Message;
         var details = new List<string>();
-
         if (!string.IsNullOrEmpty(exception.Endpoint))
-        {
             details.Add($"Endpoint: {exception.Endpoint}");
-        }
-
         if (!string.IsNullOrEmpty(exception.Method))
-        {
             details.Add($"Method: {exception.Method}");
-        }
-
         if (exception.StatusCode.HasValue)
-        {
             details.Add($"Status Code: {exception.StatusCode.Value}");
-        }
 
-        if (details.Count > 0)
-        {
-            message += " | " + string.Join(" | ", details);
-        }
-
-        return message;
+        return details.Count > 0
+            ? $"{exception.Message} | {string.Join(" | ", details)}"
+            : exception.Message;
     }
 
     /// <summary>
