@@ -15,6 +15,10 @@ namespace AspNetSpaTemplate.Exceptions;
 /// </summary>
 public static class BusinessExceptionJsonExtensions
 {
+    /// <summary>
+    /// The default JSON serializer options for serializing <see cref="BusinessException"/>.
+    /// Uses camelCase naming policy and omits null values.
+    /// </summary>
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -22,6 +26,10 @@ public static class BusinessExceptionJsonExtensions
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    /// <summary>
+    /// The JSON serializer options for serializing <see cref="BusinessException"/> with indentation.
+    /// Uses camelCase naming policy and omits null values.
+    /// </summary>
     private static readonly JsonSerializerOptions _jsonIndentedOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -48,11 +56,13 @@ public static class BusinessExceptionJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized exception, or null if the JSON is null or empty.</returns>
-    /// <exception cref="JsonException">Thrown when the JSON is invalid.</exception>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized into a <see cref="BusinessException"/>.</exception>
     public static BusinessException? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
         return JsonSerializer.Deserialize<BusinessException>(json, _jsonOptions);
     }
@@ -63,8 +73,13 @@ public static class BusinessExceptionJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">The deserialized exception, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
     public static bool TryFromJson(string json, out BusinessException? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+
         try
         {
             value = JsonSerializer.Deserialize<BusinessException>(json, _jsonOptions);
