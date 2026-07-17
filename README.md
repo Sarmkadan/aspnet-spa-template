@@ -392,6 +392,105 @@ Idempotency is enforced via `clientRequestId` — re-submitting the same key ret
 
 ---
 
+## SyncQueueService
+
+The `SyncQueueService` implements a thread-safe in-process synchronization queue that stores pending background operations for offline-first applications. It maintains a concurrent dictionary of sync entries with automatic retention eviction (default 72 hours) to prevent unbounded memory growth.
+
+The service provides idempotency guarantees through client-provided request IDs, ensuring duplicate operations are not queued. Completed and failed entries are automatically cleaned up after the retention period, while pending entries remain available for background processing.
+
+### Usage Example
+
+```csharp
+// Register SyncQueueService in Program.cs
+builder.Services.AddScoped<ISyncQueueService, SyncQueueService>();
+
+// Inject ISyncQueueService in your controller or service
+public class OrderController : ControllerBase
+{
+    private readonly ISyncQueueService _syncQueue;
+    private readonly ILogger<OrderController> _logger;
+
+    public OrderController(ISyncQueueService syncQueue, ILogger<OrderController> logger)
+    {
+        _syncQueue = syncQueue;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> CreateOrder(OrderRequest request)
+    {
+        try
+        {
+            // Process the order normally
+            var order = await _orderService.CreateOrderAsync(request);
+            return Ok(order);
+        }
+        catch (Exception ex) when (ex is not HttpRequestException)
+        {
+            // Queue the request for later processing when offline
+            int queueId = _syncQueue.Enqueue(
+                userId: request.UserId,
+                clientRequestId: request.RequestId,
+                method: "POST",
+                relativePath: "/api/orders",
+                bodyJson: JsonSerializer.Serialize(request)
+            );
+
+            _logger.LogInformation("Queued order creation for later processing: queueId={QueueId}", queueId);
+            
+            return Accepted(new { queueId, message = "Order will be processed when online" });
+        }
+    }
+
+    public async Task<IActionResult> ProcessPendingOrders(int userId)
+    {
+        // Get all pending sync entries for the user
+        var pendingEntries = _syncQueue.GetPending(userId);
+        
+        foreach (var entry in pendingEntries)
+        {
+            try
+            {
+                // Replay the queued request
+                var request = JsonSerializer.Deserialize<OrderRequest>(entry.BodyJson!);
+                var order = await _orderService.CreateOrderAsync(request!);
+                
+                // Mark as completed
+                _syncQueue.Complete(entry.Id);
+                _logger.LogInformation("Successfully processed queued order: {OrderId}", order.Id);
+            }
+            catch (Exception ex)
+            {
+                // Mark as failed with error details
+                _syncQueue.Fail(entry.Id, ex.Message);
+                _logger.LogError(ex, "Failed to process queued order {QueueId}", entry.Id);
+            }
+        }
+
+        return Ok(new { processed = pendingEntries.Count, pendingCount = _syncQueue.PendingCount(userId) });
+    }
+}
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `Enqueue(int userId, string clientRequestId, string method, string relativePath, string? bodyJson = null)` | `int` | Queues a new sync entry and returns its unique identifier. Idempotency is enforced via `clientRequestId` — duplicate IDs return the existing entry ID. |
+| `GetPending(int userId)` | `IReadOnlyList<SyncQueueEntry>` | Retrieves all pending sync entries for a specific user, ordered by queue time. |
+| `Complete(int id)` | `bool` | Marks a sync entry as successfully completed. Returns `true` if the entry exists and was updated. |
+| `Fail(int id, string error)` | `bool` | Marks a sync entry as failed with an error message. Returns `true` if the entry exists and was updated. |
+| `PendingCount(int userId)` | `int` | Returns the number of pending sync entries for a specific user. |
+
+### Related Types
+
+- **SyncQueueEntry**: Represents a single queued operation with properties like `Id`, `UserId`, `ClientRequestId`, `Method`, `RelativePath`, `BodyJson`, `Status`, `QueuedAt`, `ResolvedAt`, and `LastError`
+- **SyncEntryStatus**: Enum containing `Pending`, `Completed`, and `Failed` status values
+- **ISyncQueueService**: Interface defining the sync queue contract
+- Used in: Background processing workers, offline-first API controllers, and PWA synchronization logic
+
+
+---
+
 ## PwaService
 
 The `PwaService` provides Progressive Web App (PWA) functionality including push notification management, subscription handling, and offline sync queue operations. It serves as the backend service layer for PWA features that enable users to receive real-time notifications, maintain offline functionality, and synchronize data across devices.
