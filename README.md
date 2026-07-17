@@ -640,6 +640,61 @@ const response = await fetch('/api/users/profile', {
 
 ---
 
+## ValidationExceptionJsonExtensions
+
+The `ValidationExceptionJsonExtensions` class provides extension methods for serializing and deserializing `ValidationException` objects to/from JSON strings. This is particularly useful when you need to transmit validation errors across API boundaries or persist them in storage.
+
+The extension methods support both standard JSON serialization (with camelCase property naming) and pretty-printed JSON for debugging purposes. The deserialization methods handle both the simple message case and the full validation error dictionary format.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Exceptions;
+
+// Create a validation exception with error dictionary
+var validationException = new ValidationException(new Dictionary<string, List<string>>
+{
+    { "email", new List<string> { "Email is required", "Email format is invalid" } },
+    { "password", new List<string> { "Password must be at least 8 characters" } }
+});
+
+// Serialize to JSON string
+string json = validationException.ToJson();
+// {"message":"Validation failed","errors":{"email":["Email is required","Email format is invalid"],"password":["Password must be at least 8 characters"]}}
+
+// Serialize with indentation for readability
+string prettyJson = validationException.ToJson(indented: true);
+
+// Deserialize back to ValidationException
+ValidationException? deserialized = ValidationExceptionJsonExtensions.FromJson(json);
+
+// Try to deserialize with error handling
+if (ValidationExceptionJsonExtensions.TryFromJson(json, out var result))
+{
+    // Use the deserialized exception
+    if (result != null)
+    {
+        Console.WriteLine(result.Message);
+        foreach (var error in result.Errors)
+        {
+            Console.WriteLine($"{error.Key}: {string.Join(", ", error.Value)}");
+        }
+    }
+}
+
+// Handle null or empty JSON
+string emptyJson = "";
+ValidationException? nullResult = ValidationExceptionJsonExtensions.FromJson(emptyJson); // returns null
+
+// Handle invalid JSON
+string invalidJson = "{invalid}";
+bool success = ValidationExceptionJsonExtensions.TryFromJson(invalidJson, out var invalidResult); // returns false
+```
+
+---
+
+## API Reference
+
 ## API Reference
 
 ### Base URL
