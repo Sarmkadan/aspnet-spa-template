@@ -741,6 +741,54 @@ foreach (var fieldErrors in validationException.GetAllErrors())
 
 ---
 
+## ValidationException
+
+The `ValidationException` class represents an exception thrown when data validation fails in the application. It maintains a dictionary of field names to lists of error messages, allowing for structured validation error reporting. This exception is particularly useful for API controllers that need to return detailed validation errors to clients.
+
+The `Errors` property provides access to all validation errors, while the `AddError` method allows for fluent error accumulation. The exception can be constructed with either a simple message, a dictionary of errors, or individual field-specific errors.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Exceptions;
+
+// Create a validation exception with a simple message
+var validationException = new ValidationException("User registration data is invalid");
+
+// Create a validation exception with a dictionary of field errors
+var errors = new Dictionary<string, List<string>>
+{
+    { "email", new List<string> { "Email is required", "Email format is invalid" } },
+    { "password", new List<string> { "Password must be at least 8 characters" } },
+    { "username", new List<string> { "Username is already taken" } }
+};
+var dictValidationException = new ValidationException(errors);
+
+// Create a validation exception for a specific field
+var fieldValidationException = new ValidationException("email", "Email address is required");
+
+// Add additional errors to an existing exception
+fieldValidationException.AddError("email", "Email must contain @ symbol");
+fieldValidationException.AddError("password", "Password must contain at least one digit");
+
+// Access the Errors dictionary to inspect all validation errors
+foreach (var fieldError in fieldValidationException.Errors)
+{
+    Console.WriteLine($"{fieldError.Key}: {string.Join(", ", fieldError.Value)}");
+}
+
+// Check if there are any errors
+if (fieldValidationException.Errors.Count > 0)
+{
+    Console.WriteLine("Validation failed!");
+}
+
+// Access the Field property to get the first field with errors
+string? firstField = fieldValidationException.Field; // "email"
+```
+
+---
+
 ## ValidationExceptionExtensionsValidation
 
 The `ValidationExceptionExtensionsValidation` class provides validation helper methods specifically designed for validating parameters and exception instances used with `ValidationExceptionExtensions` extension methods. These methods ensure that field names and error messages are properly formatted before being used in validation operations, helping to prevent runtime errors and improve code reliability.
