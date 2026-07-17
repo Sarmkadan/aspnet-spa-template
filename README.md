@@ -693,6 +693,80 @@ int userId = userException.GetResourceId<int>(); // 789
 
 ---
 
+## NotFoundExceptionExtensionsValidation
+
+The `NotFoundExceptionExtensionsValidation` class provides validation helper methods for parameters used with the `NotFoundExceptionExtensions` extension methods. These methods validate parameters before they're passed to the extension methods, ensuring that field names, error messages, and other inputs are properly formatted and non-null, helping to prevent runtime errors and improve code reliability.
+
+The validation methods work with all the parameter combinations supported by the `NotFoundExceptionExtensions` methods, including simple messages, resource types with IDs, formatted messages, and exceptions with inner exceptions. Each validation method returns an empty list when validation succeeds, or a list of validation problems when validation fails.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Exceptions;
+
+// Validate parameter combinations before using NotFoundExceptionExtensions methods
+var messageProblems = NotFoundExceptionExtensionsValidation.ValidateMessage("User not found");
+bool isMessageValid = NotFoundExceptionExtensionsValidation.IsMessageValid("Product not found");
+
+// Use EnsureMessageValid to throw an exception if the message is invalid
+try
+{
+    NotFoundExceptionExtensionsValidation.EnsureMessageValid(null);
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($"Message validation failed: {ex.Message}");
+}
+
+// Validate resource type and ID parameters
+var resourceProblems = NotFoundExceptionExtensionsValidation.ValidateResource("User", 123);
+bool isResourceValid = NotFoundExceptionExtensionsValidation.IsResourceValid("Product", 456);
+
+// Use EnsureResourceValid to throw an exception if parameters are invalid
+try
+{
+    NotFoundExceptionExtensionsValidation.EnsureResourceValid(" ", null);
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($"Resource validation failed: {ex.Message}");
+}
+
+// Validate formatted resource parameters
+var formattedProblems = NotFoundExceptionExtensionsValidation.ValidateFormattedResource(
+    "Order", 
+    789, 
+    "Order with ID {0} was not found",
+    789
+);
+bool isFormattedValid = NotFoundExceptionExtensionsValidation.IsFormattedResourceValid(
+    "Product", 
+    123, 
+    "Product with ID {0} not available",
+    123
+);
+
+// Validate exception with inner exception
+var innerProblems = NotFoundExceptionExtensionsValidation.ValidateWithInner("Customer not found", new Exception("Database error"));
+bool isInnerValid = NotFoundExceptionExtensionsValidation.IsWithInnerValid("User not found", new Exception());
+
+// Validate generic resource ID parameter
+var genericProblems = NotFoundExceptionExtensionsValidation.ValidateGeneric(456);
+bool isGenericValid = NotFoundExceptionExtensionsValidation.IsGenericValid(789);
+
+// Use EnsureGenericValid to throw an exception if the resource ID is invalid
+try
+{
+    NotFoundExceptionExtensionsValidation.EnsureGenericValid(null);
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($"Generic validation failed: {ex.Message}");
+}
+```
+
+---
+
 ## ValidationExceptionExtensions
 
 ## ValidationExceptionExtensions
