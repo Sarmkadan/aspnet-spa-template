@@ -2315,6 +2315,87 @@ app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
 ---
 
+## CorrelationIdMiddleware
+
+The `CorrelationIdMiddleware` adds a unique correlation ID to each HTTP request and propagates it through the entire request pipeline. This enables distributed tracing across multiple services, simplifies log aggregation, and helps track request flows in complex systems. The middleware automatically generates correlation IDs when not provided by clients, ensuring every request has a unique identifier.
+
+
+**Usage Example:**
+
+```csharp
+// Middleware is automatically registered in Program.cs via:
+// app.UseMiddleware<CorrelationIdMiddleware>();
+
+// Client can provide correlation ID in request header
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("X-Correlation-Id", "your-correlation-id-123");
+
+// Or let middleware generate one automatically
+var response = await client.GetAsync("https://localhost:7001/api/products");
+
+// Response will include X-Correlation-Id header
+var correlationId = response.Headers.GetValues("X-Correlation-Id").FirstOrDefault();
+
+// Access correlation ID in controllers or services
+public class ProductsController : ApiControllerBase
+{
+    private readonly ILogger<ProductsController> _logger;
+    
+    public ProductsController(ILogger<ProductsController> logger)
+    {
+        _logger = logger;
+    }
+    
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ProductDto>> GetProduct(int id)
+    {
+        // Get correlation ID from HttpContext
+        var correlationId = HttpContext.GetCorrelationId();
+        _logger.LogInformation("Getting product {ProductId} | CorrelationId: {CorrelationId}", id, correlationId);
+        
+        // Or use CorrelationContext for structured logging
+        var context = CorrelationContext.FromHttpContext(HttpContext);
+        _logger.LogInformation("Request context | {CorrelationId} | {ClientIp} | {UserAgent}",
+            context.CorrelationId, context.ClientIp, context.UserAgent);
+            
+        return Ok(await _service.GetProductAsync(id));
+    }
+}
+
+// Set correlation ID when making external API calls
+public class OrderService
+{
+    private readonly HttpClient _httpClient;
+    private readonly IHttpContextAccessor _contextAccessor;
+    
+    public async Task ProcessOrderAsync(Order order)
+    {
+        var context = CorrelationContext.FromHttpContext(_contextAccessor.HttpContext!);
+        
+        // Pass correlation ID to external service
+        _httpClient.DefaultRequestHeaders.Add("X-Correlation-Id", context.CorrelationId);
+        
+        var response = await _httpClient.PostAsJsonAsync("/api/orders", order);
+    }
+}
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)` | Constructor | Creates middleware instance |
+| `InvokeAsync(HttpContext context)` | Method | Processes HTTP request and adds correlation ID |
+| `GetCorrelationId(HttpContext context)` | Static Method | Gets correlation ID from HttpContext |
+| `SetCorrelationId(HttpContext context, string correlationId)` | Static Method | Sets correlation ID in HttpContext |
+| `CorrelationId` | Property | Gets the correlation ID string |
+| `ClientIp` | Property | Gets client IP address from HTTP context |
+| `UserAgent` | Property | Gets user agent string from request headers |
+| `Timestamp` | Property | Gets timestamp when context was created |
+| `FromHttpContext(HttpContext context)` | Static Method | Creates CorrelationContext from HttpContext |
+
+---
+
 ## ErrorResponse
 
 The `ErrorResponse` class represents a standardized error response format used throughout the API to provide consistent error information to clients. It includes essential fields like error message, status code, optional error code, trace ID for debugging, and detailed validation errors when applicable.
