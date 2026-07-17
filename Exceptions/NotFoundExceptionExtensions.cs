@@ -11,7 +11,8 @@ using System.Globalization;
 namespace AspNetSpaTemplate.Exceptions;
 
 /// <summary>
-/// Extension methods for <see cref="NotFoundException"/> that provide convenient ways to create and work with not-found exceptions.
+/// Provides extension methods for creating and working with <see cref="NotFoundException"/> instances.
+/// Includes convenience methods for constructing exceptions with common patterns and checking exception details.
 /// </summary>
 public static class NotFoundExceptionExtensions
 {
@@ -90,10 +91,7 @@ public static class NotFoundExceptionExtensions
     /// <param name="resourceId">The ID of the resource that was not found.</param>
     /// <returns>A new <see cref="NotFoundException"/> instance.</returns>
     public static NotFoundException ToNotFound<T>(this object resourceId)
-    {
-        var resourceType = typeof(T).Name;
-        return new NotFoundException(resourceType, resourceId);
-    }
+        => new NotFoundException(typeof(T).Name, resourceId);
 
     /// <summary>
     /// Determines whether this exception represents a not-found error for the specified resource type.
@@ -137,10 +135,10 @@ public static class NotFoundExceptionExtensions
         ArgumentNullException.ThrowIfNull(resourceId);
 
         return string.Equals(
-                exception.ResourceType,
-                resourceType,
-                StringComparison.Ordinal)
-            && Equals(exception.ResourceId, resourceId);
+            exception.ResourceType,
+            resourceType,
+            StringComparison.Ordinal)
+        && Equals(exception.ResourceId, resourceId);
     }
 
     /// <summary>
@@ -167,15 +165,10 @@ public static class NotFoundExceptionExtensions
     /// <param name="exception">The exception.</param>
     /// <returns>The resource type.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="exception"/> is <see langword="null"/></exception>
-    /// <exception cref="InvalidOperationException">The exception doesn't have a resource type set.</exception>
+    /// <exception cref="InvalidOperationException">The exception does not have a resource type set.</exception>
     public static string GetResourceType(this NotFoundException exception)
-    {
-        ArgumentNullException.ThrowIfNull(exception);
-
-        return exception.ResourceType
-            ?? throw new InvalidOperationException(
-                "The exception does not have a resource type set.");
-    }
+        => exception.ResourceType
+           ?? throw new InvalidOperationException("The exception does not have a resource type set.");
 
     /// <summary>
     /// Gets the resource ID from this exception, or throws if it's not set.
@@ -184,17 +177,9 @@ public static class NotFoundExceptionExtensions
     /// <param name="exception">The exception.</param>
     /// <returns>The resource ID.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="exception"/> is <see langword="null"/></exception>
-    /// <exception cref="InvalidOperationException">The exception doesn't have a resource ID set.</exception>
+    /// <exception cref="InvalidOperationException">The exception's resource ID is not of the expected type.</exception>
     public static T GetResourceId<T>(this NotFoundException exception)
-    {
-        ArgumentNullException.ThrowIfNull(exception);
-
-        if (exception.ResourceId is T typedId)
-        {
-            return typedId;
-        }
-
-        throw new InvalidOperationException(
-            "The exception's resource ID is not of the expected type.");
-    }
+        => exception.ResourceId is T typedId
+           ? typedId
+           : throw new InvalidOperationException("The exception's resource ID is not of the expected type.");
 }
