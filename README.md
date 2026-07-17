@@ -1494,6 +1494,69 @@ User? user = review.User;
 
 ---
 
+## Product
+
+The `Product` class represents a catalog item in the e-commerce system, containing core product information, pricing, inventory management, and business logic for stock operations. It serves as the central domain model for product management with comprehensive inventory tracking, availability status, and rating calculations.
+
+The Product model supports CRUD operations with stock management methods (`ReduceStock`, `IncreaseStock`), availability checks, and tax calculations based on product category tax rates.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Models;
+using AspNetSpaTemplate.Constants;
+
+// Create a new product
+var product = new Product
+{
+    Name = "Premium Wireless Headphones",
+    Description = "Noise-cancelling wireless headphones with 30-hour battery life",
+    Price = 199.99m,
+    StockQuantity = 50,
+    Category = ProductCategory.Electronics,
+    ImageUrl = "/images/headphones.jpg",
+    Sku = "AUD-WH-1001",
+    Rating = 4.5m,
+    ReviewCount = 125,
+    IsAvailable = true,
+    IsFeatured = true
+};
+
+// Check stock availability
+bool isInStock = product.IsInStock(); // true
+bool canPurchase = product.CanPurchase(2); // true
+
+// Calculate pricing with tax
+decimal taxAmount = product.GetTaxAmount(); // 19.99m (10% tax for Electronics)
+decimal priceWithTax = product.GetPriceWithTax(); // 219.98m
+
+// Manage inventory
+product.ReduceStock(5); // Reduces stock by 5 units
+product.IncreaseStock(10); // Increases stock by 10 units
+
+// Update product details
+product.UpdateDetails(
+    "Premium Wireless Headphones Pro",
+    "Premium noise-cancelling wireless headphones with 30-hour battery life and Bluetooth 5.2",
+    249.99m,
+    ProductCategory.Electronics,
+    "/images/headphones-pro.jpg"
+);
+
+// Update rating
+product.UpdateRating(4.7m, 142);
+
+// Set availability and featured status
+product.SetAvailability(true);
+product.SetFeatured(true);
+
+// Access navigation properties
+ICollection<Review>? reviews = product.Reviews;
+ICollection<OrderItem>? orderItems = product.OrderItems;
+```
+
+---
+
 ## PushSubscription
 
 The `PushSubscription` class represents a browser Web Push subscription for a user device. It stores the VAPID endpoint URL and encryption keys required to deliver push notifications via the Web Push Protocol (RFC 8030). Each user can have multiple subscriptions — one per browser/device combination.
