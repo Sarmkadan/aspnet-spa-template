@@ -1241,6 +1241,46 @@ After the configured maximum retries are exhausted, it fails fast and throws an 
 
 ---
 
+## OrderItem
+
+The `OrderItem` class represents a line item in an order, containing product details, pricing information, and calculation methods for order totals. It provides comprehensive order calculation functionality including subtotals, taxes, discounts, and validation, making it ideal for order processing and line item management in e-commerce applications.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Models;
+
+// Create an order item for a product
+var orderItem = new OrderItem
+{
+    OrderId = 1,
+    ProductId = 101,
+    Quantity = 2,
+    UnitPrice = 29.99m,
+    TaxAmount = 4.80m
+};
+
+// Calculate and set the total
+orderItem.RecalculateTotal();
+
+// Apply a discount
+orderItem.ApplyDiscount(5.00m);
+
+// Get calculated values
+decimal subtotal = orderItem.GetSubtotal(); // 59.98
+decimal totalWithTax = orderItem.GetTotalWithTax(); // 59.78
+decimal averagePrice = orderItem.GetAveragePricePerUnit(); // 29.89
+
+// Validate the order item
+bool isValid = orderItem.IsValid(); // true
+
+// Access navigation properties
+Order? order = orderItem.Order;
+Product? product = orderItem.Product;
+```
+
+---
+
 ## API Reference
 
 ## ExternalApiClient
@@ -1360,6 +1400,46 @@ The client retries on:
 - Connection timeouts
 
 After the configured maximum retries are exhausted, it fails fast and throws an `ExternalApiException` with the attempt count in the context.
+
+---
+
+## OrderItem
+
+The `OrderItem` class represents a line item in an order, containing product details, pricing information, and calculation methods for order totals. It provides comprehensive order calculation functionality including subtotals, taxes, discounts, and validation, making it ideal for order processing and line item management in e-commerce applications.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Models;
+
+// Create an order item for a product
+var orderItem = new OrderItem
+{
+    OrderId = 1,
+    ProductId = 101,
+    Quantity = 2,
+    UnitPrice = 29.99m,
+    TaxAmount = 4.80m
+};
+
+// Calculate and set the total
+orderItem.RecalculateTotal();
+
+// Apply a discount
+orderItem.ApplyDiscount(5.00m);
+
+// Get calculated values
+decimal subtotal = orderItem.GetSubtotal(); // 59.98
+decimal totalWithTax = orderItem.GetTotalWithTax(); // 59.78
+decimal averagePrice = orderItem.GetAveragePricePerUnit(); // 29.89
+
+// Validate the order item
+bool isValid = orderItem.IsValid(); // true
+
+// Access navigation properties
+Order? order = orderItem.Order;
+Product? product = orderItem.Product;
+```
 
 ---
 
