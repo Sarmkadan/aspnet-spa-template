@@ -2263,6 +2263,84 @@ bool handled = await webhookHandler.HandleWebhookAsync("stripe", payload, signat
 
 ---
 
+## NotificationService
+
+The `NotificationService` handles asynchronous notification delivery across multiple channels including email, SMS, and push notifications. It queues messages for background processing to avoid blocking API responses, providing a clean abstraction for sending various types of notifications throughout the application.
+
+The service supports common notification scenarios like order confirmations, password resets, and general alerts, with built-in validation and logging.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Integration;
+
+// Inject NotificationService in your controller or service
+public class OrderController
+{
+    private readonly NotificationService _notificationService;
+
+    public OrderController(NotificationService notificationService)
+    {
+        _notificationService = notificationService;
+    }
+
+    public async Task<IActionResult> PlaceOrder(int userId, string email, decimal total)
+    {
+        // Process order...
+        
+        // Send order confirmation email
+        await _notificationService.SendOrderConfirmationAsync(email, orderId: 12345, total: 99.99m);
+        
+        // Send push notification to user
+        await _notificationService.SendPushAsync(
+            userId: userId,
+            title: "Order Confirmed",
+            message: "Your order #12345 has been placed successfully!",
+            deepLink: "/orders/12345"
+        );
+        
+        // Send password reset email
+        await _notificationService.SendPasswordResetAsync(
+            email: "user@example.com",
+            resetToken: "abc123-xyz789"
+        );
+        
+        return Ok();
+    }
+}
+
+// Background worker that processes the queue
+public class NotificationWorker : BackgroundService
+{
+    private readonly NotificationService _notificationService;
+
+    public NotificationWorker(NotificationService notificationService)
+    {
+        _notificationService = notificationService;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            var pending = _notificationService.GetPendingNotifications(batchSize: 10);
+            
+            foreach (var notification in pending)
+            {
+                // Process each notification (send email, SMS, push, etc.)
+                Console.WriteLine($"Processing {notification.Type} to {notification.Recipient}");
+                notification.SentAt = DateTime.UtcNow;
+            }
+            
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        }
+    }
+}
+
+// Check queue status
+int queueSize = _notificationService.GetQueueSize();
+```
+
 ## SyncQueueServiceTests
 
 The `SyncQueueServiceTests` class provides comprehensive unit tests for the `SyncQueueService`, which implements an in-memory queue for synchronizing offline requests with the server. These tests verify that the sync queue correctly handles request deduplication, user isolation, ordering, and state management, ensuring reliable offline-to-online request synchronization.
