@@ -2154,6 +2154,127 @@ if (validationError.Errors != null)
 | `StatusCode` | `int` | HTTP status code (e.g., 400, 404, 500) |
 | `Timestamp` | `DateTime` | When the error occurred (UTC) |
 
+---
+
+## ApiResponse
+
+The `ApiResponse` and `ApiResponse<T>` classes provide a standardized wrapper for all API responses in the application. They offer a consistent structure for both success and error responses, including metadata for debugging, trace IDs for correlation, and timestamps for tracking. These response types are used throughout the API controllers to ensure a uniform response format that clients can rely on.
+
+### Generic ApiResponse<T>
+
+The generic `ApiResponse<T>` wraps successful responses containing data of type T, while also supporting error responses with detailed error information.
+
+**Usage Example:**
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+
+// Successful response with product data
+var productResponse = ApiResponse<ProductDto>.Ok(new ProductDto
+{
+    Id = 1,
+    Name = "Premium Wireless Headphones",
+    Price = 199.99m,
+    Category = "Electronics"
+}, "Product retrieved successfully");
+
+// Error response with error code
+var errorResponse = ApiResponse<ProductDto>.Error(
+    "Product not found",
+    "PRODUCT_NOT_FOUND",
+    "abc123-xyz456"
+);
+
+// Access response properties
+if (productResponse.Success)
+{
+    ProductDto? product = productResponse.Data;
+    Console.WriteLine(productResponse.Message); // "Product retrieved successfully"
+}
+else
+{
+    Console.WriteLine(errorResponse.Message); // "Product not found"
+    Console.WriteLine(errorResponse.ErrorCode); // "PRODUCT_NOT_FOUND"
+    Console.WriteLine(errorResponse.TraceId); // "abc123-xyz456"
+    Console.WriteLine(errorResponse.Timestamp); // Current UTC timestamp
+}
+
+// Add metadata for analytics/debugging
+var responseWithMetadata = productResponse.WithMetadata("cacheHit", true)
+    .WithMetadata("processingTimeMs", 42);
+
+// Map to different data type
+var userResponse = productResponse.Map(p => new UserDto
+{
+    Id = p.Id,
+    Name = p.Name
+});
+```
+
+### Non-Generic ApiResponse
+
+The non-generic `ApiResponse` is used for operations that don't return data, such as POST/PUT/DELETE endpoints.
+
+**Usage Example:**
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+
+// Successful response for create/update/delete operations
+var successResponse = ApiResponse.Ok("Product created successfully");
+
+// Error response for validation failures
+var validationError = ApiResponse.Error(
+    "Invalid product data",
+    "VALIDATION_ERROR",
+    "xyz789-abc123"
+);
+
+// Access properties
+Console.WriteLine(successResponse.Success); // true
+Console.WriteLine(successResponse.Message); // "Product created successfully"
+Console.WriteLine(validationError.Success); // false
+Console.WriteLine(validationError.ErrorCode); // "VALIDATION_ERROR"
+```
+
+### Properties (ApiResponse<T>)
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Success` | `bool` | Indicates whether the operation was successful |
+| `Data` | `T?` | The response data (null for error responses) |
+| `Message` | `string?` | Success message or error description |
+| `ErrorCode` | `string?` | Error code for business rule violations |
+| `TraceId` | `string?` | Correlation ID for tracing requests |
+| `Timestamp` | `DateTime` | When the response was generated (UTC) |
+| `Metadata` | `Dictionary<string, object>?` | Additional metadata for debugging/analytics |
+
+### Public Methods (ApiResponse<T>)
+
+| Method | Description |
+|--------|-------------|
+| `static ApiResponse<T> Ok(T data, string? message = null)` | Creates a successful response with data |
+| `static ApiResponse<T> Error(string message, string errorCode, string? traceId = null)` | Creates an error response |
+| `ApiResponse<T> WithMetadata(string key, object value)` | Adds metadata to the response |
+| `ApiResponse<TNew> Map<TNew>(Func<T?, TNew> mapper)` | Converts response to a different type |
+
+### Properties (ApiResponse)
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Success` | `bool` | Indicates whether the operation was successful |
+| `Message` | `string?` | Success message or error description |
+| `ErrorCode` | `string?` | Error code for business rule violations |
+| `TraceId` | `string?` | Correlation ID for tracing requests |
+| `Timestamp` | `DateTime` | When the response was generated (UTC) |
+
+### Public Methods (ApiResponse)
+
+| Method | Description |
+|--------|-------------|
+| `static ApiResponse Ok(string? message = null)` | Creates a successful response |
+| `static ApiResponse Error(string message, string errorCode, string? traceId = null)` | Creates an error response |
+
 ### Constructors
 
 - `ErrorResponse()` - Default constructor
