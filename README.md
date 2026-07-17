@@ -605,6 +605,86 @@ services.AddHostedService<NotificationWorker>();
 
 ---
 
+## BackgroundTaskScheduler
+
+The `BackgroundTaskScheduler` manages and executes background tasks on a schedule or on-demand. It provides a centralized way to register, monitor, and control background task execution with detailed status tracking, error handling, and manual triggering capabilities. The scheduler is designed for single-server deployments and integrates seamlessly with ASP.NET Core's dependency injection system.
+
+### Usage Example
+
+```csharp
+// Register the scheduler in Program.cs
+builder.Services.AddBackgroundTaskScheduler();
+
+// Register your background tasks
+builder.Services.AddBackgroundTask<DataCleanupTask>();
+builder.Services.AddSingleton<IBackgroundTask>(provider => provider.GetRequiredService<DataCleanupTask>());
+
+// Configure the application to use the scheduler
+app.UseBackgroundTaskScheduler();
+
+// In your custom background task implementation
+public class DataCleanupTask : IBackgroundTask
+{
+    private readonly BackgroundTaskStatus _status = new();
+
+    public string TaskName => "DataCleanupTask";
+    public TimeSpan? ExecutionInterval => TimeSpan.FromHours(6);
+
+    public async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        _status.IsRunning = true;
+        _status.LastExecutedAt = DateTime.UtcNow;
+
+        try
+        {
+            // Perform cleanup logic
+            using var scope = _serviceProvider.CreateScope();
+            var repository = scope.ServiceProvider.GetRequiredService<IProductRepository>();
+            await repository.CleanupOldProductsAsync(TimeSpan.FromDays(365));
+
+            _status.LastExecutionDuration = TimeSpan.FromSeconds(2);
+            _status.ExecutionCount++;
+        }
+        catch (Exception ex)
+        {
+            _status.LastError = ex.Message;
+            _status.FailureCount++;
+            throw;
+        }
+        finally
+        {
+            _status.IsRunning = false;
+        }
+    }
+
+    public BackgroundTaskStatus GetStatus() => _status;
+}
+
+// Monitor task status
+var scheduler = app.ApplicationServices.GetRequiredService<IBackgroundTaskScheduler>();
+var statuses = scheduler.GetStatus();
+
+foreach (var status in statuses)
+{
+    Console.WriteLine($"Task: {status.TaskName}");
+    Console.WriteLine($" Status: {status.Status}");
+    Console.WriteLine($" Last executed: {status.LastExecutedAt}");
+    Console.WriteLine($" Next execution: {status.NextExecutionAt}");
+    Console.WriteLine($" Execution count: {status.ExecutionCount}");
+    Console.WriteLine($" Failures: {status.FailureCount}");
+
+    if (status.LastError != null)
+    {
+        Console.WriteLine($" Last error: {status.LastError}");
+    }
+}
+
+// Manually trigger a task
+await scheduler.TriggerTaskAsync("DataCleanupTask");
+```
+
+---
+
 ## IBackgroundTask
 
 The `IBackgroundTask` interface defines the contract for background worker tasks that run periodically or on-demand within the application. It provides a standardized way to implement tasks like cache cleanup, notification sending, report generation, or data synchronization. Implementations should handle their own error logging and recovery mechanisms.
