@@ -1443,6 +1443,69 @@ Product? product = orderItem.Product;
 
 ---
 
+## Order
+
+The `Order` class represents a customer order in the e-commerce system, containing order details, pricing information, shipping addresses, and order lifecycle management. It provides comprehensive order processing functionality including status transitions, discount application, total recalculation, and validation methods, making it ideal for order management in e-commerce applications.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Models;
+using AspNetSpaTemplate.Constants;
+
+// Create a new order for a user
+var order = new Order
+{
+    UserId = 42,
+    OrderNumber = "ORD-2024-001",
+    Status = OrderStatus.Pending,
+    SubTotal = 99.98m,
+    TaxAmount = 9.99m,
+    ShippingCost = 5.99m,
+    ShippingAddress = "123 Main St, City, Country",
+    BillingAddress = "123 Main St, City, Country",
+    Notes = "Please deliver during business hours"
+};
+
+// Add items to the order
+order.Items = new List<OrderItem>
+{
+    new OrderItem { ProductId = 101, Quantity = 2, UnitPrice = 49.99m, TaxAmount = 4.80m },
+    new OrderItem { ProductId = 102, Quantity = 1, UnitPrice = 0.00m, TaxAmount = 0.00m }
+};
+
+// Calculate and set the total
+order.RecalculateTotal();
+
+// Apply a discount
+order.ApplyDiscount(5.00m);
+
+// Get calculated values
+decimal total = order.Total; // 109.96m
+decimal subtotal = order.SubTotal; // 99.98m
+int totalItems = order.GetTotalItems(); // 3
+
+// Check if order can be cancelled
+bool canCancel = order.CanBeCancelled(); // true (if status is Pending or Confirmed)
+
+// Check if order is recent (within 30 days)
+bool isRecent = order.IsRecent(); // true
+
+// Transition order status
+order.MarkAsProcessing();
+order.MarkAsShipped("UPS123456789");
+order.MarkAsDelivered();
+
+// Cancel order with reason
+order.Cancel("Customer requested cancellation");
+
+// Access navigation properties
+User? user = order.User;
+ICollection<OrderItem>? items = order.Items;
+```
+
+---
+
 ## Review
 
 The `Review` class represents a product review submitted by a user, enabling customers to provide feedback on products with ratings, titles, and detailed content. Reviews track helpfulness counts, verification status, approval state, and timestamps for moderation and analytics purposes.
