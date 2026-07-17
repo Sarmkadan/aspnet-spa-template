@@ -6,8 +6,15 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
 
+/// <summary>
+/// Contains unit tests for the <see cref="ValidationHelper"/> class.
+/// Tests various validation methods including null checks, range validation, string length, patterns, emails, phone numbers, collections, and equality.
+/// </summary>
 public sealed class ValidationHelperTests
 {
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.NotNull"/> throws a <see cref="ValidationException"/> when the value is null.
+    /// </summary>
     [Fact]
     public void NotNull_WithNullValue_ThrowsValidationException()
     {
@@ -18,6 +25,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.NotNull"/> does not throw when the value is not null.
+    /// </summary>
     [Fact]
     public void NotNull_WithNonNullValue_DoesNotThrow()
     {
@@ -28,6 +38,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.NotNullOrEmpty"/> throws a <see cref="ValidationException"/> when the string value is null.
+    /// </summary>
     [Fact]
     public void NotNullOrEmpty_WithNullString_ThrowsValidationException()
     {
@@ -38,6 +51,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.NotNullOrEmpty"/> throws a <see cref="ValidationException"/> when the string value is empty.
+    /// </summary>
     [Fact]
     public void NotNullOrEmpty_WithEmptyString_ThrowsValidationException()
     {
@@ -48,6 +64,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.NotNullOrEmpty"/> does not throw when the string value is not null or empty.
+    /// </summary>
     [Fact]
     public void NotNullOrEmpty_WithValidString_DoesNotThrow()
     {
@@ -58,6 +77,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.InRange(decimal, decimal, decimal, string)"/> does not throw when the value is within the specified range.
+    /// </summary>
     [Fact]
     public void InRange_WithValueInRange_DoesNotThrow()
     {
@@ -68,6 +90,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.InRange(decimal, decimal, decimal, string)"/> throws a <see cref="ValidationException"/> when the value is below the minimum.
+    /// </summary>
     [Fact]
     public void InRange_WithValueBelowMin_ThrowsValidationException()
     {
@@ -78,6 +103,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.InRange(decimal, decimal, decimal, string)"/> throws a <see cref="ValidationException"/> when the value is above the maximum.
+    /// </summary>
     [Fact]
     public void InRange_WithValueAboveMax_ThrowsValidationException()
     {
@@ -88,6 +116,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.InRange(int, int, int, string)"/> does not throw when the integer value is within the specified range.
+    /// </summary>
     [Fact]
     public void InRange_Integer_WithValueInRange_DoesNotThrow()
     {
@@ -98,6 +129,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.InRange(int, int, int, string)"/> throws a <see cref="ValidationException"/> when the integer value is out of the specified range.
+    /// </summary>
     [Fact]
     public void InRange_Integer_WithValueOutOfRange_ThrowsValidationException()
     {
@@ -108,6 +142,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.LengthBetween(string, int, int, string)"/> does not throw when the string length is within the specified range.
+    /// </summary>
     [Fact]
     public void LengthBetween_WithValidLength_DoesNotThrow()
     {
@@ -118,6 +155,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.LengthBetween(string, int, int, string)"/> throws a <see cref="ValidationException"/> when the string is too short.
+    /// </summary>
     [Fact]
     public void LengthBetween_WithTooShortString_ThrowsValidationException()
     {
@@ -128,6 +168,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.LengthBetween(string, int, int, string)"/> throws a <see cref="ValidationException"/> when the string is too long.
+    /// </summary>
     [Fact]
     public void LengthBetween_WithTooLongString_ThrowsValidationException()
     {
@@ -138,6 +181,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.MatchesPattern(string, string, string)"/> does not throw when the string matches the specified pattern.
+    /// </summary>
     [Fact]
     public void MatchesPattern_WithMatchingPattern_DoesNotThrow()
     {
@@ -148,6 +194,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.MatchesPattern(string, string, string)"/> throws a <see cref="ValidationException"/> when the string does not match the specified pattern.
+    /// </summary>
     [Fact]
     public void MatchesPattern_WithNonMatchingPattern_ThrowsValidationException()
     {
@@ -158,6 +207,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.ValidEmail(string)"/> does not throw when the email is valid.
+    /// </summary>
     [Fact]
     public void ValidEmail_WithValidEmail_DoesNotThrow()
     {
@@ -168,6 +220,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.ValidEmail(string)"/> throws a <see cref="ValidationException"/> when the email is invalid.
+    /// </summary>
     [Fact]
     public void ValidEmail_WithInvalidEmail_ThrowsValidationException()
     {
@@ -178,6 +233,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.ValidPhoneNumber(string)"/> does not throw when the phone number is valid.
+    /// </summary>
     [Fact]
     public void ValidPhoneNumber_WithValidPhoneNumber_DoesNotThrow()
     {
@@ -188,6 +246,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.ValidPhoneNumber(string)"/> throws a <see cref="ValidationException"/> when the phone number is too short.
+    /// </summary>
     [Fact]
     public void ValidPhoneNumber_WithTooShortPhoneNumber_ThrowsValidationException()
     {
@@ -198,6 +259,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.ValidPhoneNumber(string)"/> does not throw when the phone number is null.
+    /// </summary>
     [Fact]
     public void ValidPhoneNumber_WithNullPhoneNumber_DoesNotThrow()
     {
@@ -208,6 +272,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.NotEmpty{T}(IEnumerable{T}, string)"/> throws a <see cref="ValidationException"/> when the collection is empty.
+    /// </summary>
     [Fact]
     public void NotEmpty_WithEmptyCollection_ThrowsValidationException()
     {
@@ -218,6 +285,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.NotEmpty{T}(IEnumerable{T}, string)"/> does not throw when the collection is not empty.
+    /// </summary>
     [Fact]
     public void NotEmpty_WithNonEmptyCollection_DoesNotThrow()
     {
@@ -228,6 +298,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.MaxItems{T}(IEnumerable{T}, int, string)"/> throws a <see cref="ValidationException"/> when the collection has too many items.
+    /// </summary>
     [Fact]
     public void MaxItems_WithTooManyItems_ThrowsValidationException()
     {
@@ -238,6 +311,9 @@ public sealed class ValidationHelperTests
         act.Should().Throw<ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.MaxItems{T}(IEnumerable{T}, int, string)"/> does not throw when the collection has a valid item count.
+    /// </summary>
     [Fact]
     public void MaxItems_WithValidItemCount_DoesNotThrow()
     {
@@ -248,6 +324,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.Equal(string, string, string)"/> does not throw when the values are equal.
+    /// </summary>
     [Fact]
     public void Equal_WithEqualValues_DoesNotThrow()
     {
@@ -258,6 +337,9 @@ public sealed class ValidationHelperTests
         act.Should().NotThrow();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelper.Equal(string, string, string)"/> throws a <see cref="ValidationException"/> when the values are unequal.
+    /// </summary>
     [Fact]
     public void Equal_WithUnequalValues_ThrowsValidationException()
     {
