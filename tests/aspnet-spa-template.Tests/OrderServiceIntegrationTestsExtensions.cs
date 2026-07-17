@@ -27,7 +27,12 @@ public static class OrderServiceIntegrationTestsExtensions
     /// <param name="dbContext">The database context.</param>
     /// <param name="email">The user's email address.</param>
     /// <returns>The created user entity.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="dbContext"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+/// Thrown when <paramref name="dbContext"/> or <paramref name="email"/> is null.
+/// </exception>
+/// <exception cref="ArgumentException">
+/// Thrown when <paramref name="email"/> is null or whitespace.
+/// </exception>
     public static async Task<User> CreateTestUserAsync(this OrderServiceIntegrationTests tests, AppDbContext dbContext, string email)
     {
         ArgumentNullException.ThrowIfNull(dbContext);
@@ -40,7 +45,8 @@ public static class OrderServiceIntegrationTestsExtensions
             Email = email,
             PasswordHash = "test-hash",
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         dbContext.Users.Add(user);
@@ -59,7 +65,12 @@ public static class OrderServiceIntegrationTestsExtensions
     /// <param name="stockQuantity">The initial stock quantity.</param>
     /// <param name="category">The product category.</param>
     /// <returns>The created product entity.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="dbContext"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+/// Thrown when <paramref name="dbContext"/> or <paramref name="email"/> is null.
+/// </exception>
+/// <exception cref="ArgumentException">
+/// Thrown when <paramref name="email"/> is null or whitespace.
+/// </exception>
     public static async Task<Product> CreateTestProductAsync(
         this OrderServiceIntegrationTests tests,
         AppDbContext dbContext,
@@ -79,7 +90,8 @@ public static class OrderServiceIntegrationTestsExtensions
             StockQuantity = stockQuantity,
             IsAvailable = true,
             Category = category,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         dbContext.Products.Add(product);
@@ -98,7 +110,12 @@ public static class OrderServiceIntegrationTestsExtensions
     /// <param name="shippingAddress">The shipping address.</param>
     /// <param name="billingAddress">The billing address.</param>
     /// <returns>The created order response.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="orderService"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+/// Thrown when <paramref name="orderService"/> or <paramref name="items"/> is null.
+/// </exception>
+/// <exception cref="ArgumentException">
+/// Thrown when <paramref name="shippingAddress"/> or <paramref name="billingAddress"/> is null or whitespace.
+/// </exception>
     public static async Task<OrderResponse> CreateTestOrderAsync(
         this OrderServiceIntegrationTests tests,
         OrderService orderService,
@@ -134,7 +151,12 @@ public static class OrderServiceIntegrationTestsExtensions
     /// <param name="productRepository">The product repository.</param>
     /// <param name="expectedReduction">The expected reduction in stock quantity.</param>
     /// <returns>The updated product entity.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="productRepository"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+/// Thrown when <paramref name="productRepository"/> is null.
+/// </exception>
+/// <exception cref="ArgumentException">
+/// Thrown when the product with <paramref name="productId"/> does not exist.
+/// </exception>
     public static async Task<Product> AssertStockReductionAsync(
         this OrderServiceIntegrationTests tests,
         int productId,
@@ -144,9 +166,9 @@ public static class OrderServiceIntegrationTestsExtensions
         ArgumentNullException.ThrowIfNull(productRepository);
 
         var product = await productRepository.GetByIdAsync(productId);
-        product.Should().NotBeNull();
+        product.Should().NotBeNull("because the product should exist after order creation");
 
-        product!.StockQuantity.Should().BeGreaterThanOrEqualTo(expectedReduction);
+        product.StockQuantity.Should().BeGreaterThanOrEqualTo(expectedReduction);
 
         return product;
     }
