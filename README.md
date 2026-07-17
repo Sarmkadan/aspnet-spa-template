@@ -324,6 +324,166 @@ Idempotency is enforced via `clientRequestId` — re-submitting the same key ret
 
 ---
 
+## PwaService
+
+The `PwaService` provides Progressive Web App (PWA) functionality including push notification management, subscription handling, and offline sync queue operations. It serves as the backend service layer for PWA features that enable users to receive real-time notifications, maintain offline functionality, and synchronize data across devices.
+
+The service manages Web Push subscriptions using the VAPID protocol, handles push notification delivery to individual users or broadcast to multiple users, and coordinates the sync queue system for offline-first applications.
+
+### Usage Examples
+
+**Register a push subscription:**
+
+```csharp
+// In your controller or service
+var subscriptionRequest = new RegisterSubscriptionRequest
+{
+    Endpoint = "https://fcm.googleapis.com/fcm/send/device-token-123",
+    P256dhKey = "BLM8xgL5F2JGqgJqgJqgJqgJqgJqgJqgJqgJq",
+    AuthKey = "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB",
+    DeviceLabel = "Work Chrome Browser"
+};
+
+// Register the subscription with PwaService
+var subscription = await _pwaService.RegisterSubscriptionAsync(
+    userId: 123,
+    request: subscriptionRequest,
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+);
+```
+
+**Send a push notification to a user:**
+
+```csharp
+var notificationPayload = new PushNotificationPayload
+{
+    Title = "Order Shipped",
+    Body = "Your order #1234 has been dispatched.",
+    Icon = "/icons/icon-192.png",
+    ActionUrl = "/?page=orders",
+    Data = new { orderId = 1234 }
+};
+
+var deliveryResult = await _pwaService.SendPushToUserAsync(
+    userId: 123,
+    payload: notificationPayload
+);
+
+if (deliveryResult.Success)
+{
+    Console.WriteLine($"Push sent successfully to {deliveryResult.RecipientsCount} devices");
+}
+```
+
+**Broadcast a push notification to multiple users:**
+
+```csharp
+var userIds = new List<int> { 123, 456, 789 };
+var broadcastPayload = new PushNotificationPayload
+{
+    Title = "New Feature Available",
+    Body = "Check out our latest product updates!",
+    Icon = "/icons/icon-192.png",
+    ActionUrl = "/products"
+};
+
+var batchResult = await _pwaService.BroadcastPushAsync(
+    userIds: userIds,
+    payload: broadcastPayload
+);
+
+Console.WriteLine($"Sent to {batchResult.SuccessCount}/{batchResult.TotalRecipients} users");
+```
+
+**Queue a sync entry for offline synchronization:**
+
+```csharp
+var syncRequest = new SyncQueueEntryRequest
+{
+    ClientRequestId = Guid.NewGuid().ToString(),
+    HttpMethod = "POST",
+    Endpoint = "/api/orders",
+    RequestBody = JsonSerializer.Serialize(new { productId = 101, quantity = 2 }),
+    Timestamp = DateTime.UtcNow
+};
+
+var queueEntry = await _pwaService.QueueSyncEntryAsync(
+    userId: 123,
+    request: syncRequest
+);
+
+Console.WriteLine($"Queued sync entry: {queueEntry.Id}");
+```
+
+**Get pending sync entries and replay them:**
+
+```csharp
+// Get all pending sync entries for a user
+var pendingEntries = await _pwaService.GetPendingSyncEntriesAsync(userId: 123);
+
+foreach (var entry in pendingEntries)
+{
+    Console.WriteLine($"Pending entry {entry.Id}: {entry.HttpMethod} {entry.Endpoint}");
+}
+
+// Replay all pending sync entries when user comes back online
+var replayResult = await _pwaService.ReplaySyncQueueAsync(userId: 123);
+
+Console.WriteLine($"Replayed {replayResult.SuccessCount} entries, failed {replayResult.FailedCount}");
+```
+
+**Check PWA status for a user:**
+
+```csharp
+var status = await _pwaService.GetStatusAsync(userId: 123);
+
+if (status.HasPushSubscription)
+{
+    Console.WriteLine("User has push subscription active");
+}
+
+if (status.HasPendingSyncEntries)
+{
+    Console.WriteLine($"User has {status.PendingSyncCount} pending sync entries");
+}
+```
+
+**Unsubscribe a user from push notifications:**
+
+```csharp
+await _pwaService.UnsubscribeAsync(
+    userId: 123,
+    endpoint: "https://fcm.googleapis.com/fcm/send/device-token-123"
+);
+```
+
+### Public Methods
+
+| Method | Description |
+|--------|-------------|
+| `GetStatusAsync(int userId, CancellationToken ct)` | Retrieves the current PWA status for a user, including push subscription and sync queue information |
+| `RegisterSubscriptionAsync(int userId, RegisterSubscriptionRequest request, string? userAgent, CancellationToken ct)` | Registers a new push notification subscription for a user |
+| `UnsubscribeAsync(int userId, string endpoint, CancellationToken ct)` | Unsubscribes a user from push notifications using their subscription endpoint |
+| `SendPushToUserAsync(int userId, PushNotificationPayload payload, CancellationToken ct)` | Sends a push notification to a specific user |
+| `BroadcastPushAsync(IReadOnlyList<int> userIds, PushNotificationPayload payload, CancellationToken ct)` | Broadcasts a push notification to multiple users simultaneously |
+| `QueueSyncEntryAsync(int userId, SyncQueueEntryRequest request, CancellationToken ct)` | Queues a sync entry for offline synchronization |
+| `GetPendingSyncEntriesAsync(int userId, CancellationToken ct)` | Retrieves all pending sync entries for a user |
+| `ReplaySyncQueueAsync(int userId, CancellationToken ct)` | Replays all pending sync entries in the queue for a user |
+
+### Related Types
+
+- **RegisterSubscriptionRequest**: DTO used to register Web Push subscriptions from browser clients
+- **PushSubscription**: Model representing a browser Web Push subscription for a user device  
+- **PushNotificationPayload**: DTO containing push notification content and metadata
+- **PwaStatusResponse**: Response DTO containing PWA status information for a user
+- **SyncQueueEntryRequest**: DTO for queuing sync entries with offline changes
+- **SyncQueueEntryResponse**: Response DTO for sync queue entries
+- **SyncReplayResult**: Result of replaying sync queue entries
+- **PushDeliveryResult**: Result of sending push notifications
+- **BatchPushDeliveryResult**: Result of broadcasting push notifications to multiple users
+
+---
+
 ## Installation
 
 ### Prerequisites
