@@ -43,12 +43,16 @@ public static class NotFoundExceptionJsonExtensions
     /// Deserializes a <see cref="NotFoundException"/> from JSON.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized exception, or null if the JSON is null or empty.</returns>
+    /// <returns>The deserialized exception, or null if the JSON is null, empty, or whitespace.</returns>
     /// <exception cref="JsonException">Thrown when the JSON is invalid.</exception>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static NotFoundException? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
 
         return JsonSerializer.Deserialize<NotFoundException>(json, _jsonOptions);
     }
@@ -60,16 +64,7 @@ public static class NotFoundExceptionJsonExtensions
     /// <param name="value">Receives the deserialized exception if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
     public static bool TryFromJson(string json, out NotFoundException? value)
-    {
-        try
-        {
-            value = JsonSerializer.Deserialize<NotFoundException>(json, _jsonOptions);
-            return true;
-        }
-        catch (JsonException)
-        {
-            value = null;
-            return false;
-        }
-    }
+        => JsonSerializer.Deserialize<NotFoundException>(json, _jsonOptions) is { } result
+            ? (value = result, true).Item2
+            : (value = null, false).Item2;
 }
