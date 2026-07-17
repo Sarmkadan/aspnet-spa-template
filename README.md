@@ -488,6 +488,179 @@ public class OrderController : ControllerBase
 - **ISyncQueueService**: Interface defining the sync queue contract
 - Used in: Background processing workers, offline-first API controllers, and PWA synchronization logic
 
+---
+
+## ISyncQueueService
+
+The `ISyncQueueService` interface manages an in-memory queue for offline synchronization operations. It stores pending background operations captured by the service worker when the client is offline, allowing them to be replayed when connectivity is restored. The service provides idempotency guarantees through client-provided request IDs and automatically tracks entry status and timestamps.
+
+### Usage Example
+
+```csharp
+// Register SyncQueueService in Program.cs
+builder.Services.AddScoped<ISyncQueueService, SyncQueueService>();
+
+// Inject ISyncQueueService in your controller or background worker
+public class OrderSyncWorker : BackgroundService
+{
+    private readonly ISyncQueueService _syncQueue;
+    private readonly IOrderService _orderService;
+    private readonly ILogger<OrderSyncWorker> _logger;
+
+    public OrderSyncWorker(
+        ISyncQueueService syncQueue,
+        IOrderService orderService,
+        ILogger<OrderSyncWorker> logger)
+    {
+        _syncQueue = syncQueue;
+        _orderService = orderService;
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            // Process pending sync entries for all users
+            var pendingEntries = _syncQueue.GetPending(userId: 0); // Get all pending entries
+            
+            foreach (var entry in pendingEntries)
+            {
+                try
+                {
+                    _logger.LogInformation("Processing queued entry {EntryId} for user {UserId}", entry.Id, entry.UserId);
+
+                    // Replay the queued request based on method and path
+                    switch (entry.Method.ToUpper())
+                    {
+                        case "POST":
+                            var postData = JsonSerializer.Deserialize<OrderRequest>(entry.BodyJson!);
+                            await _orderService.CreateOrderAsync(postData!);
+                            break;
+
+                        case "PUT":
+                            var putData = JsonSerializer.Deserialize<OrderRequest>(entry.BodyJson!);
+                            await _orderService.UpdateOrderAsync(entry.RelativePath.Split('/').Last(), putData!);
+                            break;
+
+                        case "DELETE":
+                            var orderId = entry.RelativePath.Split('/').Last();
+                            await _orderService.DeleteOrderAsync(orderId);
+                            break;
+                    }
+
+                    // Mark as completed on success
+                    _syncQueue.Complete(entry.Id);
+                    _logger.LogInformation("Successfully processed queued entry {EntryId}", entry.Id);
+                }
+                catch (Exception ex)
+                {
+                    // Mark as failed with error details
+                    _syncQueue.Fail(entry.Id, ex.Message);
+                    _logger.LogError(ex, "Failed to process queued entry {EntryId}", entry.Id);
+                }
+            }
+
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken); // Check every 5 minutes
+        }
+    }
+}
+
+// In your API controller when handling requests that might fail offline
+public class OrdersController : ControllerBase
+{
+    private readonly ISyncQueueService _syncQueue;
+    private readonly IOrderService _orderService;
+    private readonly ILogger<OrdersController> _logger;
+
+    public OrdersController(
+        ISyncQueueService syncQueue,
+        IOrderService orderService,
+        ILogger<OrdersController> logger)
+    {
+        _syncQueue = syncQueue;
+        _orderService = orderService;
+        _logger = logger;
+    }
+
+    [HttpPost("orders")]
+    public async Task<IActionResult> CreateOrder([FromBody] OrderRequest request, int userId)
+    {
+        try
+        {
+            // Try to process normally first
+            var order = await _orderService.CreateOrderAsync(request);
+            return Ok(order);
+        }
+        catch (Exception ex) when (ex is not HttpRequestException)
+        {
+            // Queue for later processing when offline
+            int queueId = _syncQueue.Enqueue(
+                userId: userId,
+                clientRequestId: request.RequestId,
+                method: "POST",
+                relativePath: "/api/orders",
+                bodyJson: JsonSerializer.Serialize(request)
+            );
+
+            _logger.LogInformation("Queued order creation for user {UserId}: queueId={QueueId}", userId, queueId);
+            
+            return Accepted(new {
+                queueId,
+                message = "Order will be processed when online",
+                retryAfter = TimeSpan.FromMinutes(5)
+            });
+        }
+    }
+
+    [HttpGet("sync/status/{userId}")]
+    public IActionResult GetSyncStatus(int userId)
+    {
+        // Get pending count for user
+        int pendingCount = _syncQueue.PendingCount(userId);
+        
+        return Ok(new {
+            userId,
+            hasPendingEntries = pendingCount > 0,
+            pendingCount,
+            message = pendingCount > 0 ? "You have pending sync operations" : "All operations synced"
+        });
+    }
+}
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `Enqueue(int userId, string clientRequestId, string method, string relativePath, string? bodyJson = null)` | `int` | Queues a new sync entry and returns its unique identifier. Idempotency is enforced via `clientRequestId` — duplicate IDs return the existing entry ID. |
+| `GetPending(int userId)` | `IReadOnlyList<SyncQueueEntry>` | Retrieves all pending sync entries for a specific user, ordered by queue time. |
+| `Complete(int id)` | `bool` | Marks a sync entry as successfully completed. Returns `true` if the entry exists and was updated. |
+| `Fail(int id, string error)` | `bool` | Marks a sync entry as failed with an error message. Returns `true` if the entry exists and was updated. |
+| `PendingCount(int userId)` | `int` | Returns the number of pending sync entries for a specific user. |
+
+### Related Types
+
+- **SyncQueueEntry**: Represents a single queued operation with properties:
+  - `Id` (int): Server-assigned identifier
+  - `UserId` (int): Owner of the entry
+  - `ClientRequestId` (string): Client-generated idempotency key
+  - `Method` (string): HTTP method of the queued request
+  - `RelativePath` (string): Relative API path
+  - `BodyJson` (string?): Optional request body as JSON string
+  - `Status` (SyncEntryStatus): Current processing status (Pending, Completed, Failed)
+  - `LastError` (string?): Error message from most recent failed attempt
+  - `QueuedAt` (DateTime): UTC timestamp when entry was enqueued
+  - `ResolvedAt` (DateTime?): UTC timestamp when entry was completed or failed
+
+- **SyncEntryStatus**: Enum containing status values:
+  - `Pending = 0`: Waiting to be replayed
+  - `Completed = 1`: Successfully replayed
+  - `Failed = 2`: Replay failed after maximum retries
+
+- **ISyncQueueService**: Interface defining the sync queue contract
+- Used in: Background processing workers, offline-first API controllers, and PWA synchronization logic
+
 
 ---
 
