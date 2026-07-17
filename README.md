@@ -1443,6 +1443,57 @@ Product? product = orderItem.Product;
 
 ---
 
+## Review
+
+The `Review` class represents a product review submitted by a user, enabling customers to provide feedback on products with ratings, titles, and detailed content. Reviews track helpfulness counts, verification status, approval state, and timestamps for moderation and analytics purposes.
+
+
+
+
+Reviews support CRUD operations with validation for rating values (1-5 scale), recent review tracking, and moderation workflows through approval/rejection methods.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Models;
+
+// Create a new product review
+var review = new Review
+{
+    ProductId = 101,
+    UserId = 42,
+    Rating = 5,
+    Title = "Excellent product!",
+    Content = "This product exceeded my expectations. Highly recommended for anyone looking for quality.",
+    IsVerifiedPurchase = true
+};
+
+// Check if rating is valid
+bool isValid = review.IsValidRating(); // true
+
+// Get a visual rating display
+string ratingDisplay = review.GetRatingDisplay(); // "★★★★★"
+
+// Check if review is recent (within 30 days)
+bool isRecent = review.IsRecent(); // true
+
+// Mark review as helpful
+review.MarkAsHelpful();
+
+// Update the review after validation
+review.UpdateReview(4, "Very good, but could be better", "Good quality overall, but shipping took longer than expected");
+
+// Approve or reject review for moderation
+review.Approve();
+// review.Reject();
+
+// Access navigation properties
+Product? product = review.Product;
+User? user = review.User;
+```
+
+---
+
 ## PushSubscription
 
 The `PushSubscription` class represents a browser Web Push subscription for a user device. It stores the VAPID endpoint URL and encryption keys required to deliver push notifications via the Web Push Protocol (RFC 8030). Each user can have multiple subscriptions — one per browser/device combination.
