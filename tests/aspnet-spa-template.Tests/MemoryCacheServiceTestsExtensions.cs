@@ -1,6 +1,5 @@
 #nullable enable
 
-using System.Globalization;
 using AspNetSpaTemplate.Caching;
 using FluentAssertions;
 using Xunit;
@@ -51,7 +50,7 @@ public static class MemoryCacheServiceTestsExtensions
     /// <param name="test">The test instance.</param>
     /// <param name="key">The cache key.</param>
     /// <param name="value">The value to cache.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="test"/> or <paramref name="key"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="test"/>, <paramref name="key"/>, or <paramref name="value"/> is <see langword="null"/>.</exception>
     public static async Task TestGetOrSetPatternAsync<T>(
         this MemoryCacheServiceTests test,
         string key,
