@@ -19,9 +19,12 @@ public static class OfflineSupportExtensions
     /// and as an <see cref="IHostedService"/>, ensuring a single shared instance handles both roles.
     /// </summary>
     /// <param name="services">The application service collection.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
     /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     public static IServiceCollection AddOfflineSupport(this IServiceCollection services)
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddSingleton<AssetVersioningService>();
         services.AddSingleton<IAssetVersioningService>(sp => sp.GetRequiredService<AssetVersioningService>());
         services.AddHostedService(sp => sp.GetRequiredService<AssetVersioningService>());
@@ -38,7 +41,11 @@ public static class OfflineSupportExtensions
     /// file handler can short-circuit them.
     /// </remarks>
     /// <param name="app">The application builder.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="app"/> is <see langword="null"/>.</exception>
     /// <returns>The same <see cref="IApplicationBuilder"/> for chaining.</returns>
     public static IApplicationBuilder UseOfflineSupport(this IApplicationBuilder app)
-        => app.UseMiddleware<HotReloadMiddleware>();
+    {
+        ArgumentNullException.ThrowIfNull(app);
+        return app.UseMiddleware<HotReloadMiddleware>();
+    }
 }
