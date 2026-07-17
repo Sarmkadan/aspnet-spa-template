@@ -1874,6 +1874,87 @@ public class ReviewServiceUsageExample
 }
 ```
 
+---
+
+## ReviewServiceTestsExtensions
+
+The `ReviewServiceTestsExtensions` class provides a set of extension methods and helper methods for the `ReviewServiceTests` class that simplify testing review service functionality. These methods encapsulate common test scenarios like creating test reviews, asserting review properties, checking collections of reviews, and validating exceptions, making test code more concise and readable.
+
+The extension methods work with the `Review`, `Product`, and exception classes, providing fluent assertions and helper methods for creating test data.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using AspNetSpaTemplate.Models;
+using Xunit;
+
+public class ReviewServiceTestsExtensionsExample
+{
+    private readonly ReviewServiceTests _tests = new ReviewServiceTests();
+
+    public async Task RunReviewTests()
+    {
+        // Create test data using helper methods
+        var review = ReviewServiceTestsExtensions.CreateTestReview(
+            id: 1,
+            productId: 1,
+            userId: 1,
+            rating: 5,
+            title: "Excellent product",
+            content: "This product exceeded my expectations",
+            isApproved: true
+        );
+
+        var product = ReviewServiceTestsExtensions.CreateTestProduct(
+            id: 1,
+            name: "Test Product"
+        );
+
+        // Test review properties
+        review.ShouldHaveReviewProperties(
+            expectedRating: 5,
+            expectedTitle: "Excellent product",
+            expectedContent: "This product exceeded my expectations",
+            expectedIsApproved: true
+        );
+
+        // Test collection assertions
+        var reviews = new List<Review> { review };
+        reviews.ShouldContainExactly(new[] { review });
+        reviews.ShouldContainRating(5);
+        reviews.ShouldContainUserReviews(1);
+        reviews.ShouldContainOnlyApprovedReviews();
+        reviews.ShouldContainOnlyProductReviews(1);
+
+        // Test review matching
+        var expectedReview = ReviewServiceTestsExtensions.CreateTestReview();
+        review.ShouldMatchReview(expectedReview);
+
+        // Test empty collection
+        var emptyReviews = new List<Review>();
+        emptyReviews.ShouldBeEmpty();
+
+        // Test exception validation
+        var validationException = new ValidationException(
+            new Dictionary<string, List<string>>
+            {
+                { "Rating", new List<string> { "Rating must be between 1 and 5" } }
+            }
+        );
+        validationException.ShouldHaveValidationErrors("Rating must be between 1 and 5");
+
+        var businessException = new BusinessException(
+            "Review already exists for this user and product",
+            "REVIEW_DUPLICATE"
+        );
+        businessException.ShouldHaveBusinessExceptionMessage(
+            "Review already exists for this user and product"
+        );
+    }
+}
+```
+
 ## ProductServiceTests
 
 The `ProductServiceTests` class provides comprehensive unit testing for the `ProductService`, covering CRUD operations, search functionality, and business logic validations. It ensures that product creation, retrieval, updates, and deletion behave correctly under both valid and invalid scenarios.
