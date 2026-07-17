@@ -2201,6 +2201,68 @@ public class MemoryCacheUsageExample
 
 ---
 
+## WebhookHandler
+
+The `WebhookHandler` class processes incoming webhooks from external services like payment providers, email services, and shipping providers. It validates HMAC signatures to ensure payload integrity, routes webhooks to appropriate handlers based on the provider, and publishes domain events for downstream processing. The handler supports registering new webhook providers at runtime and handles various webhook event types with proper error logging and validation.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Integration;
+using AspNetSpaTemplate.Events;
+using Microsoft.Extensions.Logging;
+
+// In Program.cs or your DI configuration
+builder.Services.AddSingleton<WebhookHandler>();
+builder.Services.AddSingleton<IEventBus, EventBusImplementation>();
+
+// Usage in a controller or background service
+public class WebhookController : ControllerBase
+{
+    private readonly WebhookHandler _webhookHandler;
+    private readonly ILogger<WebhookController> _logger;
+
+    public WebhookController(WebhookHandler webhookHandler, ILogger<WebhookController> logger)
+    {
+        _webhookHandler = webhookHandler;
+        _logger = logger;
+    }
+
+    [HttpPost("webhooks/payment")]
+    public async Task<IActionResult> HandlePaymentWebhook([FromBody] WebhookRequest request)
+    {
+        // Validate and process the webhook
+        bool success = await _webhookHandler.HandleWebhookAsync(
+            provider: request.Provider,
+            payload: request.Payload,
+            signature: request.Signature
+        );
+
+        if (success)
+        {
+            return Ok(new WebhookResponse { Acknowledged = true, Message = "Webhook processed successfully" });
+        }
+        
+        return BadRequest(new WebhookResponse { 
+            Acknowledged = false, 
+            Message = "Webhook processing failed", 
+            ErrorCode = "WEBHOOK_VALIDATION_FAILED" 
+        });
+    }
+}
+
+// Register a new webhook provider with its secret
+var webhookHandler = new WebhookHandler(eventBus, logger);
+webhookHandler.RegisterWebhook("stripe", "whsec_test_webhook_secret_key");
+
+// Process a webhook from Stripe
+string payload = "{\"event_type\":\"payment_intent.succeeded\",\"data\":{\"id\":\"pi_123\"}}";
+string signature = "t=1234567890,v1=signature_hash";
+bool handled = await webhookHandler.HandleWebhookAsync("stripe", payload, signature);
+```
+
+---
+
 ## SyncQueueServiceTests
 
 The `SyncQueueServiceTests` class provides comprehensive unit tests for the `SyncQueueService`, which implements an in-memory queue for synchronizing offline requests with the server. These tests verify that the sync queue correctly handles request deduplication, user isolation, ordering, and state management, ensuring reliable offline-to-online request synchronization.
