@@ -12,7 +12,7 @@ namespace AspNetSpaTemplate.Tests;
 /// </summary>
 public static class ProductServiceTestsValidation
 {
-    private static readonly string[] _emptyArray = Array.Empty<string>();
+    private static readonly IReadOnlyList<string> _valid = Array.Empty<string>();
 
     /// <summary>
     /// Validates an instance of <see cref="ProductServiceTests"/> and returns a list of validation problems.
@@ -25,10 +25,8 @@ public static class ProductServiceTestsValidation
         ArgumentNullException.ThrowIfNull(value);
 
         // ProductServiceTests is a test fixture class with injected dependencies
-        // No properties to validate beyond null check
-        // This provides the interface as requested by the task
-
-        return _emptyArray;
+        // No properties to validate beyond null check - the mocks are configured in the constructor
+        return _valid;
     }
 
     /// <summary>
@@ -36,18 +34,7 @@ public static class ProductServiceTestsValidation
     /// </summary>
     /// <param name="value">The instance to check.</param>
     /// <returns>True if the instance is valid; otherwise, false.</returns>
-    public static bool IsValid(this ProductServiceTests value)
-    {
-        try
-        {
-            Validate(value);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    public static bool IsValid(this ProductServiceTests value) => value is not null && Validate(value).Count == 0;
 
     /// <summary>
     /// Ensures that an instance of <see cref="ProductServiceTests"/> is valid,
@@ -63,13 +50,7 @@ public static class ProductServiceTestsValidation
         var problems = Validate(value);
         if (problems.Count > 0)
         {
-            throw new ArgumentException(
-                $"ProductServiceTests instance is not valid. Problems:\n- {
-                    string.Join(
-                        "\n- ",
-                        problems
-                    )
-                }");
+            throw new ArgumentException($"ProductServiceTests instance is not valid. Problems:\n- {string.Join("\n- ", problems)}");
         }
     }
 }
