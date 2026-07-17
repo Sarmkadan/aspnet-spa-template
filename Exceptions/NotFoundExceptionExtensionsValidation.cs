@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace AspNetSpaTemplate.Exceptions;
 
@@ -22,9 +21,11 @@ public static class NotFoundExceptionExtensionsValidation
     /// <param name="message">The exception message to validate.</param>
     /// <returns>A list of validation problems; empty if the message is valid.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="message"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="message"/> is empty or whitespace.</exception>
     public static IReadOnlyList<string> ValidateMessage(string message)
     {
         ArgumentNullException.ThrowIfNull(message);
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
 
         return Array.Empty<string>();
     }
@@ -35,17 +36,7 @@ public static class NotFoundExceptionExtensionsValidation
     /// <param name="message">The exception message to check.</param>
     /// <returns>True if the message is valid; otherwise, false.</returns>
     public static bool IsMessageValid(string message)
-    {
-        try
-        {
-            ValidateMessage(message);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+        => ValidateMessage(message) is { Count: 0 };
 
     /// <summary>
     /// Ensures that the message parameter is valid for use with <see cref="NotFoundExceptionExtensions.ToNotFound(string)"/> method,
@@ -91,17 +82,7 @@ public static class NotFoundExceptionExtensionsValidation
     /// <param name="resourceId">The resource ID to check.</param>
     /// <returns>True if both parameters are valid; otherwise, false.</returns>
     public static bool IsResourceValid(string resourceType, object resourceId)
-    {
-        try
-        {
-            ValidateResource(resourceType, resourceId);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+        => ValidateResource(resourceType, resourceId) is { Count: 0 };
 
     /// <summary>
     /// Ensures that the resourceType and resourceId parameters are valid for use with <see cref="NotFoundExceptionExtensions.ToNotFound(string, object)"/> method,
@@ -153,17 +134,7 @@ public static class NotFoundExceptionExtensionsValidation
     /// <param name="args">The format arguments to check.</param>
     /// <returns>True if all parameters are valid; otherwise, false.</returns>
     public static bool IsFormattedResourceValid(string resourceType, object resourceId, string format, params object?[] args)
-    {
-        try
-        {
-            ValidateFormattedResource(resourceType, resourceId, format, args);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+        => ValidateFormattedResource(resourceType, resourceId, format, args) is { Count: 0 };
 
     /// <summary>
     /// Ensures that the resourceType, resourceId, format, and args parameters are valid for use with <see cref="NotFoundExceptionExtensions.ToNotFound(string, object, string, object?[])"/> method,
@@ -211,17 +182,7 @@ public static class NotFoundExceptionExtensionsValidation
     /// <param name="innerException">The inner exception to check.</param>
     /// <returns>True if both parameters are valid; otherwise, false.</returns>
     public static bool IsWithInnerValid(string message, Exception innerException)
-    {
-        try
-        {
-            ValidateWithInner(message, innerException);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+        => ValidateWithInner(message, innerException) is { Count: 0 };
 
     /// <summary>
     /// Ensures that the message and innerException parameters are valid for use with <see cref="NotFoundExceptionExtensions.ToNotFound(string, Exception)"/> method,
@@ -264,17 +225,7 @@ public static class NotFoundExceptionExtensionsValidation
     /// <param name="resourceId">The resource ID to check.</param>
     /// <returns>True if the resource ID is valid; otherwise, false.</returns>
     public static bool IsGenericValid(object resourceId)
-    {
-        try
-        {
-            ValidateGeneric(resourceId);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+        => ValidateGeneric(resourceId) is { Count: 0 };
 
     /// <summary>
     /// Ensures that the resourceId parameter is valid for use with <see cref="NotFoundExceptionExtensions.ToNotFound{T}(object)"/> method,
