@@ -1879,6 +1879,40 @@ public class ProductServiceUsageExample
 }
 ```
 
+## MemoryCacheServiceTests
+
+The `MemoryCacheServiceTests` class provides comprehensive unit tests for the `MemoryCacheService`, ensuring all caching operations—such as retrieving, setting, removing, and expiring entries—work correctly under various scenarios. The test suite covers edge cases like expired entries, pattern-based removal, and cache statistics, verifying that the cache behaves reliably as a high-performance in-memory storage solution.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using Xunit;
+
+// MemoryCacheServiceTests is designed for use within an xUnit test runner
+public class MemoryCacheUsageExample
+{
+    private readonly MemoryCacheServiceTests _tests = new MemoryCacheServiceTests();
+
+    public async Task RunTestSuite()
+    {
+        // Verify basic CRUD operations
+        await _tests.SetAsync_WithValue_StoresValue();
+        await _tests.GetAsync_WithExistingKey_ReturnsValue();
+        await _tests.RemoveAsync_WithExistingKey_RemovesValue();
+
+        // Verify advanced cache features
+        await _tests.GetOrSetAsync_WithMissingKey_CallsFactoryAndCachesValue();
+        await _tests.ExpireAsync_WithExistingKey_SetsExpiration();
+        await _tests.ExistsAsync_WithExistingKey_ReturnsTrue();
+        
+        // Verify statistics and cleanup
+        await _tests.GetStatisticsAsync_ReturnsCorrectStats();
+        await _tests.FlushAllAsync_ClearsAllEntries();
+    }
+}
+```
+
 ## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
