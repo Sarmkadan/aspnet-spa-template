@@ -11,8 +11,7 @@ namespace AspNetSpaTemplate.Exceptions;
 
 /// <summary>
 /// Provides System.Text.Json serialization and deserialization helpers for
-/// <see cref="ExternalApiException"/> using the same options as
-/// <see cref="ExternalApiExceptionJsonExtensions"/>.
+/// <see cref="ExternalApiException"/> using camelCase property naming.
 /// </summary>
 public static class ExternalApiExceptionJsonExtensionsJsonExtensions
 {
@@ -20,6 +19,12 @@ public static class ExternalApiExceptionJsonExtensionsJsonExtensions
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false,
+    };
+
+    private static readonly JsonSerializerOptions _jsonOptionsIndented = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
     };
 
     /// <summary>
@@ -32,7 +37,6 @@ public static class ExternalApiExceptionJsonExtensionsJsonExtensions
     public static string ToJson(this ExternalApiException value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-
         return JsonSerializer.Serialize(value, indented ? _jsonOptionsIndented : _jsonOptions);
     }
 
@@ -74,10 +78,4 @@ public static class ExternalApiExceptionJsonExtensionsJsonExtensions
             return false;
         }
     }
-
-    private static readonly JsonSerializerOptions _jsonOptionsIndented = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-    };
 }
