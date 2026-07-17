@@ -275,6 +275,84 @@ if (ErrorMappingHelper.IsCriticalError(exception))
 }
 ```
 
+## JsonSerializationHelper
+
+Provides consistent JSON serialization and deserialization utilities with standardized options across the application. Centralizes JSON configuration including camelCase naming policy, null value handling, and enum converter settings to ensure uniformity in API responses, logging, and data persistence.
+
+### Usage Example
+
+```csharp
+// Define a sample model
+public class UserProfile
+{
+    public int Id { get; set; }
+    public string? Username { get; set; }
+    public string? Email { get; set; }
+    public UserRole Role { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public enum UserRole
+{
+    Admin,
+    User,
+    Guest
+}
+
+// Serialize object to JSON (compact format for API responses)
+var user = new UserProfile
+{
+    Id = 1,
+    Username = "johndoe",
+    Email = "john@example.com",
+    Role = UserRole.Admin,
+    CreatedAt = DateTime.UtcNow
+};
+
+string json = JsonSerializationHelper.Serialize(user);
+// Output: {"id":1,"username":"johndoe","email":"john@example.com","role":"admin","createdAt":"2025-07-19T14:30:45.123Z"}
+
+
+
+// Serialize with pretty formatting (for logging/debugging)
+string prettyJson = JsonSerializationHelper.SerializePretty(user);
+// Output: formatted JSON with indentation
+
+// Deserialize JSON to typed object
+string apiResponse = "{\\"id\\":2,\\"username\\":\\"janedoe\\",\\"email\\":\\"jane@example.com\\",\\"role\\":\\"user\\",\\"createdAt\\":\\"2025-07-18T10:15:30Z\\"}";
+var deserializedUser = JsonSerializationHelper.Deserialize<UserProfile>(apiResponse);
+
+// Safe deserialization (returns null on failure)
+string invalidJson = "{invalid json}";
+var safeResult = JsonSerializationHelper.DeserializeSafe<UserProfile>(invalidJson); // Returns null
+
+// Validate JSON without deserialization
+bool isValid = JsonSerializationHelper.IsValidJson(json); // true
+bool isInvalid = JsonSerializationHelper.IsValidJson("{invalid"); // false
+
+// Get default serializer options for custom scenarios
+var options = JsonSerializationHelper.GetDefaultOptions();
+
+// Get pretty formatting options
+var prettyOptions = JsonSerializationHelper.GetPrettyOptions();
+
+// Parse JSON to JsonElement for flexible querying
+var jsonElement = JsonSerializationHelper.ParseJsonElement(json);
+if (jsonElement.HasValue)
+{
+    var root = jsonElement.Value;
+    var username = root.GetProperty("username").GetString();
+}
+
+// Convert between object types via JSON
+var userData = new { user.Id, user.Username, user.Role };
+var convertedUser = JsonSerializationHelper.ConvertObject<UserProfile>(userData);
+
+// Deserialize from stream (useful for HTTP request bodies)
+using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+var streamUser = await JsonSerializationHelper.DeserializeAsync<UserProfile>(stream);
+```
+
 ## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
