@@ -1431,6 +1431,50 @@ hey -n 50000 -c 100 https://localhost:7001/api/products
 
 ---
 
+## IEventBus
+
+The `IEventBus` interface defines the contract for a publish-subscribe event system that enables loose coupling between application components. It provides mechanisms to subscribe to domain events, unsubscribe from them, and publish events either individually or in batches to registered handlers.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Events;
+
+// Inject IEventBus in your service
+public class ProductService
+{
+    private readonly IEventBus _eventBus;
+    
+    public ProductService(IEventBus eventBus) => _eventBus = eventBus;
+
+    public async Task CreateProduct(string name, decimal price)
+    {
+        // Perform creation logic...
+        
+        // Publish event
+        await _eventBus.PublishAsync(new ProductCreatedEvent {
+            ProductId = 123,
+            ProductName = name,
+            Price = price
+        });
+    }
+}
+
+// In your background worker or startup
+public class NotificationWorker
+{
+    public NotificationWorker(IEventBus eventBus)
+    {
+        eventBus.Subscribe<ProductCreatedEvent>(async @event => {
+            Console.WriteLine($"Product created: {@event.ProductName} - {@event.Price}");
+            await Task.CompletedTask;
+        });
+    }
+}
+```
+
+---
+
 ## EventBusImplementation
 
 The `EventBusImplementation` class provides an in-process event bus implementation suitable for single-server deployments. It maintains subscribers in memory and dispatches events sequentially, making it ideal for loose coupling between application components without external message broker dependencies.
