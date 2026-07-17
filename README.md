@@ -2276,6 +2276,45 @@ var orderItem = new OrderItemRequest
 
 ---
 
+## LoggingMiddlewareOptions
+
+The `LoggingMiddlewareOptions` class configures the behavior of the `RequestResponseLoggingMiddleware`. It controls whether logging is enabled, the verbosity level, which request/response components to log (headers, bodies), performance thresholds, and path exclusions. This allows fine-grained control over HTTP request/response logging throughout the application.
+
+**Usage Example:**
+
+```csharp
+// Configure logging middleware in Program.cs
+builder.Services.Configure<LoggingMiddlewareOptions>(options =>
+{
+    options.Enabled = true;
+    options.VerbosityLevel = "Detailed";
+    options.LogRequestHeaders = true;
+    options.LogResponseHeaders = true;
+    options.LogRequestBody = true;
+    options.LogResponseBody = true;
+    options.SlowRequestThresholdMs = 2000;
+    options.ExcludedPaths = new List<string> { "/health", "/metrics" };
+});
+
+// Register the middleware in the pipeline
+app.UseMiddleware<RequestResponseLoggingMiddleware>();
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Enabled` | `bool` | Set to `false` to disable the middleware entirely |
+| `VerbosityLevel` | `string` | Controls logging detail: `Minimal`, `Standard`, or `Detailed` |
+| `LogRequestHeaders` | `bool` | Whether to log request headers (sensitive headers are redacted) |
+| `LogResponseHeaders` | `bool` | Whether to log response headers |
+| `LogRequestBody` | `bool` | Whether to log request body content |
+| `LogResponseBody` | `bool` | Whether to log response body content |
+| `SlowRequestThresholdMs` | `int` | Threshold in milliseconds for logging slow requests (default: 1000) |
+| `ExcludedPaths` | `List<string>` | Paths to exclude from logging (e.g., health checks, metrics) |
+
+---
+
 ## ErrorResponse
 
 The `ErrorResponse` class represents a standardized error response format used throughout the API to provide consistent error information to clients. It includes essential fields like error message, status code, optional error code, trace ID for debugging, and detailed validation errors when applicable.
