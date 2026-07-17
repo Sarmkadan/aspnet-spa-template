@@ -2,6 +2,75 @@
 
 A production-ready ASP.NET Core template with integrated React SPA, authentication, and modern tooling.
 
+## WebhooksController
+
+Receives and processes webhooks from external services including payment providers, email services, shipping providers, and custom integrations. Validates HMAC signatures, queues webhook payloads for asynchronous processing, and returns immediate HTTP responses. Designed to respond quickly (under 5 seconds) to avoid webhook timeouts from external providers.
+
+### Endpoints
+
+- `POST /api/webhooks/payment` - Handle payment provider webhooks
+- `POST /api/webhooks/email` - Handle email service webhooks (delivery status, bounces, complaints)
+- `POST /api/webhooks/shipping` - Handle shipping provider webhooks (tracking updates)
+- `POST /api/webhooks/{provider}` - Generic endpoint for custom integrations
+
+### Usage Example
+
+```csharp
+// Configure webhook endpoints in your application
+// Add to Program.cs:
+builder.Services.AddScoped<WebhookHandler>();
+
+// Example: Sending a webhook from an external service
+// Payment provider sends webhook to your endpoint:
+POST https://yourapp.com/api/webhooks/payment
+Content-Type: application/json
+X-Signature: sha256=<HMAC-Signature>
+
+{
+  "payload": "{\"transactionId\":\"12345\",\"amount\":100.50,\"status\":\"completed\"}",
+  "signature": "sha256=<HMAC-Signature>"
+}
+
+// Email service sends webhook to your endpoint:
+POST https://yourapp.com/api/webhooks/email
+Content-Type: application/json
+X-Signature: sha256=<HMAC-Signature>
+
+{
+  "payload": "{\"event\":\"bounce\",\"email\":\"user@example.com\",\"recipient\":\"sender@example.com\"}",
+  "signature": "sha256=<HMAC-Signature>"
+}
+
+// Shipping provider sends webhook to your endpoint:
+POST https://yourapp.com/api/webhooks/shipping
+Content-Type: application/json
+X-Signature: sha256=<HMAC-Signature>
+
+{
+  "payload": "{\"trackingNumber\":\"UPS123456789\",\"status\":\"delivered\"}",
+  "signature": "sha256=<HMAC-Signature>"
+}
+
+// Custom integration webhook:
+POST https://yourapp.com/api/webhooks/custom-provider
+Content-Type: application/json
+X-Signature: sha256=<HMAC-Signature>
+
+{
+  "payload": "{\"event\":\"data-sync\",\"data\":{...}}",
+  "signature": "sha256=<HMAC-Signature>"
+}
+
+// Response from controller:
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "acknowledged": true,
+  "message": "Webhook received and queued for processing"
+}
+```
+
 ## DateTimeExtensions
 
 Provides a comprehensive set of extension methods for common DateTime operations including date boundary calculations, age calculation, ISO 8601 formatting, and human-readable relative time formatting. These utilities centralize timezone handling and formatting logic to ensure consistency across the application.
