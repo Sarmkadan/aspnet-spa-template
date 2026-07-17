@@ -603,6 +603,57 @@ services.AddHostedService<CacheMaintenanceWorker>();
 services.AddHostedService<NotificationWorker>();
 ```
 
+---
+
+## CacheMaintenanceWorker
+
+The `CacheMaintenanceWorker` is a background service that monitors and maintains the health of the in-memory cache system. It periodically checks cache performance metrics, identifies potential issues like excessive memory usage or low hit rates, and provides detailed health reports. The worker helps ensure optimal cache performance and prevents memory leaks by tracking key metrics such as hit rate, item count, and memory usage.
+
+### Usage Example
+
+```csharp
+// Register the worker in Program.cs
+builder.Services.AddHostedService<CacheMaintenanceWorker>();
+
+// Access the worker via DI to check status
+public class CacheMonitorService
+{
+    private readonly CacheMaintenanceWorker _cacheWorker;
+
+    public CacheMonitorService(CacheMaintenanceWorker cacheWorker)
+    {
+        _cacheWorker = cacheWorker;
+    }
+
+    public async Task MonitorCacheHealth()
+    {
+        // Get current status
+        BackgroundTaskStatus status = await _cacheWorker.GetStatus();
+
+        // Check health metrics
+        bool isHealthy = _cacheWorker.IsHealthy;
+        double hitRate = _cacheWorker.HitRate;
+        long itemCount = _cacheWorker.ItemCount;
+        long memoryUsage = _cacheWorker.MemoryUsageBytes;
+
+        // Get detailed health report
+        CacheHealthReport healthReport = await _cacheWorker.GetHealthReportAsync();
+
+        // Check if cache is healthy
+        bool isCacheHealthy = await _cacheWorker.IsCacheHealthyAsync();
+
+        // Access warnings if any issues detected
+        if (!isHealthy && _cacheWorker.WarningCount > 0)
+        {
+            foreach (string warning in _cacheWorker.Warnings)
+            {
+                Console.WriteLine($"Cache warning: {warning}");
+            }
+        }
+    }
+}
+```
+
 ### Example 7: Caching Strategy
 
 **Backend Service**
