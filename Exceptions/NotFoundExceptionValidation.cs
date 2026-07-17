@@ -1,6 +1,7 @@
 #nullable enable
+
 // =============================================================================
-// Author: 
+// Author:
 // =============================================================================
 
 namespace AspNetSpaTemplate.Exceptions;
@@ -20,19 +21,13 @@ public static class NotFoundExceptionValidation
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var problems = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(value.ResourceType))
+        return value.ResourceType switch
         {
-            problems.Add("Resource type is null or empty.");
-        }
-
-        if (value.ResourceId == null)
-        {
-            problems.Add("Resource ID is null.");
-        }
-
-        return problems;
+            null or "" or " " => ["Resource type is null or empty."],
+            _ when string.IsNullOrWhiteSpace(value.ResourceType) => ["Resource type is null or empty."],
+            _ when value.ResourceId is null => ["Resource ID is null."],
+            _ => []
+        };
     }
 
     /// <summary>
@@ -44,7 +39,6 @@ public static class NotFoundExceptionValidation
     public static bool IsValid(this NotFoundException value)
     {
         ArgumentNullException.ThrowIfNull(value);
-
         return Validate(value).Count == 0;
     }
 
