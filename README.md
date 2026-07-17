@@ -840,6 +840,48 @@ catch (ArgumentException ex)
 
 The `ValidationExceptionJsonExtensions` class provides extension methods for serializing and deserializing `ValidationException` objects to/from JSON strings. This is particularly useful when you need to transmit validation errors across API boundaries or persist them in storage.
 
+---
+
+## ExternalApiException
+
+The `ExternalApiException` class represents an exception thrown when external API calls fail. It captures the endpoint that failed, the HTTP method used, the status code returned (if applicable), and provides a fluent `WithContext` method to attach additional diagnostic information to the exception.
+
+This exception is particularly useful for API integration layers where you need to handle and log failures from external services with rich context.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Exceptions;
+
+// Create an external API exception with endpoint and message
+var exception = new ExternalApiException("/api/payment/process", "Payment gateway returned 402 Payment Required");
+Console.WriteLine(exception.Endpoint); // "/api/payment/process"
+
+// Create an external API exception with full context
+var detailedException = new ExternalApiException(
+    endpoint: "https://api.stripe.com/v1/charges",
+    method: "POST",
+    statusCode: 402,
+    message: "Payment failed: card declined"
+);
+Console.WriteLine(detailedException.Endpoint); // "https://api.stripe.com/v1/charges"
+Console.WriteLine(detailedException.Method); // "POST"
+Console.WriteLine(detailedException.StatusCode); // 402
+
+// Add additional diagnostic context using the fluent WithContext method
+var exceptionWithContext = new ExternalApiException(
+    "/api/external-service/data",
+    "External service unavailable"
+)
+.WithContext("requestId", Guid.NewGuid())
+.WithContext("retryCount", 3)
+.WithContext("timestamp", DateTime.UtcNow);
+
+// Access the additional context through the Data property
+Console.WriteLine(exceptionWithContext.Data["requestId"]); // Guid value
+Console.WriteLine(exceptionWithContext.Data["retryCount"]); // 3
+```
+
 The extension methods support both standard JSON serialization (with camelCase property naming) and pretty-printed JSON for debugging purposes. The deserialization methods handle both the simple message case and the full validation error dictionary format.
 
 ### Usage Example
