@@ -842,11 +842,46 @@ The `ValidationExceptionJsonExtensions` class provides extension methods for ser
 
 ---
 
-## ExternalApiException
+## BusinessException
 
-The `ExternalApiException` class represents an exception thrown when external API calls fail. It captures the endpoint that failed, the HTTP method used, the status code returned (if applicable), and provides a fluent `WithContext` method to attach additional diagnostic information to the exception.
+The `BusinessException` class represents an exception thrown when business logic constraints are violated in the application. It provides structured error information including an optional error code and configurable HTTP status code, making it ideal for API controllers that need to return specific business rule violations to clients.
 
-This exception is particularly useful for API integration layers where you need to handle and log failures from external services with rich context.
+The exception supports multiple construction patterns and includes a fluent `WithData` method for attaching additional diagnostic context to the exception instance.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Exceptions;
+
+// Create a basic business exception with a message
+var exception = new BusinessException("Product stock cannot be negative");
+
+// Create a business exception with error code and default HTTP status (400)
+var validationException = new BusinessException("Invalid order quantity", "ORDER_QTY_INVALID");
+
+// Create a business exception with custom HTTP status code (e.g., 422 for validation failures)
+var businessRuleException = new BusinessException(
+    "User already has an active subscription",
+    "USER_SUBSCRIPTION_ACTIVE",
+    422
+);
+
+// Use the fluent WithData method to attach additional context
+try
+{
+    // Some business operation that might fail
+}
+catch (Exception ex)
+{
+    throw new BusinessException("Failed to process payment", "PAYMENT_PROCESSING_ERROR", 402)
+        .WithData(ex);
+}
+
+// Access the properties
+Console.WriteLine(exception.ErrorCode); // null
+Console.WriteLine(validationException.ErrorCode); // "ORDER_QTY_INVALID"
+Console.WriteLine(businessRuleException.HttpStatusCode); // 422
+```
 
 ### Usage Example
 
