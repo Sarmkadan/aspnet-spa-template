@@ -162,6 +162,76 @@ var recentActiveUsers = await client.GetFromJsonAsync<List<UserResponse>>("/api/
 Console.WriteLine($"Active in last 7 days: {recentActiveUsers?.Count}");
 ```
 
+## OrdersController
+
+Manages order lifecycle operations including order creation, status updates, discount application, and order retrieval. The controller provides RESTful endpoints for order management with proper authentication, authorization, and response handling. Supports filtering by user, status, and date ranges with pagination support.
+
+### Endpoints
+
+- `GET /api/orders/{id}` - Retrieve a specific order by ID
+- `POST /api/orders` - Create a new order (authenticated users only)
+- `PUT /api/orders/{id}/status` - Update an order's status
+- `POST /api/orders/{id}/discount` - Apply a discount to an order
+- `GET /api/orders/user/{userId}` - List all orders for a specific user with pagination
+- `GET /api/orders/my-orders` - List the authenticated user's orders with pagination
+- `GET /api/orders/pending` - Get all pending orders
+- `GET /api/orders/revenue/total` - Get total revenue (optionally filtered by days)
+
+### Usage Example
+
+```csharp
+// Configure OrderService in Program.cs
+builder.Services.AddScoped<OrderService>();
+
+// Example: Create a new order (authenticated user)
+var newOrder = new CreateOrderRequest
+{
+    Items = new List<OrderItemRequest>
+    {
+        new OrderItemRequest { ProductId = 1, Quantity = 2, Price = 29.99m },
+        new OrderItemRequest { ProductId = 3, Quantity = 1, Price = 99.99m }
+    },
+    ShippingAddress = "123 Main St, City, Country",
+    PaymentMethod = "Credit Card"
+};
+var createdOrder = await client.PostAsJsonAsync<OrderResponse>("/api/orders", newOrder);
+Console.WriteLine($"Order created: #{createdOrder?.Id}, Total: {createdOrder?.TotalAmount}");
+
+// Example: Get a specific order by ID
+var orderResponse = await client.GetFromJsonAsync<OrderResponse>("/api/orders/1");
+Console.WriteLine($"Order: #{orderResponse?.Id}, Status: {orderResponse?.Status}");
+
+// Example: Update order status
+var statusUpdate = new UpdateOrderStatusRequest { Status = OrderStatus.Processing };
+var updatedOrder = await client.PutAsJsonAsync<OrderResponse>("/api/orders/1/status", statusUpdate);
+Console.WriteLine($"Order status updated to: {updatedOrder?.Status}");
+
+// Example: Apply discount to an order
+var discountRequest = new ApplyDiscountRequest { DiscountPercent = 10, Reason = "Seasonal promotion" };
+var discountedOrder = await client.PostAsJsonAsync<OrderResponse>("/api/orders/1/discount", discountRequest);
+Console.WriteLine($"Discount applied. New total: {discountedOrder?.TotalAmount}");
+
+// Example: Get all orders for a specific user (pagination)
+var userOrdersPage1 = await client.GetFromJsonAsync<OrderListResponse>("/api/orders/user/1?pageNumber=1&pageSize=10");
+Console.WriteLine($"Total user orders: {userOrdersPage1?.TotalCount}");
+
+// Example: Get the authenticated user's orders (pagination)
+var myOrdersPage1 = await client.GetFromJsonAsync<OrderListResponse>("/api/orders/my-orders?pageNumber=1&pageSize=10");
+Console.WriteLine($"My orders: {myOrdersPage1?.Items.Count} items");
+
+// Example: Get all pending orders
+var pendingOrders = await client.GetFromJsonAsync<List<OrderResponse>>("/api/orders/pending");
+Console.WriteLine($"Pending orders: {pendingOrders?.Count}");
+
+// Example: Get total revenue (all time)
+var totalRevenue = await client.GetFromJsonAsync<decimal>("/api/orders/revenue/total");
+Console.WriteLine($"Total revenue: {totalRevenue:C}");
+
+// Example: Get total revenue for last 30 days
+var monthlyRevenue = await client.GetFromJsonAsync<decimal>("/api/orders/revenue/total?days=30");
+Console.WriteLine($"Revenue (last 30 days): {monthlyRevenue:C}");
+```
+
 ## WebhooksController
 
 Receives and processes webhooks from external services including payment providers, email services, shipping providers, and custom integrations. Validates HMAC signatures, queues webhook payloads for asynchronous processing, and returns immediate HTTP responses. Designed to respond quickly (under 5 seconds) to avoid webhook timeouts from external providers.
