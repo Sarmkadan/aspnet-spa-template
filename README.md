@@ -1611,6 +1611,109 @@ public static object GetSubscriberCountLock(this EventBusImplementation eventBus
 ```
 
 
+## ValidationHelperTests
+
+The `ValidationHelperTests` class provides a comprehensive set of unit tests for the validation helper methods used throughout the application. These tests verify that validation logic correctly handles various input scenarios including null values, empty strings, out-of-range values, and pattern matching, ensuring robust validation across the codebase.
+
+The test suite covers validation methods for common validation scenarios such as null checks, string length validation, range validation, email validation, phone number validation, and pattern matching, providing confidence that validation logic behaves as expected in different edge cases.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using Xunit;
+
+public class UserRegistrationTests
+{
+    [Fact]
+    public void RegisterUser_WithValidData_DoesNotThrow()
+    {
+        // Arrange
+        var user = new UserRegistrationDto
+        {
+            Email = "user@example.com",
+            PhoneNumber = "+1234567890",
+            Password = "SecurePassword123!",
+            Username = "johndoe"
+        };
+
+        // Act & Assert - should not throw any validation exceptions
+        var exception = Record.Exception(() => ValidateUserRegistration(user));
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void RegisterUser_WithInvalidEmail_ThrowsValidationException()
+    {
+        // Arrange
+        var user = new UserRegistrationDto
+        {
+            Email = "invalid-email",
+            PhoneNumber = "+1234567890",
+            Password = "SecurePassword123!",
+            Username = "johndoe"
+        };
+
+        // Act & Assert
+        Assert.Throws<ValidationException>(() => ValidateUserRegistration(user));
+    }
+
+    [Fact]
+    public void RegisterUser_WithShortPassword_ThrowsValidationException()
+    {
+        // Arrange
+        var user = new UserRegistrationDto
+        {
+            Email = "user@example.com",
+            PhoneNumber = "+1234567890",
+            Password = "short",
+            Username = "johndoe"
+        };
+
+        // Act & Assert
+        var exception = Assert.Throws<ValidationException>(() => ValidateUserRegistration(user));
+        Assert.Contains("Password must be at least", exception.Message);
+    }
+
+    private void ValidateUserRegistration(UserRegistrationDto user)
+    {
+        user.Email.ValidEmail("Email");
+        user.PhoneNumber.ValidPhoneNumber("PhoneNumber");
+        user.Password.LengthBetween(8, 100, "Password");
+        user.Username.NotNullOrEmpty("Username");
+    }
+}
+
+public class ProductTests
+{
+    [Fact]
+    public void CreateProduct_WithValidPrice_DoesNotThrow()
+    {
+        // Arrange
+        decimal price = 99.99m;
+
+        // Act & Assert - should not throw
+        var exception = Record.Exception(() => ValidateProductPrice(price));
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void CreateProduct_WithNegativePrice_ThrowsValidationException()
+    {
+        // Arrange
+        decimal price = -10.00m;
+
+        // Act & Assert
+        Assert.Throws<ValidationException>(() => ValidateProductPrice(price));
+    }
+
+    private void ValidateProductPrice(decimal price)
+    {
+        price.InRange(0.01m, 10000m, "Price");
+    }
+}
+```
+
 ## ValidationHelperTestsExtensions
 
 The `ValidationHelperTestsExtensions` class provides a set of fluent extension methods for unit testing validation logic. It simplifies asserting validation constraints on properties by allowing you to chain validation calls directly onto the values being tested, improving test readability and reducing boilerplate code.
