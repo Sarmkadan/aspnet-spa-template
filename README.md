@@ -1506,6 +1506,65 @@ ICollection<OrderItem>? items = order.Items;
 
 ---
 
+## User
+
+The `User` class represents a user account in the system, containing personal information, authentication details, and account lifecycle management. It provides comprehensive user management functionality including profile updates, email verification, login tracking, and account activation/deactivation, making it ideal for user management in web applications.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Models;
+
+// Create a new user account
+var user = new User
+{
+    FirstName = "John",
+    LastName = "Doe",
+    Email = "john.doe@example.com",
+    PasswordHash = "hashed_password_123",
+    PhoneNumber = "+1234567890",
+    Address = "123 Main St",
+    City = "New York",
+    PostalCode = "10001",
+    Country = "USA",
+    IsActive = true,
+    IsEmailVerified = false
+};
+
+// Get the user's full name
+string fullName = user.GetFullName(); // "John Doe"
+
+// Validate email format
+bool isEmailValid = user.IsValidEmail(); // true
+
+// Update last login timestamp
+user.UpdateLastLogin();
+
+// Update user profile information
+user.UpdateProfile(
+    "John",
+    "Smith",
+    "+1234567890",
+    "456 Oak Ave",
+    "Boston",
+    "02108",
+    "USA"
+);
+
+// Mark email as verified
+user.VerifyEmail();
+
+// Deactivate user account
+user.Deactivate();
+
+// Reactivate user account
+user.Activate();
+
+// Access navigation properties
+ICollection<Order>? orders = user.Orders;
+ICollection<Review>? reviews = user.Reviews;
+```
+
 ## Review
 
 The `Review` class represents a product review submitted by a user, enabling customers to provide feedback on products with ratings, titles, and detailed content. Reviews track helpfulness counts, verification status, approval state, and timestamps for moderation and analytics purposes.
@@ -2463,6 +2522,65 @@ public class OrderIntegrationTests : IAsyncLifetime
     }
 }
 ```
+## User
+
+The `User` class represents a user account in the system, containing personal information, authentication details, and account lifecycle management. It provides comprehensive user management functionality including profile updates, email verification, login tracking, and account activation/deactivation, making it ideal for user management in web applications.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Models;
+
+// Create a new user account
+var user = new User
+{
+    FirstName = "John",
+    LastName = "Doe",
+    Email = "john.doe@example.com",
+    PasswordHash = "hashed_password_123",
+    PhoneNumber = "+1234567890",
+    Address = "123 Main St",
+    City = "New York",
+    PostalCode = "10001",
+    Country = "USA",
+    IsActive = true,
+    IsEmailVerified = false
+};
+
+// Get the user's full name
+string fullName = user.GetFullName(); // "John Doe"
+
+// Validate email format
+bool isEmailValid = user.IsValidEmail(); // true
+
+// Update last login timestamp
+user.UpdateLastLogin();
+
+// Update user profile information
+user.UpdateProfile(
+    "John",
+    "Smith",
+    "+1234567890",
+    "456 Oak Ave",
+    "Boston",
+    "02108",
+    "USA"
+);
+
+// Mark email as verified
+user.VerifyEmail();
+
+// Deactivate user account
+user.Deactivate();
+
+// Reactivate user account
+user.Activate();
+
+// Access navigation properties
+ICollection<Order>? orders = user.Orders;
+ICollection<Review>? reviews = user.Reviews;
+```
+
 ## ReviewServiceTests
 
 The `ReviewServiceTests` class provides comprehensive unit testing for the `ReviewService`, covering CRUD operations and business logic validations. It ensures that review creation, retrieval, approval, and deletion behave correctly under both valid and invalid scenarios.
@@ -2495,6 +2613,65 @@ public class ReviewServiceUsageExample
 ```
 
 ---
+
+## User
+
+The `User` class represents a user account in the system, containing personal information, authentication details, and account lifecycle management. It provides comprehensive user management functionality including profile updates, email verification, login tracking, and account activation/deactivation, making it ideal for user management in web applications.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Models;
+
+// Create a new user account
+var user = new User
+{
+    FirstName = "John",
+    LastName = "Doe",
+    Email = "john.doe@example.com",
+    PasswordHash = "hashed_password_123",
+    PhoneNumber = "+1234567890",
+    Address = "123 Main St",
+    City = "New York",
+    PostalCode = "10001",
+    Country = "USA",
+    IsActive = true,
+    IsEmailVerified = false
+};
+
+// Get the user's full name
+string fullName = user.GetFullName(); // "John Doe"
+
+// Validate email format
+bool isEmailValid = user.IsValidEmail(); // true
+
+// Update last login timestamp
+user.UpdateLastLogin();
+
+// Update user profile information
+user.UpdateProfile(
+    "John",
+    "Smith",
+    "+1234567890",
+    "456 Oak Ave",
+    "Boston",
+    "02108",
+    "USA"
+);
+
+// Mark email as verified
+user.VerifyEmail();
+
+// Deactivate user account
+user.Deactivate();
+
+// Reactivate user account
+user.Activate();
+
+// Access navigation properties
+ICollection<Order>? orders = user.Orders;
+ICollection<Review>? reviews = user.Reviews;
+```
 
 ## ReviewServiceTestsExtensions
 
