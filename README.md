@@ -7108,6 +7108,97 @@ public class NotificationSettings
 }
 ```
 
+### MemoryCacheService
+
+In-memory cache service implementation designed for single-server ASP.NET Core applications. Uses `ConcurrentDictionary` for thread-safe operations and distributed locks to prevent cache stampedes during concurrent `GetOrSetAsync` calls. Automatically handles cache expiration and provides statistics for monitoring cache performance.
+
+
+
+**Usage Example:**
+
+
+```csharp
+// Register in DI container (Program.cs)
+builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
+
+// Usage in a service
+public class ProductService
+{
+    private readonly ICacheService _cache;
+    private readonly ILogger<ProductService> _logger;
+    
+    public ProductService(ICacheService cache, ILogger<ProductService> logger)
+    {
+        _cache = cache;
+        _logger = logger;
+    }
+    
+    public async Task<Product?> GetProductAsync(int id)
+    {
+        const string cacheKey = "products:123";
+        
+        // Try to get from cache first
+        var cachedProduct = await _cache.GetAsync<Product>(cacheKey);
+        if (cachedProduct is not null)
+        {
+            _logger.LogInformation("Cache hit for product {ProductId}", id);
+            return cachedProduct;
+        }
+        
+        _logger.LogInformation("Cache miss for product {ProductId}", id);
+        
+        // Get from database
+        var product = await _dbContext.Products.FindAsync(id);
+        
+        if (product is not null)
+        {
+            // Cache for 5 minutes
+            await _cache.SetAsync(cacheKey, product, TimeSpan.FromMinutes(5));
+        }
+        
+        return product;
+    }
+    
+    public async Task<Product> GetProductWithFallbackAsync(int id)
+    {
+        const string cacheKey = "products:fallback:456";
+        
+        // Get or set with factory pattern (prevents cache stampede)
+        return await _cache.GetOrSetAsync(
+            cacheKey,
+            async () => await _dbContext.Products.FindAsync(id),
+            TimeSpan.FromMinutes(10)
+        );
+    }
+    
+    public async Task IncrementViewCountAsync(int productId)
+    {
+        const string cacheKey = "product:views";
+        await _cache.IncrementAsync(cacheKey);
+    }
+    
+    public async Task<bool> IsProductCachedAsync(int id)
+    {
+        const string cacheKey = "products:789";
+        return await _cache.ExistsAsync(cacheKey);
+    }
+    
+    public async Task ClearProductCacheAsync()
+    {
+        // Remove all keys matching pattern
+        await _cache.RemoveByPatternAsync("products:*");
+    }
+    
+    public async Task DisplayCacheStatsAsync()
+    {
+        var stats = await _cache.GetStatisticsAsync();
+        Console.WriteLine($"Cache Stats: {stats.TotalRequests} requests, " +
+                         $"{stats.CacheHits} hits ({stats.HitRate:P}), " +
+                         $"{stats.ItemCount} items");
+    }
+}
+```
+
 ---
 
 ## License
