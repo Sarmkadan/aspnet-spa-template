@@ -1560,6 +1560,58 @@ updateRequest.Validate();
 - **ProductCategory**: Enum containing product categories (Electronics, Clothing, Books, Home, Sports)
 - Used in: ProductsController.Put(int id, UpdateProductRequest request)
 
+## CreateProductRequest
+
+The `CreateProductRequest` DTO is used to create a new product in the system. It encapsulates all required fields for product creation with built-in validation rules that ensure data integrity before processing the new product. The request supports creating core product information, pricing, inventory levels, category assignments, and product images.
+
+**Usage Example:**
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+using AspNetSpaTemplate.Constants;
+
+// Create a new product request
+var createRequest = new CreateProductRequest
+{
+    Name = "Premium Wireless Headphones",
+    Description = "Noise-cancelling wireless headphones with 30-hour battery life and Bluetooth 5.2",
+    Price = 199.99m,
+    StockQuantity = 50,
+    Category = ProductCategory.Electronics,
+    ImageUrl = "/images/headphones.jpg",
+    Sku = "AUD-WH-1001"
+};
+
+// The request can then be sent to the ProductsController:
+// POST /api/products
+// Body: CreateProductRequest
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Name` | `string` | The product name (required, max 200 characters) |
+| `Description` | `string` | Detailed product description |
+| `Price` | `decimal` | Product price (must be non-negative) |
+| `StockQuantity` | `int` | Current inventory quantity (must be non-negative) |
+| `Category` | `ProductCategory` | Product category enum value |
+| `ImageUrl` | `string?` | URL to product image (optional) |
+| `Sku` | `string?` | Stock keeping unit identifier (optional) |
+
+### Validation Rules
+
+- **Name**: Required, cannot be empty or whitespace, maximum 200 characters
+- **Description**: Required, cannot be empty or whitespace
+- **Price**: Must be non-negative
+- **StockQuantity**: Must be non-negative
+- **Category**: Required, must be a valid ProductCategory enum value
+
+### Related Types
+
+- **ProductCategory**: Enum containing product categories (Electronics, Clothing, Books, Home, Sports)
+- Used in: ProductsController.Post(CreateProductRequest request)
+
 ## ExternalApiClient
 
 The `ExternalApiClient` class provides a robust, retry-capable HTTP client for consuming external APIs from your ASP.NET Core services. It handles common concerns like automatic retries on transient failures, configurable timeouts, structured error handling, and detailed logging—making external API calls more reliable and easier to debug.
