@@ -10,7 +10,7 @@ namespace AspNetSpaTemplate.Tests;
 public sealed class MemoryCacheServiceTests
 {
     private readonly Mock<ILogger<MemoryCacheService>> _mockLogger;
-    private readonly MemoryCacheService _cacheService;
+    internal readonly MemoryCacheService _cacheService;
 
     public MemoryCacheServiceTests()
     {
