@@ -484,6 +484,83 @@ await _pwaService.UnsubscribeAsync(
 
 ---
 
+## IManifestService
+
+The `IManifestService` interface generates and provides access to the Web App Manifest metadata used by the browser to install the application as a Progressive Web App. It exposes properties for common manifest fields and a method to build the complete manifest object, which is cached for performance. The service supports generating both relative and absolute URLs for icons and other resources based on the incoming request context.
+
+### Usage Example
+
+```csharp
+// Register IManifestService in Program.cs
+builder.Services.AddScoped<IManifestService, ManifestService>();
+
+// Inject IManifestService in your controller or service
+public class MyController : ControllerBase
+{
+    private readonly IManifestService _manifestService;
+    
+    public MyController(IManifestService manifestService)
+    {
+        _manifestService = manifestService;
+    }
+    
+    public IActionResult GetManifest()
+    {
+        // Build manifest with absolute URLs based on the current request
+        var manifest = _manifestService.BuildManifest(
+            requestScheme: Request.Scheme,
+            requestHost: Request.Host.Host
+        );
+        
+        // Return as JSON response
+        return Ok(manifest);
+    }
+    
+    public IActionResult GetThemeColors()
+    {
+        // Access cached theme colors directly
+        string themeColor = _manifestService.ThemeColor; // "#2563eb"
+        string backgroundColor = _manifestService.BackgroundColor; // "#f8fafc"
+        
+        return Ok(new {
+            themeColor,
+            backgroundColor
+        });
+    }
+}
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `Name` | `string` | Full application name shown during installation |
+| `ShortName` | `string` | Short name used on the home screen where space is limited |
+| `Description` | `string` | Human-readable description of the application's purpose |
+| `StartUrl` | `string` | URL loaded when the application is launched from the installed entry point |
+| `Scope` | `string` | Navigation scope; requests outside the scope open in the browser |
+| `Display` | `string` | How the application should be displayed: `standalone`, `fullscreen`, `minimal-ui`, or `browser` |
+| `Orientation` | `string` | Default screen orientation |
+| `BackgroundColor` | `string` | Background colour shown in the splash screen before the app loads |
+| `ThemeColor` | `string` | Colour used by the browser for the address bar and surrounding UI |
+| `Lang` | `string` | Primary language of the application |
+| `Categories` | `IReadOnlyList<string>` | Application category hints for app stores and search engines |
+| `Icons` | `IReadOnlyList<ManifestIcon>` | Application icon set in various resolutions |
+| `Shortcuts` | `IReadOnlyList<ManifestShortcut>` | Deep-link shortcuts accessible from the home screen long-press menu |
+| `PreferRelatedApplications` | `bool` | When `true`, the browser may suggest a native application as an alternative |
+| `BuildManifest(string requestScheme, string? requestHost)` | `WebAppManifest` | Returns the complete Web App Manifest object ready to be serialised as JSON |
+
+### Related Types
+
+- **WebAppManifest**: The serializable representation of the W3C Web App Manifest containing all manifest fields
+- **ManifestIcon**: A single icon entry with `Src`, `Sizes`, `Type`, and `Purpose` properties
+- **ManifestShortcut**: A deep-link shortcut with `Name`, `ShortName`, `Description`, `Url`, and `Icons` properties
+
+
+
+---
+
+
 ## Installation
 
 ### Prerequisites
