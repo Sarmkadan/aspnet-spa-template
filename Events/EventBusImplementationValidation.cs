@@ -24,13 +24,7 @@ public static class EventBusImplementationValidation
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var problems = new List<string>();
-
-        // EventBusImplementation has no configurable properties to validate
-        // The validation is primarily about the instance being non-null and functional
-        // which is already ensured by the constructor and method guards
-
-        return problems.AsReadOnly();
+        return Array.Empty<string>();
     }
 
     /// <summary>
@@ -38,10 +32,7 @@ public static class EventBusImplementationValidation
     /// </summary>
     /// <param name="value">The event bus implementation to check.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValid(this EventBusImplementation value)
-    {
-        return value.Validate().Count == 0;
-    }
+    public static bool IsValid(this EventBusImplementation value) => value.Validate().Count == 0;
 
     /// <summary>
     /// Ensures that the specified <see cref="EventBusImplementation"/> is valid.
