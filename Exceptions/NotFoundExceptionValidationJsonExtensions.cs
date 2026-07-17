@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // ===================================================================
 
+using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -21,6 +22,13 @@ public static class NotFoundExceptionValidationJsonExtensions
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    private static readonly JsonSerializerOptions _jsonIndentedOptions = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     /// <summary>
     /// Converts a <see cref="NotFoundException"/> to its JSON representation.
     /// </summary>
@@ -31,24 +39,28 @@ public static class NotFoundExceptionValidationJsonExtensions
     public static string ToJson(this NotFoundException value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-
-        return JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(_jsonOptions)
-        {
-            WriteIndented = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        } : _jsonOptions);
+        return JsonSerializer.Serialize(value, indented ? _jsonIndentedOptions : _jsonOptions);
     }
 
     /// <summary>
     /// Deserializes a <see cref="NotFoundException"/> from JSON.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized exception, or null if the JSON is null or empty.</returns>
-    /// <exception cref="JsonException">Thrown when the JSON is invalid.</exception>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <returns>
+    /// The deserialized exception, or <c>null</c> if <paramref name="json"/> is <c>null</c>,
+    /// empty, or consists only of whitespace.
+    /// </returns>
+    /// <exception cref="JsonException">Thrown when the JSON is syntactically invalid.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <c>null</c>.</exception>
     public static NotFoundException? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
+
+        // Treat empty or whitespace-only JSON as "no data"
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
 
         return JsonSerializer.Deserialize<NotFoundException>(json, _jsonOptions);
     }
@@ -57,15 +69,21 @@ public static class NotFoundExceptionValidationJsonExtensions
     /// Attempts to deserialize a <see cref="NotFoundException"/> from JSON.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">Receives the deserialized exception if successful.</param>
-    /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <param name="value">
+    /// When this method returns <c>true</c>, contains the deserialized <see cref="NotFoundException"/>;
+    /// otherwise, <c>null</c>.
+    /// </param>
+    /// <returns><c>true</c> if deserialization succeeded; otherwise, <c>false</c>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <c>null</c>.</exception>
     public static bool TryFromJson(string json, out NotFoundException? value)
     {
-        value = null;
+        ArgumentNullException.ThrowIfNull(json);
 
+        // Empty or whitespace JSON cannot be deserialized into a valid exception
         if (string.IsNullOrWhiteSpace(json))
         {
-            return true;
+            value = null;
+            return false;
         }
 
         try
@@ -75,6 +93,7 @@ public static class NotFoundExceptionValidationJsonExtensions
         }
         catch (JsonException)
         {
+            value = null;
             return false;
         }
     }
