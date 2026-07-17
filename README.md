@@ -1763,6 +1763,50 @@ public void Validate_Collection()
 }
 ```
 
+## OrderServiceIntegrationTests
+
+The `OrderServiceIntegrationTests` class provides comprehensive integration testing for order-related workflows, ensuring end-to-end functionality between the order service, repository, and database. It verifies complex business scenarios such as stock management, order calculations, and data isolation by utilizing the test server and database context.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using Xunit;
+
+public class OrderIntegrationTests : IAsyncLifetime
+{
+    private readonly OrderServiceIntegrationTests _tests;
+
+    public OrderIntegrationTests()
+    {
+        _tests = new OrderServiceIntegrationTests();
+    }
+
+    public async Task InitializeAsync() => await _tests.InitializeAsync();
+    
+    public async Task DisposeAsync() => await _tests.DisposeAsync();
+
+    [Fact]
+    public async Task Run_Full_Workflows()
+    {
+        // Execute end-to-end flow
+        await _tests.EndToEnd_CreateProductAndOrder_CompleteWorkflow();
+
+        // Verify calculations
+        await _tests.CreateOrderWithMultipleItems_CalculatesTotalsCorrectly();
+        
+        // Check inventory updates
+        await _tests.StockReduction_DecreasesProductInventory();
+        
+        // Validate constraints
+        await _tests.InsufficientStock_PreventOrderCreation();
+        
+        // Verify data isolation
+        await _tests.GetUserOrders_ReturnsOnlyUserOrders();
+    }
+}
+```
+
 ## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
