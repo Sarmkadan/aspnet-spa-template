@@ -6,7 +6,7 @@
 // =============================================================================
 
 using System.Collections.Generic;
-using System.Globalization;
+using System.Linq;
 
 namespace AspNetSpaTemplate.Exceptions;
 
@@ -81,6 +81,7 @@ public static class ValidationExceptionExtensions
     /// <returns>A string containing all error messages for the field, separated by the specified separator.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="exception"/> is null.</exception>
     /// <exception cref="ArgumentException"><paramref name="fieldName"/> is null or empty.</exception>
+    /// <exception cref="ArgumentException"><paramref name="separator"/> is null or empty.</exception>
     public static string GetErrorMessages(
         this ValidationException exception,
         string fieldName,
@@ -90,12 +91,9 @@ public static class ValidationExceptionExtensions
         ArgumentException.ThrowIfNullOrEmpty(fieldName);
         ArgumentException.ThrowIfNullOrEmpty(separator);
 
-        if (exception.Errors.TryGetValue(fieldName, out var errors) && errors.Count > 0)
-        {
-            return string.Join(separator, errors);
-        }
-
-        return string.Empty;
+        return exception.Errors.TryGetValue(fieldName, out var errors) && errors.Count > 0
+            ? string.Join(separator, errors)
+            : string.Empty;
     }
 
     /// <summary>
@@ -123,7 +121,6 @@ public static class ValidationExceptionExtensions
     public static bool HasErrors(this ValidationException exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-
         return exception.Errors.Count > 0;
     }
 
@@ -149,10 +146,10 @@ public static class ValidationExceptionExtensions
             }
             else
             {
-            	foreach (var error in kvp.Value)
-            	{
-            		existingErrors.Add(error);
-            	}
+                foreach (var error in kvp.Value)
+                {
+                    existingErrors.Add(error);
+                }
             }
         }
     }
