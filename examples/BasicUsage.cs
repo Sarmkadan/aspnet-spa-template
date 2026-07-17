@@ -5,19 +5,31 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using AspNetSpaTemplate.Data;
 
-// Note: This example assumes you have an instance of AppDbContext,
-// ProductRepository, and an ILogger set up (typically via dependency
-// injection when running within the ASP.NET Core context).
-
+/// <summary>
+/// Provides basic usage examples for the ProductService class.
+/// </summary>
+/// <remarks>
+/// This example demonstrates how to instantiate and use ProductService
+/// with dependency injection in an ASP.NET Core application context.
+/// </remarks>
 public class BasicUsage
 {
     private readonly ProductService _productService;
 
+    /// <summary>
+    /// Initializes a new instance of the BasicUsage class.
+    /// </summary>
+    /// <param name="productRepository">The product repository instance.</param>
+    /// <param name="logger">The logger instance for ProductService.</param>
     public BasicUsage(ProductRepository productRepository, ILogger<ProductService> logger)
     {
         _productService = new ProductService(productRepository, logger);
     }
 
+    /// <summary>
+    /// Runs the basic usage examples for ProductService asynchronously.
+    /// </summary>
+    /// <returns>A Task representing the asynchronous operation.</returns>
     public async Task RunExampleAsync()
     {
         // 1. Get a product by ID
