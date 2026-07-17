@@ -66,12 +66,6 @@ public static class MemoryCacheServiceTestsJsonExtensions
         }
     }
 
-    private static JsonSerializerOptions GetIndentedOptions()
-    {
-        var options = new JsonSerializerOptions(_jsonSerializerOptions)
-        {
-            WriteIndented = true,
-        };
-        return options;
+            private static JsonSerializerOptions GetIndentedOptions()
+            => new(_jsonSerializerOptions) { WriteIndented = true };
     }
-}
