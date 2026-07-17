@@ -30,16 +30,10 @@ public static class EventBusImplementationExtensionsJsonExtensions
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
     /// <returns>A JSON string representation of the event bus.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static string ToJson(this EventBusImplementation value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        var options = indented
+    public static string ToJson(this EventBusImplementation value, bool indented = false) =>
+        JsonSerializer.Serialize(value, indented
             ? new JsonSerializerOptions(_jsonSerializerOptions) { WriteIndented = true }
-            : _jsonSerializerOptions;
-
-        return JsonSerializer.Serialize(value, options);
-    }
+            : _jsonSerializerOptions);
 
     /// <summary>
     /// Deserializes an <see cref="EventBusImplementation"/> instance from a JSON string.
@@ -52,12 +46,9 @@ public static class EventBusImplementationExtensionsJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(json);
 
-        if (string.IsNullOrEmpty(json))
-        {
-            return null;
-        }
-
-        return JsonSerializer.Deserialize<EventBusImplementation>(json, _jsonSerializerOptions);
+        return string.IsNullOrEmpty(json)
+            ? null
+            : JsonSerializer.Deserialize<EventBusImplementation>(json, _jsonSerializerOptions);
     }
 
     /// <summary>
