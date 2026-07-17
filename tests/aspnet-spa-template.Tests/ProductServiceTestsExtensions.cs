@@ -14,24 +14,27 @@ namespace AspNetSpaTemplate.Tests;
 public static class ProductServiceTestsExtensions
 {
     /// <summary>
-    /// Creates a sample product for testing purposes with default values.
+    /// Creates a sample product for testing purposes.
     /// </summary>
-    /// <param name="name">The product name. If null or empty, uses "Test Product".</param>
-    /// <param name="price">The product price. If null, uses 99.99.</param>
-    /// <param name="category">The product category. If null, uses Electronics.</param>
+    /// <param name="name">The product name. Cannot be null or empty.</param>
+    /// <param name="price">The product price. Must be positive. If null, defaults to 99.99.</param>
+    /// <param name="category">The product category. If null, defaults to Electronics.</param>
     /// <returns>A configured <see cref="Product"/> instance ready for testing.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="name"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="name"/> is empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="price"/> is less than or equal to 0.</exception>
     public static Product CreateTestProduct(
-        string? name = null,
+        string name,
         decimal? price = null,
         ProductCategory? category = null)
     {
-        ArgumentException.ThrowIfNullOrEmpty(name ?? "Test Product");
+        ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(price ?? 99.99m, 0);
 
         return new Product
         {
             Id = 1,
-            Name = name ?? "Test Product",
+            Name = name,
             Description = "A test product for unit testing",
             Price = price ?? 99.99m,
             StockQuantity = 100,
@@ -45,8 +48,10 @@ public static class ProductServiceTestsExtensions
     /// <summary>
     /// Creates a sample product with price validation errors for negative price testing.
     /// </summary>
-    /// <param name="name">The product name.</param>
+    /// <param name="name">The product name. Cannot be null or empty.</param>
     /// <returns>A product with negative price for validation testing.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="name"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="name"/> is empty.</exception>
     public static Product CreateInvalidPriceProduct(string name)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
@@ -70,6 +75,8 @@ public static class ProductServiceTestsExtensions
     /// <param name="expectedName">Expected product name.</param>
     /// <param name="expectedPrice">Expected product price.</param>
     /// <param name="expectedStock">Expected stock quantity.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="product"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="expectedName"/> is null or empty.</exception>
     public static void ShouldMatchExpectedValues(
         this Product product,
         string expectedName,
@@ -92,6 +99,7 @@ public static class ProductServiceTestsExtensions
     /// <param name="count">Number of products to create. Must be positive.</param>
     /// <param name="category">Optional category to assign to all products.</param>
     /// <returns>An <see cref="IReadOnlyList{T}"/> of products ready for pagination testing.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is less than or equal to 0.</exception>
     public static IReadOnlyList<Product> CreateProductCollection(
         int count,
         ProductCategory? category = null)
