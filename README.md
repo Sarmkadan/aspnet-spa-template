@@ -160,6 +160,123 @@ aspnet-spa-template/
 
 ---
 
+## RepositoryBase
+
+`RepositoryBase<T>` is a generic base class that provides common CRUD operations and query capabilities for Entity Framework Core. It serves as the foundation for all concrete repository implementations in the application, offering standardized methods for entity retrieval, creation, updating, and deletion.
+
+The base repository handles Entity Framework Core operations like `FindAsync`, `ToListAsync`, `FirstOrDefaultAsync`, and `SaveChangesAsync`, reducing boilerplate code in derived repositories. It also supports pagination through the `GetPagedAsync` method and provides convenience methods like `ExistsAsync` and `CountAsync` for common query patterns.
+
+### Usage Example
+
+```csharp
+// Define a concrete repository for your entity
+public class ProductRepository : RepositoryBase<Product>
+{
+    public ProductRepository(AppDbContext context) : base(context) { }
+    
+    // Add custom query methods specific to Product
+    public async Task<IEnumerable<Product>> GetAvailableProductsAsync()
+    {
+        return await FindAsync(p => p.IsAvailable && p.StockQuantity > 0);
+    }
+    
+    public async Task<IEnumerable<Product>> GetProductsByCategoryAsync(ProductCategory category, int pageNumber = 1, int pageSize = 10)
+    {
+        return await GetPagedAsync(pageNumber, pageSize, p => p.Category == category && p.IsAvailable);
+    }
+}
+
+// Usage in a service
+public class ProductService
+{
+    private readonly ProductRepository _productRepository;
+    
+    public ProductService(ProductRepository productRepository)
+    {
+        _productRepository = productRepository;
+    }
+    
+    public async Task<Product?> GetProductByIdAsync(int productId)
+    {
+        return await _productRepository.GetByIdAsync(productId);
+    }
+    
+    public async Task<IEnumerable<Product>> GetAllProductsAsync()
+    {
+        return await _productRepository.GetAllAsync();
+    }
+    
+    public async Task AddProductAsync(Product product)
+    {
+        _productRepository.Add(product);
+        await _productRepository.SaveChangesAsync();
+    }
+    
+    public async Task UpdateProductAsync(Product product)
+    {
+        _productRepository.Update(product);
+        await _productRepository.SaveChangesAsync();
+    }
+    
+    public async Task DeleteProductAsync(int productId)
+    {
+        var product = await _productRepository.GetByIdAsync(productId);
+        if (product != null)
+        {
+            _productRepository.Remove(product);
+            await _productRepository.SaveChangesAsync();
+        }
+    }
+    
+    public async Task<IEnumerable<Product>> GetPaginatedProductsAsync(int pageNumber, int pageSize)
+    {
+        return await _productRepository.GetPagedAsync(pageNumber, pageSize);
+    }
+    
+    public async Task<bool> ProductExistsAsync(int productId)
+    {
+        return await _productRepository.ExistsAsync(p => p.Id == productId);
+    }
+    
+    public async Task<int> GetTotalProductCountAsync()
+    {
+        return await _productRepository.CountAsync();
+    }
+}
+
+// Register in Program.cs
+builder.Services.AddScoped<ProductRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `GetByIdAsync(int id)` | `Task<T?>` | Retrieves an entity by its primary key ID |
+| `GetAllAsync()` | `Task<IEnumerable<T>>` | Retrieves all entities of type T |
+| `FindAsync(Expression<Func<T, bool>> predicate)` | `Task<IEnumerable<T>>` | Retrieves entities matching the specified predicate |
+| `FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)` | `Task<T?>` | Retrieves the first entity matching the predicate, or null if none found |
+| `CountAsync(Expression<Func<T, bool>>? predicate = null)` | `Task<int>` | Counts entities, optionally filtered by predicate |
+| `ExistsAsync(Expression<Func<T, bool>> predicate)` | `Task<bool>` | Checks if any entity matches the predicate |
+| `GetPagedAsync(int pageNumber, int pageSize, Expression<Func<T, bool>>? predicate = null)` | `Task<IEnumerable<T>>` | Retrieves entities with pagination support |
+| `Add(T entity)` | `void` | Adds a new entity to the DbContext |
+| `AddRange(IEnumerable<T> entities)` | `void` | Adds multiple entities to the DbContext |
+| `Update(T entity)` | `void` | Marks an entity as modified in the DbContext |
+| `UpdateRange(IEnumerable<T> entities)` | `void` | Marks multiple entities as modified in the DbContext |
+| `Remove(T entity)` | `void` | Removes an entity from the DbContext |
+| `RemoveRange(IEnumerable<T> entities)` | `void` | Removes multiple entities from the DbContext |
+| `SaveChangesAsync()` | `Task<int>` | Persists all changes to the database and returns the number of affected rows |
+
+### Related Types
+
+- **IRepository<T>**: Interface defining the repository contract
+- **AppDbContext**: Entity Framework Core database context used by the repository
+- **DbSet<T>**: Entity Framework Core's representation of a table
+- Used in: All service classes that need data access (ProductService, OrderService, UserService, ReviewService)
+
+---
+
 ## Features
 
 ### Backend Features
