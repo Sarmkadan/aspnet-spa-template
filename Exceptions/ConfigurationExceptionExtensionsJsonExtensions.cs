@@ -12,7 +12,7 @@ using System.Text.Json.Serialization;
 namespace AspNetSpaTemplate.Exceptions
 {
     /// <summary>
-    /// Provides System.Text.Json serialization extensions for methods in <see cref="ConfigurationExceptionExtensions"/>.
+    /// Provides System.Text.Json serialization extensions for <see cref="ConfigurationException"/>.
     /// This class enables round-trip serialization of configuration exception data through JSON.
     /// </summary>
     public static class ConfigurationExceptionExtensionsJsonExtensions
@@ -32,8 +32,8 @@ namespace AspNetSpaTemplate.Exceptions
         };
 
         /// <summary>
-        /// Converts a <see cref="ConfigurationExceptionExtensions"/> method result to its JSON representation.
-        /// This serializes the configuration exception data that would be returned by extension methods.
+        /// Converts a <see cref="ConfigurationException"/> to its JSON representation.
+        /// This serializes the configuration exception data for round-trip serialization.
         /// </summary>
         /// <param name="value">The configuration exception to serialize.</param>
         /// <param name="indented">Whether to format the JSON with indentation.</param>
