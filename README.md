@@ -1087,6 +1087,84 @@ foreach (var row in parsedData)
 }
 ```
 
+## XmlFormatter
+
+Provides utilities for formatting objects as XML strings and bytes, with support for serialization, deserialization, validation, and XPath-based value extraction. Useful for legacy system integrations, XML-based APIs, or data exchange with systems that require XML format.
+
+
+
+### Public Members
+
+- `ToXml<T>(T obj)` - Serializes an object to an XML string
+- `ToXmlBytes<T>(T obj)` - Serializes an object to XML bytes (UTF-8 encoded)
+- `FromXml<T>(string xml)` - Deserializes XML string back to object (throws on invalid format)
+- `FromXmlSafe<T>(string? xml)` - Safely deserializes XML (returns null on error, doesn't throw)
+- `IsValidXml(string xml)` - Validates XML format without deserializing
+- `GetXmlValue(string xml, string xpath)` - Extracts specific value from XML using XPath
+- `CreateElement(string name, Dictionary<string, string>? attributes)` - Creates XML element with attributes
+
+### Usage Example
+
+```csharp
+// Define a sample model
+public class Product
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public decimal Price { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public string? Category { get; set; }
+    public int StockQuantity { get; set; }
+    public bool IsFeatured { get; set; }
+}
+
+// Sample data
+var product = new Product
+{
+    Id = 1,
+    Name = "Wireless Headphones",
+    Price = 199.99m,
+    CreatedDate = DateTime.UtcNow.AddDays(-30),
+    Category = "Electronics",
+    StockQuantity = 150,
+    IsFeatured = true
+};
+
+// Serialize object to XML string
+string xmlString = XmlFormatter.ToXml(product);
+Console.WriteLine(xmlString);
+
+// Serialize object to XML bytes (ready for file download or transmission)
+byte[] xmlBytes = XmlFormatter.ToXmlBytes(product);
+File.WriteAllBytes("product.xml", xmlBytes);
+
+// Deserialize XML back to object
+var deserializedProduct = XmlFormatter.FromXml<Product>(xmlString);
+Console.WriteLine($"Deserialized: {deserializedProduct?.Name}, Price: {deserializedProduct?.Price}");
+
+// Safe deserialization (returns null on error)
+string invalidXml = "<Product><Name>Test</Name>";
+var safeResult = XmlFormatter.FromXmlSafe<Product>(invalidXml); // Returns null
+Console.WriteLine(safeResult is null ? "Safe deserialization handled invalid XML" : "Unexpected result");
+
+// Validate XML format
+bool isValid = XmlFormatter.IsValidXml(xmlString);
+Console.WriteLine($"XML is valid: {isValid}");
+
+// Extract specific value using XPath
+string? category = XmlFormatter.GetXmlValue(xmlString, "/Product/Category");
+Console.WriteLine($"Category from XPath: {category}");
+
+// Create XML element programmatically
+var attributes = new Dictionary<string, string>
+{
+    { "id", "1" },
+    { "type", "electronics" }
+};
+var element = XmlFormatter.CreateElement("Product", attributes);
+Console.WriteLine($"Created element: {element.Name}, Attributes: {element.Attributes.Count}");
+```
+
 ## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
