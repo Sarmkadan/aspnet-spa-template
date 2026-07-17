@@ -1611,6 +1611,47 @@ public static object GetSubscriberCountLock(this EventBusImplementation eventBus
 ```
 
 
+## ThemeServiceTests
+
+The `ThemeServiceTests` class provides comprehensive unit tests for the `ThemeService`, which manages user theme preferences (System, Light, Dark) using the in-memory cache service. These tests verify theme preference management including retrieval, setting, clearing, and user isolation scenarios, ensuring the theme service correctly handles default behavior and preference persistence.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Services;
+using AspNetSpaTemplate.Caching;
+
+// Create theme service with cache backing
+var cacheService = new MemoryCacheService(logger);
+var themeService = new ThemeService(cacheService, logger);
+
+// Get current theme preference (defaults to System when nothing stored)
+ColourScheme currentTheme = await themeService.GetSchemeAsync(userId: 123);
+// Returns: ColourScheme.System
+
+// Set a theme preference for a user
+await themeService.SetSchemeAsync(userId: 123, ColourScheme.Dark);
+
+// Get the stored preference
+ColourScheme storedTheme = await themeService.GetSchemeAsync(userId: 123);
+// Returns: ColourScheme.Dark
+
+// Clear the preference to revert to system default
+await themeService.ClearSchemeAsync(userId: 123);
+
+// Get after clearing (back to default)
+ColourScheme defaultTheme = await themeService.GetSchemeAsync(userId: 123);
+// Returns: ColourScheme.System
+
+// Different users have isolated preferences
+await themeService.SetSchemeAsync(userId: 456, ColourScheme.Light);
+ColourScheme user456Theme = await themeService.GetSchemeAsync(userId: 456);
+// Returns: ColourScheme.Light
+
+ColourScheme user123Theme = await themeService.GetSchemeAsync(userId: 123);
+// Returns: ColourScheme.System (still isolated)
+```
+
 ## ValidationHelperTests
 
 The `ValidationHelperTests` class provides a comprehensive set of unit tests for the validation helper methods used throughout the application. These tests verify that validation logic correctly handles various input scenarios including null values, empty strings, out-of-range values, and pattern matching, ensuring robust validation across the codebase.
