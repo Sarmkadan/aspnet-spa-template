@@ -282,6 +282,96 @@ Provides a comprehensive set of validation methods for common validation scenari
 ### Usage Example
 
 ```csharp
+
+// In a controller action
+public IActionResult CreateUser([FromBody] CreateUserRequest request)
+{
+try
+{
+// Validate input parameters
+ValidationHelper.NotNull(request, nameof(request));
+ValidationHelper.NotNullOrEmpty(request.Username, nameof(request.Username));
+ValidationHelper.LengthBetween(request.Username, 3, 50, nameof(request.Username));
+ValidationHelper.ValidEmail(request.Email, nameof(request.Email));
+ValidationHelper.InRange(request.Age, 18, 120, nameof(request.Age));
+ValidationHelper.Equal(request.Password, request.ConfirmPassword, nameof(request.ConfirmPassword));
+ValidationHelper.MaxItems(request.Roles, 5, nameof(request.Roles));
+
+// Process valid request
+var user = _userService.CreateUser(request);
+return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+}
+catch (ValidationException ex)
+{
+// Return validation errors to client
+return BadRequest(new { errors = ex.Errors });
+}
+}
+```
+
+## DataExportHelper
+
+Provides utilities for exporting data collections to various formats (CSV, JSON, XML) with support for format negotiation, custom field selection, and file naming. The helper centralizes data export logic to ensure consistent formatting and file handling across controllers and services.
+
+### Usage Example
+
+```csharp
+// Define a sample model
+public class UserDto
+{
+public int Id { get; set; }
+public string? Username { get; set; }
+public string? Email { get; set; }
+public DateTime CreatedAt { get; set; }
+}
+
+// Sample data
+var users = new List<UserDto>
+{
+new UserDto { Id = 1, Username = "johndoe", Email = "john@example.com", CreatedAt = DateTime.UtcNow.AddDays(-1) },
+new UserDto { Id = 2, Username = "janedoe", Email = "jane@example.com", CreatedAt = DateTime.UtcNow.AddDays(-2) },
+new UserDto { Id = 3, Username = "bobsmith", Email = "bob@example.com", CreatedAt = DateTime.UtcNow.AddDays(-3) }
+};
+
+// Export to JSON format (default)
+var jsonExport = DataExportHelper.ExportData(users, ExportFormat.Json);
+Console.WriteLine($"JSON Export: {jsonExport.ContentType}, {jsonExport.FileName}");
+File.WriteAllBytes(jsonExport.FileName, jsonExport.Data);
+
+// Export to CSV format
+var csvExport = DataExportHelper.ExportData(users, ExportFormat.Csv);
+Console.WriteLine($"CSV Export: {csvExport.ContentType}, {csvExport.FileName}");
+File.WriteAllBytes(csvExport.FileName, csvExport.Data);
+
+// Export to XML format
+var xmlExport = DataExportHelper.ExportData(users, ExportFormat.Xml);
+Console.WriteLine($"XML Export: {xmlExport.ContentType}, {xmlExport.FileName}");
+File.WriteAllBytes(xmlExport.FileName, xmlExport.Data);
+
+// Negotiate format from Accept header
+var acceptHeader = "text/csv";
+var negotiatedFormat = DataExportHelper.NegotiateFormat(acceptHeader);
+Console.WriteLine($"Negotiated format: {negotiatedFormat}");
+
+// Get file extension and content type
+var extension = DataExportHelper.GetFileExtension(ExportFormat.Json);
+var contentType = DataExportHelper.GetContentType(ExportFormat.Csv);
+Console.WriteLine($"JSON extension: {extension}, CSV content type: {contentType}");
+
+// Export directly to FileContentResult for HTTP response
+var httpContext = new DefaultHttpContext();
+httpContext.Request.Headers["Accept"] = "application/json";
+var fileResult = users.ExportAsFile(httpContext, "users-list");
+Console.WriteLine($"File download name: {fileResult.FileDownloadName}");
+```
+
+## ValidationHelper
+
+Provides a comprehensive set of validation methods for common validation scenarios including null checks, range validation, string length validation, pattern matching, email validation, phone number validation, collection validation, and equality checks. This utility centralizes validation logic to ensure consistent error handling across controllers, services, and domain models.
+
+### Usage Example
+
+```csharp
 // In a controller action
 public IActionResult CreateUser([FromBody] CreateUserRequest request)
 {
