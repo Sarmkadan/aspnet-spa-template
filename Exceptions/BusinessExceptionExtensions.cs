@@ -82,9 +82,6 @@ public static class BusinessExceptionExtensions
         ArgumentNullException.ThrowIfNull(exception);
         ArgumentException.ThrowIfNullOrEmpty(errorCode);
 
-        return string.Equals(
-            exception.ErrorCode,
-            errorCode,
-            StringComparison.OrdinalIgnoreCase);
+        return exception.ErrorCode.Equals(errorCode, StringComparison.OrdinalIgnoreCase);
     }
 }
