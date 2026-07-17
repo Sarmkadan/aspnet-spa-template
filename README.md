@@ -2255,6 +2255,72 @@ if (validationError.Errors != null)
 
 ---
 
+## PaginationRequest
+
+The `PaginationRequest` DTO is used to standardize pagination parameters across all API endpoints that return paginated data. It encapsulates core pagination properties (`PageNumber`, `PageSize`), sorting options (`SortBy`, `SortDescending`), search functionality (`SearchTerm`), and advanced filtering (`Filters`) in a single request object. The class includes validation to ensure safe database query parameters and provides helper methods for calculating skip counts.
+
+**Usage Example:**
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+
+// Create a pagination request for the first page with 20 items per page
+var paginationRequest = new PaginationRequest
+{
+    PageNumber = 1,
+    PageSize = 20,
+    SortBy = "Name",
+    SortDescending = false,
+    SearchTerm = "headphones",
+    Filters = new Dictionary<string, string>
+    {
+        { "category", "Electronics" },
+        { "price", "100-500" }
+    }
+};
+
+// Validate the request before using it
+paginationRequest.Validate();
+
+// Calculate skip count for database queries
+int skip = paginationRequest.GetSkip(); // Returns 0 for page 1
+
+// Use with a controller action
+[HttpGet]
+public async Task<ApiResponse<List<ProductDto>>> GetProducts([FromQuery] PaginationRequest pagination)
+{
+    var products = await _service.GetProductsAsync(pagination);
+    return ApiResponse.Success(products);
+}
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `PageNumber` | `int` | Current page number (1-based, minimum 1) |
+| `PageSize` | `int` | Number of items per page (1-100, default 10) |
+| `SortBy` | `string?` | Field name to sort by (e.g., "Name", "Price", "CreatedAt") |
+| `SortDescending` | `bool` | Whether to sort in descending order (default: false) |
+| `SearchTerm` | `string?` | Text to search across relevant fields |
+| `Filters` | `Dictionary<string, string>?` | Key-value pairs for advanced filtering (e.g., {"category": "Electronics", "price": "100-500"}) |
+
+### Methods
+
+- `Validate()` - Validates pagination parameters and throws `ArgumentException` if invalid
+- `GetSkip()` - Calculates the number of items to skip for database queries: `(PageNumber - 1) * PageSize`
+
+### Validation Rules
+
+- **PageNumber**: Must be ≥ 1
+- **PageSize**: Must be ≥ 1 and ≤ 100 (to prevent DOS attacks)
+- All properties are optional except the validation constraints
+
+### Related Types
+
+- **PaginationResponse<T>**: Standard response wrapper that includes pagination metadata and the actual data
+- Used in: ProductsController.Get([FromQuery] PaginationRequest pagination), OrdersController.Get([FromQuery] PaginationRequest pagination), UsersController.Get([FromQuery] PaginationRequest pagination)
+
 ## ApiResponse
 
 The `ApiResponse` and `ApiResponse<T>` classes provide a standardized wrapper for all API responses in the application. They offer a consistent structure for both success and error responses, including metadata for debugging, trace IDs for correlation, and timestamps for tracking. These response types are used throughout the API controllers to ensure a uniform response format that clients can rely on.
