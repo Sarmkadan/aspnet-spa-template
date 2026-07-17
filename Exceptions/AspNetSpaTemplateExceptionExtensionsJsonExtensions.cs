@@ -65,19 +65,22 @@ namespace AspNetSpaTemplate.Exceptions
         /// <param name="json">The JSON string to deserialize.</param>
         /// <param name="value">The deserialized configuration exception, or null if deserialization fails.</param>
         /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
         public static bool TryFromJson(string json, out ConfigurationException? value)
         {
+            ArgumentNullException.ThrowIfNull(json);
+
             value = null;
 
             if (string.IsNullOrEmpty(json))
             {
-                return true;
+                return false;
             }
 
             try
             {
                 value = JsonSerializer.Deserialize<ConfigurationException>(json, _jsonOptions);
-                return true;
+                return value is not null;
             }
             catch (JsonException)
             {
