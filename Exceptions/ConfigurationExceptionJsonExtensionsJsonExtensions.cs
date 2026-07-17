@@ -14,7 +14,7 @@ namespace AspNetSpaTemplate.Exceptions;
 /// <summary>
 /// Provides System.Text.Json serialization extensions for <see cref="ConfigurationException"/>.
 /// </summary>
-public static sealed class ConfigurationExceptionJsonExtensionsJsonExtensions
+public static class ConfigurationExceptionJsonExtensionsJsonExtensions
 {
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
     {
