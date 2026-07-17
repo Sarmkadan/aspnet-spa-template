@@ -21,6 +21,12 @@ public static class ExternalApiExceptionExtensionsJsonExtensions
         WriteIndented = false,
     };
 
+    private static readonly JsonSerializerOptions _jsonOptionsIndented = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+    };
+
     /// <summary>
     /// Serializes an <see cref="ExternalApiException"/> to a JSON string.
     /// </summary>
@@ -39,16 +45,16 @@ public static class ExternalApiExceptionExtensionsJsonExtensions
     /// Deserializes an <see cref="ExternalApiException"/> from a JSON string.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized exception, or null if the JSON is null or empty.</returns>
+    /// <returns>The deserialized exception.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
-    public static ExternalApiException? FromJson(string json)
+    public static ExternalApiException FromJson(string json)
     {
-        if (string.IsNullOrEmpty(json))
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
-        return JsonSerializer.Deserialize<ExternalApiException>(json, _jsonOptions);
+        return JsonSerializer.Deserialize<ExternalApiException>(json, _jsonOptions) ?? throw new JsonException("Deserialization returned null");
     }
 
     /// <summary>
@@ -57,13 +63,16 @@ public static class ExternalApiExceptionExtensionsJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized exception if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static bool TryFromJson(string json, out ExternalApiException? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         value = null;
 
-        if (string.IsNullOrEmpty(json))
+        if (string.IsNullOrWhiteSpace(json))
         {
-            return true;
+            return false;
         }
 
         try
@@ -76,10 +85,4 @@ public static class ExternalApiExceptionExtensionsJsonExtensions
             return false;
         }
     }
-
-    private static readonly JsonSerializerOptions _jsonOptionsIndented = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-    };
 }
