@@ -78,6 +78,90 @@ await client.PatchAsJsonAsync("/api/products/1/featured", new { isFeatured = tru
 await client.DeleteAsync("/api/products/1");
 ```
 
+## UsersController
+
+Manages user authentication, registration, profile management, and user lifecycle operations including activation and deactivation. The controller provides RESTful endpoints for user management with proper authorization checks and response handling.
+
+### Endpoints
+
+- `POST /api/users/register` - Register a new user
+- `POST /api/users/login` - Authenticate a user and return authentication token
+- `GET /api/users/{id}` - Retrieve a user by ID
+- `GET /api/users/profile` - Get the current authenticated user's profile
+- `PUT /api/users/{id}` - Update a user's information
+- `PUT /api/users/{id}/deactivate` - Deactivate a user account
+- `PUT /api/users/{id}/activate` - Activate a user account
+- `GET /api/users` - List all users in the system
+- `GET /api/users/recently-active` - Get users who have been active within a specified time period
+
+### Usage Example
+
+```csharp
+// Configure UserService in Program.cs
+builder.Services.AddScoped<UserService>();
+
+// Example: Register a new user
+var registrationRequest = new CreateUserRequest
+{
+ Username = "johndoe",
+ Email = "john.doe@example.com",
+ Password = "SecurePassword123!",
+ FirstName = "John",
+ LastName = "Doe",
+ Age = 30
+};
+var registerResponse = await client.PostAsJsonAsync<UserResponse>("/api/users/register", registrationRequest);
+Console.WriteLine($"User registered: {registerResponse?.Username}");
+
+// Example: Authenticate a user
+var loginRequest = new LoginRequest
+{
+ Email = "john.doe@example.com",
+ Password = "SecurePassword123!"
+};
+var loginResponse = await client.PostAsJsonAsync<LoginResponse>("/api/users/login", loginRequest);
+Console.WriteLine($"Login successful. Token: {loginResponse?.Token?.Substring(0, 10)}...");
+
+// Example: Get user profile (authenticated)
+var profileResponse = await client.GetFromJsonAsync<UserResponse>("/api/users/profile");
+Console.WriteLine($"User profile: {profileResponse?.Username}, Email: {profileResponse?.Email}");
+
+// Example: Get a specific user by ID
+var userResponse = await client.GetFromJsonAsync<UserResponse>("/api/users/1");
+Console.WriteLine($"User: {userResponse?.Username}, Status: {userResponse?.Status}");
+
+// Example: Update user information
+var updateRequest = new UpdateUserRequest
+{
+ FirstName = "John",
+ LastName = "Doe Updated",
+ Email = "john.doe.updated@example.com",
+ Age = 31
+};
+var updatedUser = await client.PutAsJsonAsync<UserResponse>("/api/users/1", updateRequest);
+Console.WriteLine($"User updated: {updatedUser?.Username}");
+
+// Example: Deactivate a user account
+await client.PutAsync("/api/users/2/deactivate", null);
+Console.WriteLine("User deactivated successfully");
+
+// Example: Activate a user account
+await client.PutAsync("/api/users/2/activate", null);
+Console.WriteLine("User activated successfully");
+
+// Example: List all users
+var allUsers = await client.GetFromJsonAsync<List<UserResponse>>("/api/users");
+Console.WriteLine($"Total users: {allUsers?.Count}");
+
+// Example: Get recently active users (last 30 days)
+var activeUsers = await client.GetFromJsonAsync<List<UserResponse>>("/api/users/recently-active");
+Console.WriteLine($"Recently active users: {activeUsers?.Count}");
+
+// Example: Get recently active users with custom time period
+var recentActiveUsers = await client.GetFromJsonAsync<List<UserResponse>>("/api/users/recently-active?days=7");
+Console.WriteLine($"Active in last 7 days: {recentActiveUsers?.Count}");
+```
+
 ## WebhooksController
 
 Receives and processes webhooks from external services including payment providers, email services, shipping providers, and custom integrations. Validates HMAC signatures, queues webhook payloads for asynchronous processing, and returns immediate HTTP responses. Designed to respond quickly (under 5 seconds) to avoid webhook timeouts from external providers.
