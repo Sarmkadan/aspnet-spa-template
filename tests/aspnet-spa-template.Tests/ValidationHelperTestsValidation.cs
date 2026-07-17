@@ -12,59 +12,60 @@ namespace AspNetSpaTemplate.Tests;
 /// </summary>
 public static class ValidationHelperTestsValidation
 {
-    private static readonly string[] _emptyArray = Array.Empty<string>();
+	/// <summary>
+	/// Validates an instance of <see cref="ValidationHelperTests"/> and returns a list of validation problems.
+	/// </summary>
+	/// <param name="value">The instance to validate.</param>
+	/// <returns>A list of validation problems; empty if the instance is valid.</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
+	public static IReadOnlyList<string> Validate(this ValidationHelperTests value)
+	{
+		ArgumentNullException.ThrowIfNull(value);
 
-    /// <summary>
-    /// Validates an instance of <see cref="ValidationHelperTests"/> and returns a list of validation problems.
-    /// </summary>
-    /// <param name="value">The instance to validate.</param>
-    /// <returns>A list of validation problems; empty if the instance is valid.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
-    public static IReadOnlyList<string> Validate(this ValidationHelperTests value)
-    {
-        ArgumentNullException.ThrowIfNull(value);
+		// ValidationHelperTests has no properties to validate
+		// This provides the interface as requested by the task
+		// All validation is delegated to ValidationHelper static methods
 
-        // ValidationHelperTests has no properties to validate
-        // This provides the interface as requested by the task
-        // All validation is delegated to ValidationHelper static methods
+		return Array.Empty<string>();
+	}
 
-        return _emptyArray;
-    }
+	/// <summary>
+	/// Determines whether an instance of <see cref="ValidationHelperTests"/> is valid.
+	/// </summary>
+	/// <param name="value">The instance to check.</param>
+	/// <returns>True if the instance is valid; otherwise, false.</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
+	public static bool IsValid(this ValidationHelperTests value)
+	{
+		ArgumentNullException.ThrowIfNull(value);
 
-    /// <summary>
-    /// Determines whether an instance of <see cref="ValidationHelperTests"/> is valid.
-    /// </summary>
-    /// <param name="value">The instance to check.</param>
-    /// <returns>True if the instance is valid; otherwise, false.</returns>
-    public static bool IsValid(this ValidationHelperTests value)
-    {
-        try
-        {
-            Validate(value);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+		try
+		{
+			_ = Validate(value);
+			return true;
+		}
+		catch (ValidationException)
+		{
+			return false;
+		}
+	}
 
-    /// <summary>
-    /// Ensures that an instance of <see cref="ValidationHelperTests"/> is valid,
-    /// throwing an <see cref="ArgumentException"/> if not.
-    /// </summary>
-    /// <param name="value">The instance to validate.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when the instance is not valid.</exception>
-    public static void EnsureValid(this ValidationHelperTests value)
-    {
-        ArgumentNullException.ThrowIfNull(value);
+	/// <summary>
+	/// Ensures that an instance of <see cref="ValidationHelperTests"/> is valid,
+	/// throwing an <see cref="ArgumentException"/> if not.
+	/// </summary>
+	/// <param name="value">The instance to validate.</param>
+	/// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
+	/// <exception cref="ArgumentException">Thrown when the instance is not valid.</exception>
+	public static void EnsureValid(this ValidationHelperTests value)
+	{
+		ArgumentNullException.ThrowIfNull(value);
 
-        var problems = Validate(value);
-        if (problems.Count > 0)
-        {
-            throw new ArgumentException(
-                $"ValidationHelperTests instance is not valid. Problems:\n- {string.Join("\n- ", problems)}");
-        }
-    }
+		var problems = Validate(value);
+		if (problems.Count > 0)
+		{
+			throw new ArgumentException(
+			$"ValidationHelperTests instance is not valid. Problems:\n- {string.Join("\n- ", problems)}");
+		}
+	}
 }
