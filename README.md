@@ -1087,6 +1087,40 @@ bool success = ValidationExceptionJsonExtensions.TryFromJson(invalidJson, out va
 
 ---
 
+## NotFoundException
+
+The `NotFoundException` class represents an exception thrown when a requested resource cannot be found in the system. It includes optional `ResourceType` and `ResourceId` properties to provide context about which resource was not found, making it ideal for API controllers that need to return specific not-found responses to clients.
+
+This exception can be constructed with a simple message, or with resource type and ID information for better error context and debugging.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Exceptions;
+
+// Create a not-found exception with a simple message
+var exception = new NotFoundException("User not found");
+
+// Create a not-found exception with resource type and ID
+var productException = new NotFoundException("Product", 123);
+
+// Access the resource type and ID properties
+Console.WriteLine(productException.ResourceType); // "Product"
+Console.WriteLine(productException.ResourceId);   // 123
+
+// Create a not-found exception with an inner exception
+try
+{
+    // Some operation that might throw
+}
+catch (Exception ex)
+{
+    var notFound = new NotFoundException("Order not found", ex);
+}
+```
+
+---
+
 ## API Reference
 
 ## API Reference
