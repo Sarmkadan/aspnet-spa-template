@@ -1,9 +1,8 @@
 #nullable enable
-
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -54,7 +53,9 @@ public static class ConfigurationExceptionJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(json);
 
-        return JsonSerializer.Deserialize<ConfigurationException>(json, _jsonOptions);
+        return string.IsNullOrWhiteSpace(json)
+            ? null
+            : JsonSerializer.Deserialize<ConfigurationException>(json, _jsonOptions);
     }
 
     /// <summary>
@@ -63,8 +64,11 @@ public static class ConfigurationExceptionJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">The deserialized exception, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static bool TryFromJson(string json, out ConfigurationException? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         try
         {
             value = JsonSerializer.Deserialize<ConfigurationException>(json, _jsonOptions);
@@ -76,5 +80,4 @@ public static class ConfigurationExceptionJsonExtensions
             return false;
         }
     }
-
 }
