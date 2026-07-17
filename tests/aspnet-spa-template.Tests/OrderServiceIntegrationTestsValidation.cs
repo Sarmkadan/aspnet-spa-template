@@ -66,10 +66,7 @@ public static class OrderServiceIntegrationTestsValidation
     /// <param name="value">The instance to check.</param>
     /// <returns><see langword="true"/> if the instance is valid; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is <see langword="null"/>.</exception>
-    public static bool IsValid(this OrderServiceIntegrationTests value)
-    {
-        return Validate(value).Count == 0;
-    }
+    public static bool IsValid(this OrderServiceIntegrationTests value) => Validate(value).Count == 0;
 
     /// <summary>
     /// Ensures that the specified <see cref="OrderServiceIntegrationTests"/> instance is valid.
