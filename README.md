@@ -1461,6 +1461,67 @@ await eventBus.PublishManyAsync(new[] {
 });
 ```
 
+## EventBusImplementationExtensions
+
+The `EventBusImplementationExtensions` class provides extension methods for the `EventBusImplementation` class, adding functionality for bulk operations, conditional publishing, and subscriber management.
+
+### Subscribe
+
+Subscribes multiple handlers for the same event type in a single call.
+
+```csharp
+public static void Subscribe<TEvent>(this EventBusImplementation eventBus, IEnumerable<Func<TEvent, Task>> handlers) where TEvent : DomainEvent
+```
+
+### TryPublishAsync
+
+Publishes an event only if there are subscribers interested in it.
+
+```csharp
+public static async Task<bool> TryPublishAsync<TEvent>(this EventBusImplementation eventBus, TEvent @event) where TEvent : DomainEvent
+```
+
+### PublishBatchAsync
+
+Publishes multiple events of different types in a single batch.
+
+```csharp
+public static async Task PublishBatchAsync(this EventBusImplementation eventBus, IEnumerable<DomainEvent> events)
+```
+
+### GetAllSubscriberCounts
+
+Gets all subscriber counts for all registered event types.
+
+```csharp
+public static IReadOnlyDictionary<Type, int> GetAllSubscriberCounts(this EventBusImplementation eventBus)
+```
+
+### ClearSubscribers
+
+Unsubscribes all handlers for a specific event type.
+
+```csharp
+public static void ClearSubscribers<TEvent>(this EventBusImplementation eventBus) where TEvent : DomainEvent
+```
+
+### PublishWithDelayAsync
+
+Publishes an event with a delay using Task.Delay or TimeSpan.
+
+```csharp
+public static async Task PublishWithDelayAsync<TEvent>(this EventBusImplementation eventBus, TEvent @event, int delayMilliseconds) where TEvent : DomainEvent
+public static async Task PublishWithDelayAsync<TEvent>(this EventBusImplementation eventBus, TEvent @event, TimeSpan delay) where TEvent : DomainEvent
+```
+
+### GetSubscriberCountLock
+
+Gets the lock object used for thread-safe operations on subscribers.
+
+```csharp
+public static object GetSubscriberCountLock(this EventBusImplementation eventBus)
+```
+
 ## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
