@@ -12,6 +12,9 @@ public sealed class MemoryCacheServiceTests
     private readonly Mock<ILogger<MemoryCacheService>> _mockLogger;
     internal readonly MemoryCacheService _cacheService;
 
+    public int Id { get; set; }
+    public string? Name { get; set; }
+
     public MemoryCacheServiceTests()
     {
         _mockLogger = new Mock<ILogger<MemoryCacheService>>();
