@@ -504,6 +504,107 @@ public class OrderController : ControllerBase
 
 ---
 
+## UserRepository
+
+`UserRepository` is a specialized repository for managing user entities in the application. It extends `RepositoryBase<User>` to provide user-specific query methods including retrieval by email, filtering by account status (active/verified), location-based queries, and count operations. The repository is essential for user management, authentication flows, user listing functionality, and administrative operations.
+
+### Usage Example
+
+```csharp
+// Register UserRepository in Program.cs
+builder.Services.AddScoped<UserRepository>();
+
+// Inject UserRepository in your controller or service
+public class UserController : ControllerBase
+{
+    private readonly UserRepository _userRepository;
+    private readonly ILogger<UserController> _logger;
+
+    public UserController(UserRepository userRepository, ILogger<UserController> logger)
+    {
+        _userRepository = userRepository;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> GetUserByEmail(string email)
+    {
+        // Retrieve a user by email address
+        var user = await _userRepository.GetByEmailAsync(email);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(new { user.Id, user.Email, user.FullName, user.IsActive });
+    }
+
+    public async Task<IActionResult> GetActiveUsers()
+    {
+        // Retrieve all active users
+        var activeUsers = await _userRepository.GetActiveUsersAsync();
+        return Ok(activeUsers);
+    }
+
+    public async Task<IActionResult> GetVerifiedUsers()
+    {
+        // Retrieve all verified users
+        var verifiedUsers = await _userRepository.GetVerifiedUsersAsync();
+        return Ok(verifiedUsers);
+    }
+
+    public async Task<IActionResult> GetUsersByCountry(string country)
+    {
+        // Retrieve users from a specific country
+        var countryUsers = await _userRepository.GetUsersByCountryAsync(country);
+        return Ok(countryUsers);
+    }
+
+    public async Task<IActionResult> GetRecentlyActiveUsers(int days = 30)
+    {
+        // Retrieve users active in the last N days
+        var recentUsers = await _userRepository.GetRecentlyActiveAsync(days);
+        return Ok(recentUsers);
+    }
+
+    public async Task<IActionResult> CheckEmailExists(string email)
+    {
+        // Check if an email already exists in the system
+        bool exists = await _userRepository.EmailExistsAsync(email);
+        return Ok(new { email, exists });
+    }
+
+    public async Task<IActionResult> GetUserCounts()
+    {
+        // Get various user statistics
+        var totalCount = await _userRepository.GetUserCountAsync();
+        var activeCount = await _userRepository.GetActiveUserCountAsync();
+
+        return Ok(new { totalUsers = totalCount, activeUsers = activeCount });
+    }
+}
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `GetByEmailAsync(string email)` | `Task<User?>` | Retrieves a user by their email address (case-insensitive comparison). Returns null if no user with the specified email exists. |
+| `GetActiveUsersAsync()` | `Task<IEnumerable<User>>` | Retrieves all active users (where `IsActive` is true). |
+| `GetVerifiedUsersAsync()` | `Task<IEnumerable<User>>` | Retrieves all verified users (where both `IsEmailVerified` and `IsActive` are true). |
+| `GetRecentlyActiveAsync(int days = 30)` | `Task<IEnumerable<User>>` | Retrieves users active within the specified number of days (default: 30), ordered by most recent login. |
+| `GetUsersByCountryAsync(string country)` | `Task<IEnumerable<User>>` | Retrieves all active users from the specified country. |
+| `GetUserCountAsync()` | `Task<int>` | Returns the total count of all users in the system. |
+| `GetActiveUserCountAsync()` | `Task<int>` | Returns the count of active users (where `IsActive` is true). |
+| `EmailExistsAsync(string email)` | `Task<bool>` | Checks if any user exists with the specified email address (case-insensitive comparison). |
+
+### Related Types
+
+- **User**: Entity representing a user with properties like `Id`, `FirstName`, `LastName`, `Email`, `PasswordHash`, `PhoneNumber`, `Address`, `City`, `PostalCode`, `Country`, `IsActive`, `IsEmailVerified`, `LastLoginAt`, `CreatedAt`, and `UpdatedAt`
+- Used in: UserService, UserController, authentication flows, user management interfaces, and administrative dashboards
+
+---
+
 ## Features
 
 ### Backend Features
