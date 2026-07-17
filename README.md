@@ -277,6 +277,129 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 ---
 
+## ProductRepository
+
+`ProductRepository` is a specialized repository for managing product entities in the e-commerce system. It extends `RepositoryBase<Product>` to provide product-specific query methods including retrieval by category, featured products, top-rated products, stock status, search functionality, and analytical methods for calculating average prices and product counts. The repository is essential for product management, catalog browsing, search functionality, and business intelligence operations.
+
+### Usage Example
+
+```csharp
+// Register ProductRepository in Program.cs
+builder.Services.AddScoped<ProductRepository>();
+
+// Inject ProductRepository in your controller or service
+public class ProductController : ControllerBase
+{
+    private readonly ProductRepository _productRepository;
+    private readonly ILogger<ProductController> _logger;
+
+    public ProductController(ProductRepository productRepository, ILogger<ProductController> logger)
+    {
+        _productRepository = productRepository;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> GetProductsByCategory(ProductCategory category)
+    {
+        // Retrieve products by category
+        var products = await _productRepository.GetByCategoryAsync(category);
+        return Ok(products);
+    }
+
+    public async Task<IActionResult> GetFeaturedProducts()
+    {
+        // Retrieve featured products (limited to 10 by default)
+        var featuredProducts = await _productRepository.GetFeaturedProductsAsync();
+        return Ok(featuredProducts);
+    }
+
+    public async Task<IActionResult> GetTopRatedProducts()
+    {
+        // Retrieve top-rated products (limited to 10 by default)
+        var topRated = await _productRepository.GetTopRatedAsync();
+        return Ok(topRated);
+    }
+
+    public async Task<IActionResult> GetInStockProducts()
+    {
+        // Retrieve all products that are in stock
+        var inStock = await _productRepository.GetInStockAsync();
+        return Ok(inStock);
+    }
+
+    public async Task<IActionResult> GetLowStockProducts()
+    {
+        // Retrieve products with low stock (default threshold: 10)
+        var lowStock = await _productRepository.GetLowStockAsync();
+        return Ok(lowStock);
+    }
+
+    public async Task<IActionResult> SearchProducts(string searchTerm)
+    {
+        // Search products by name or description
+        var results = await _productRepository.SearchAsync(searchTerm);
+        return Ok(results);
+    }
+
+    public async Task<IActionResult> GetProductBySku(string sku)
+    {
+        // Retrieve a product by its SKU
+        var product = await _productRepository.GetBySkuAsync(sku);
+        
+        if (product == null)
+        {
+            return NotFound();
+        }
+        
+        return Ok(product);
+    }
+
+    public async Task<IActionResult> GetPagedProductsByCategory(ProductCategory category, int pageNumber, int pageSize)
+    {
+        // Retrieve paginated products by category
+        var products = await _productRepository.GetPagedByCategoryAsync(category, pageNumber, pageSize);
+        return Ok(products);
+    }
+
+    public async Task<IActionResult> GetAveragePrice(ProductCategory category)
+    {
+        // Calculate average price for a category
+        var averagePrice = await _productRepository.GetAveragePriceAsync(category);
+        return Ok(new { category, averagePrice });
+    }
+
+    public async Task<IActionResult> GetAvailableProductCount()
+    {
+        // Get count of available products
+        var count = await _productRepository.GetAvailableProductCountAsync();
+        return Ok(new { availableProducts = count });
+    }
+}
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `GetByCategoryAsync(ProductCategory category)` | `Task<IEnumerable<Product>>` | Retrieves all available products filtered by category, ordered by rating (highest first). |
+| `GetFeaturedProductsAsync(int limit = 10)` | `Task<IEnumerable<Product>>` | Retrieves featured products (where `IsFeatured` is true) limited by the specified count, ordered by rating. |
+| `GetTopRatedAsync(int limit = 10)` | `Task<IEnumerable<Product>>` | Retrieves top-rated products based on rating scores, limited by the specified count. Uses rating as primary sort, review count as secondary sort. |
+| `GetInStockAsync()` | `Task<IEnumerable<Product>>` | Retrieves all products that have stock available (`StockQuantity > 0`) and are available (`IsAvailable` is true). |
+| `GetLowStockAsync(int threshold = 10)` | `Task<IEnumerable<Product>>` | Retrieves products with low stock levels (less than or equal to the specified threshold), ordered by stock quantity (ascending). |
+| `SearchAsync(string searchTerm)` | `Task<IEnumerable<Product>>` | Searches products by name or description using the provided search term (case-insensitive). Returns products ordered by rating (highest first). |
+| `GetBySkuAsync(string sku)` | `Task<Product?>` | Retrieves a single product by its SKU (Stock Keeping Unit). Returns null if no product with the specified SKU exists. |
+| `GetPagedByCategoryAsync(ProductCategory category, int pageNumber, int pageSize)` | `Task<IEnumerable<Product>>` | Retrieves paginated products filtered by category, ordered by rating (highest first). Uses skip/take for pagination. |
+| `GetAveragePriceAsync(ProductCategory category)` | `Task<decimal>` | Calculates and returns the average price for products in the specified category. Returns 0 if no products exist in the category. |
+| `GetAvailableProductCountAsync()` | `Task<int>` | Returns the total count of available products (where `IsAvailable` is true and `StockQuantity > 0`). |
+
+### Related Types
+
+- **Product**: Entity representing a product with properties like `Id`, `Name`, `Description`, `Price`, `StockQuantity`, `Category`, `ImageUrl`, `Sku`, `Rating`, `ReviewCount`, `IsAvailable`, `IsFeatured`, and `CreatedAt`
+- **ProductCategory**: Enum containing product categories like `Electronics`, `Clothing`, `Books`, `Home`, `Sports`, `Beauty`, `Groceries`, `Toys`
+- Used in: ProductService, ProductController, catalog browsing, search functionality, and business intelligence operations
+
+---
+
 ## OrderRepository
 
 `OrderRepository` is a specialized repository for managing order entities in the e-commerce system. It extends `RepositoryBase<Order>` to provide order-specific query methods including retrieval by order number, user ID, status, and date ranges. The repository also includes analytical methods for calculating revenue metrics, order counts, and average order values, making it essential for order management, reporting, and business intelligence operations.
