@@ -2285,11 +2285,95 @@ public class AssetController : ControllerBase
 - **Cache Busting**: The service worker uses the versioned asset paths to implement cache-first strategy for static assets
 - **Supported Extensions**: `.js`, `.css`, `.html`, `.json`, `.ico`, `.png`, `.svg`, `.webp`, `.woff2`
 
+
+---
+
+## DependencyInjectionExtensions
+
+`DependencyInjectionExtensions` is a static utility class that provides extension methods for configuring ASP.NET Core's dependency injection container. It offers a collection of specialized registration methods that allow you to selectively enable only the services your application needs, reducing boilerplate configuration in `Program.cs`. Each method follows a consistent pattern and handles null checks, making them safe for production use.
+
+The extensions support various application profiles from minimal caching-only services to full application stacks with background workers, event buses, and external integrations. This approach enables fine-grained control over your application's architecture while maintaining clean, maintainable startup code.
+
+### Usage Example
+
+```csharp
+// Configure services in Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+// Add only core services (recommended for most applications)
+builder.Services.AddCoreServices();
+
+// Add structured logging with correlation IDs
+builder.Services.AddStructuredLogging();
+
+// Add only caching services for cache-first applications
+builder.Services.AddCachingOnly();
+
+// Add only event bus for event-driven applications
+builder.Services.AddEventBusOnly();
+
+// Add only background tasks for background processing
+builder.Services.AddBackgroundTasksOnly();
+
+// Add only external integration services
+builder.Services.AddIntegrationOnly();
+
+// Add health check endpoints for monitoring
+builder.Services.AddHealthChecks();
+
+// Configure CORS based on environment
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDevelopmentCors();
+}
+else
+{
+    builder.Services.AddProductionCors(
+        "https://example.com",
+        "https://api.example.com"
+    );
+}
+
+// Add API versioning for versioned APIs
+builder.Services.AddApiVersioning();
+
+// Add response compression for bandwidth optimization
+builder.Services.AddResponseCompression();
+
+var app = builder.Build();
+
+// Configure middleware pipeline
+app.UseAllMiddleware(app.Environment);
+
+// The IServiceMarker and ServiceMarker types provide a type-safe way
+// to mark service registrations for specific application features
+builder.Services.AddSingleton<IServiceMarker, ServiceMarker>();
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `AddCoreServices(IServiceCollection)` | `IServiceCollection` | Registers all core application services including application services, caching, HTTP clients, and background tasks |
+| `AddStructuredLogging(IServiceCollection)` | `IServiceCollection` | Registers logging services with structured logging and correlation ID tracking |
+| `AddCachingOnly(IServiceCollection)` | `IServiceCollection` | Registers only caching services for applications that only need caching functionality |
+| `AddEventBusOnly(IServiceCollection)` | `IServiceCollection` | Registers only event bus and handlers for event-driven applications |
+| `AddBackgroundTasksOnly(IServiceCollection)` | `IServiceCollection` | Registers only background tasks and scheduler for applications with background processing needs |
+| `AddIntegrationOnly(IServiceCollection)` | `IServiceCollection` | Registers only integration services for applications that need external API communication |
+| `AddHealthChecks(IServiceCollection)` | `IServiceCollection` | Registers health check endpoints for container orchestration and monitoring |
+| `AddDevelopmentCors(IServiceCollection)` | `IServiceCollection` | Registers CORS for development allowing all origins, headers, and methods |
+| `AddProductionCors(IServiceCollection, params string[])` | `IServiceCollection` | Registers CORS for production with specific allowed origins |
+| `AddApiVersioning(IServiceCollection)` | `IServiceCollection` | Registers API versioning services for managing multiple API versions |
+| `AddResponseCompression(IServiceCollection)` | `IServiceCollection` | Registers request/response compression to reduce bandwidth for APIs returning large payloads |
+| `UseAllMiddleware(IApplicationBuilder, IWebHostEnvironment)` | `IApplicationBuilder` | Registers all middleware in proper order including exception handling, HTTPS redirection, CORS, static files, routing, and application-specific middleware |
+
 ### Related Types
 
-- **AssetVersioningService**: Concrete implementation that also implements `IHostedService` and `IDisposable` for lifecycle management
-- Used in: Service worker registration and HMR client implementations
+- **IServiceMarker**: Service collection marker interface for type-safe service resolution
+- **ServiceMarker**: Implementation of service marker interface
+- Used in: Program.cs service configuration, application startup, and feature-specific service registrations
 
+---
 
 
 
