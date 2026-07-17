@@ -15,11 +15,7 @@ public static class ProductServiceBenchmarksExtensions
     /// <returns>The average price of all products.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="benchmarks"/> is null.</exception>
     public static async Task<decimal> GetAverageProductPriceAsync(this ProductServiceBenchmarks benchmarks)
-    {
-        ArgumentNullException.ThrowIfNull(benchmarks);
-        var products = await benchmarks.GetAllProducts();
-        return products.Average(p => p.Price);
-    }
+        => (await benchmarks.GetAllProducts()).Average(p => p.Price);
 
     /// <summary>
     /// Retrieves a product by ID and returns its details as a string.
@@ -32,9 +28,11 @@ public static class ProductServiceBenchmarksExtensions
     public static async Task<string> GetProductDetailsAsStringAsync(this ProductServiceBenchmarks benchmarks, int id)
     {
         ArgumentNullException.ThrowIfNull(benchmarks);
-        if (id <= 0) throw new ArgumentException("ID must be greater than 0", nameof(id));
-        var product = await benchmarks.GetProductById();
-        return product is not null ? $"ID: {product.Id}, Name: {product.Name}, Price: {product.Price}" : "Product not found";
+        ArgumentException.ThrowIfLessThanOrEqual(id, 0, nameof(id));
+        var product = await benchmarks.GetProductById(id);
+        return product is not null
+            ? $"ID: {product.Id}, Name: {product.Name}, Price: {product.Price}"
+            : "Product not found";
     }
 
     /// <summary>
@@ -45,11 +43,7 @@ public static class ProductServiceBenchmarksExtensions
     /// <returns>The count of featured products with a price greater than the threshold.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="benchmarks"/> is null.</exception>
     public static async Task<int> GetFeaturedProductsCountAboveThresholdAsync(this ProductServiceBenchmarks benchmarks, decimal threshold)
-    {
-        ArgumentNullException.ThrowIfNull(benchmarks);
-        var featuredProducts = await benchmarks.GetFeaturedProducts();
-        return featuredProducts.Count(p => p.Price > threshold);
-    }
+        => (await benchmarks.GetFeaturedProducts()).Count(p => p.Price > threshold);
 
     /// <summary>
     /// Retrieves all products and returns the product with the highest price.
@@ -58,9 +52,7 @@ public static class ProductServiceBenchmarksExtensions
     /// <returns>The product with the highest price, or null if no products are found.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="benchmarks"/> is null.</exception>
     public static async Task<AspNetSpaTemplate.DTOs.ProductResponse?> GetProductWithHighestPriceAsync(this ProductServiceBenchmarks benchmarks)
-    {
-        ArgumentNullException.ThrowIfNull(benchmarks);
-        var products = await benchmarks.GetAllProducts();
-        return products.OrderByDescending(p => p.Price).FirstOrDefault();
-    }
+        => (await benchmarks.GetAllProducts())
+            .OrderByDescending(p => p.Price)
+            .FirstOrDefault();
 }
