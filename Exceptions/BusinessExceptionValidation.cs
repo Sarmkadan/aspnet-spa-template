@@ -51,19 +51,15 @@ public static class BusinessExceptionValidation
     /// <param name="value">The exception to check.</param>
     /// <returns>True if valid; otherwise, false.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
-    public static bool IsValid(this BusinessException? value)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-        return Validate(value).Count == 0;
-    }
+    public static bool IsValid(this BusinessException? value) => Validate(value).Count == 0;
 
     /// <summary>
     /// Ensures that a <see cref="BusinessException"/> instance is in a valid state,
     /// throwing an <see cref="ArgumentException"/> with a detailed message if not.
     /// </summary>
     /// <param name="value">The exception to validate.</param>
-    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> is invalid.</exception>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="value"/> is invalid. Contains detailed validation problems.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
     public static void EnsureValid(this BusinessException? value)
     {
         ArgumentNullException.ThrowIfNull(value);
