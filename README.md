@@ -1402,7 +1402,52 @@ Key test files:
 |---|---|
 | `ProductModelTests.cs` | Model validation and business rules |
 | `OrderAndCacheTests.cs` | Order creation and cache invalidation |
-| `StringExtensionsTests.cs` | Utility extension methods |
+| `StringExtensionsTests.cs` | Utility extension methods for string manipulation |
+
+## StringExtensionsTests
+
+The `StringExtensionsTests` class provides comprehensive unit tests for the `StringExtensions` utility class, which offers a collection of extension methods for common string manipulation scenarios. These methods simplify tasks like sanitizing input, converting between formats, truncating text, and validating content, providing a robust toolkit for consistent string handling throughout the application.
+
+The test suite covers methods for sanitizing whitespace, converting to slugs, truncating text with ellipsis, converting PascalCase to display names, validating emails and alphanumeric strings, providing fallback values, and HTML encoding special characters.
+
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Extensions;
+
+// Sanitize user input by removing excessive whitespace
+string sanitizedInput = "  Hello    World  ".Sanitize();
+// Returns: "Hello World"
+
+// Convert a title to a URL-friendly slug
+string slug = "Hello World & Friends!".ToSlug();
+// Returns: "hello-world-friends"
+
+// Truncate long text with ellipsis
+string truncated = "This is a very long text that needs to be shortened".Truncate(20);
+// Returns: "This is a very long..."
+
+// Convert PascalCase to display format
+string displayName = "UserProfileSettings".ToDisplayName();
+// Returns: "User Profile Settings"
+
+// Validate email format
+bool isValidEmail = "user@example.com".IsValidEmail();
+// Returns: true
+
+// Provide fallback for empty strings
+string name = "".OrIfEmpty("John Doe");
+// Returns: "John Doe"
+
+// HTML encode special characters
+string encoded = "<script>alert('XSS')</script>".HtmlEncode();
+// Returns: "&lt;script&gt;alert(&#39;XSS&#39;)&lt;/script&gt;"
+
+// Check if string is alphanumeric
+bool isAlphaNumeric = "User123".IsAlphaNumeric();
+// Returns: true
+```
 
 ---
 
