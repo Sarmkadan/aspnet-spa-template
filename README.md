@@ -1121,7 +1121,247 @@ catch (Exception ex)
 
 ---
 
+## ExternalApiClient
+
+The `ExternalApiClient` class provides a robust, retry-capable HTTP client for consuming external APIs from your ASP.NET Core services. It handles common concerns like automatic retries on transient failures, configurable timeouts, structured error handling, and detailed logging—making external API calls more reliable and easier to debug.
+
+Configure the client via `ExternalApiConfig` and register it in your DI container. The client automatically retries failed requests (up to 3 times by default) for server errors (5xx) and timeouts, with exponential backoff between attempts.
+
+### Usage Example
+
+```csharp
+// In Program.cs or your DI configuration
+builder.Services.AddHttpClient<ExternalApiClient>();
+builder.Services.Configure<ExternalApiConfig>(config =>
+{
+    config.BaseUrl = "https://api.example.com/v1";
+    config.ApiKey = "your-api-key-here";
+    config.Timeout = TimeSpan.FromSeconds(30);
+    config.MaxRetries = 3;
+    config.LogRequests = true;
+    config.LogResponses = false; // Set to true for debugging, but be careful with sensitive data
+});
+
+// Inject ExternalApiClient in your service
+public class PaymentService
+{
+    private readonly ExternalApiClient _apiClient;
+    private readonly ILogger<PaymentService> _logger;
+    
+    public PaymentService(ExternalApiClient apiClient, ILogger<PaymentService> logger)
+    {
+        _apiClient = apiClient;
+        _logger = logger;
+    }
+    
+    public async Task<PaymentResponse> ProcessPaymentAsync(PaymentRequest request)
+    {
+        try
+        {
+            // Make GET request to external API
+            var paymentMethods = await _apiClient.GetAsync<PaymentMethod[]>(
+                $"/payment-methods"
+            );
+            
+            // Make POST request to external API
+            var paymentResponse = await _apiClient.PostAsync<PaymentResponse>(
+                $"/payments",
+                new { request.Amount, request.Currency, request.PaymentMethodId }
+            );
+            
+            return paymentResponse;
+        }
+        catch (ExternalApiException ex)
+        {
+            _logger.LogError(ex, "Failed to process payment via external API");
+            throw; // Or handle gracefully based on your business requirements
+        }
+    }
+}
+
+// Example DTOs
+public record PaymentRequest(decimal Amount, string Currency, int PaymentMethodId);
+public record PaymentResponse(string TransactionId, decimal Amount, string Status);
+public record PaymentMethod(string Id, string Name, string Type);
+```
+
+### Configuration Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `BaseUrl` | `string` | `""` | The base URL of the external API (e.g., `https://api.example.com/v1`) |
+| `ApiKey` | `string` | `""` | API key for authentication with the external service |
+| `Timeout` | `TimeSpan` | `30 seconds` | HTTP request timeout duration |
+| `MaxRetries` | `int` | `3` | Maximum number of retry attempts for transient failures |
+| `LogRequests` | `bool` | `true` | Whether to log request details (endpoint, attempt count) |
+| `LogResponses` | `bool` | `false` | Whether to log response details (be careful with sensitive data) |
+
+### Public Methods
+
+- `GetAsync<T>(string endpoint)` - Makes a GET request to the specified endpoint and returns a deserialized response of type T
+- `PostAsync<T>(string endpoint, object request)` - Makes a POST request with the provided request object and returns a deserialized response of type T
+
+Both methods automatically handle retries, timeouts, and error conversion to `ExternalApiException` with detailed context.
+
+### Error Handling
+
+All external API failures throw `ExternalApiException` which includes:
+- The endpoint that failed
+- HTTP method (GET/POST)
+- HTTP status code (if available)
+- Detailed error message
+- Additional diagnostic context (attempt count, request body, etc.)
+
+```csharp
+try
+{
+    var response = await _apiClient.GetAsync<WeatherData>("/weather/current");
+}
+catch (ExternalApiException ex)
+{
+    // ex.Endpoint = "/weather/current"
+    // ex.Method = "GET"
+    // ex.StatusCode = 500 (if available)
+    // ex.Message = "Internal server error"
+    // ex.Data["Attempts"] = "3" (if retries exhausted)
+    
+    // Handle gracefully or rethrow
+    throw;
+}
+```
+
+### Retry Strategy
+
+The client retries on:
+- Server errors (HTTP 5xx)
+- Request timeouts (HTTP 408)
+- Connection timeouts
+
+After the configured maximum retries are exhausted, it fails fast and throws an `ExternalApiException` with the attempt count in the context.
+
+---
+
 ## API Reference
+
+## ExternalApiClient
+
+The `ExternalApiClient` class provides a robust, retry-capable HTTP client for consuming external APIs from your ASP.NET Core services. It handles common concerns like automatic retries on transient failures, configurable timeouts, structured error handling, and detailed logging—making external API calls more reliable and easier to debug.
+
+Configure the client via `ExternalApiConfig` and register it in your DI container. The client automatically retries failed requests (up to 3 times by default) for server errors (5xx) and timeouts, with exponential backoff between attempts.
+
+### Usage Example
+
+```csharp
+// In Program.cs or your DI configuration
+builder.Services.AddHttpClient<ExternalApiClient>();
+builder.Services.Configure<ExternalApiConfig>(config =>
+{
+    config.BaseUrl = "https://api.example.com/v1";
+    config.ApiKey = "your-api-key-here";
+    config.Timeout = TimeSpan.FromSeconds(30);
+    config.MaxRetries = 3;
+    config.LogRequests = true;
+    config.LogResponses = false; // Set to true for debugging, but be careful with sensitive data
+});
+
+// Inject ExternalApiClient in your service
+public class PaymentService
+{
+    private readonly ExternalApiClient _apiClient;
+    private readonly ILogger<PaymentService> _logger;
+    
+    public PaymentService(ExternalApiClient apiClient, ILogger<PaymentService> logger)
+    {
+        _apiClient = apiClient;
+        _logger = logger;
+    }
+    
+    public async Task<PaymentResponse> ProcessPaymentAsync(PaymentRequest request)
+    {
+        try
+        {
+            // Make GET request to external API
+            var paymentMethods = await _apiClient.GetAsync<PaymentMethod[]>(
+                $"/payment-methods"
+            );
+            
+            // Make POST request to external API
+            var paymentResponse = await _apiClient.PostAsync<PaymentResponse>(
+                $"/payments",
+                new { request.Amount, request.Currency, request.PaymentMethodId }
+            );
+            
+            return paymentResponse;
+        }
+        catch (ExternalApiException ex)
+        {
+            _logger.LogError(ex, "Failed to process payment via external API");
+            throw; // Or handle gracefully based on your business requirements
+        }
+    }
+}
+
+// Example DTOs
+public record PaymentRequest(decimal Amount, string Currency, int PaymentMethodId);
+public record PaymentResponse(string TransactionId, decimal Amount, string Status);
+public record PaymentMethod(string Id, string Name, string Type);
+```
+
+### Configuration Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `BaseUrl` | `string` | `""` | The base URL of the external API (e.g., `https://api.example.com/v1`) |
+| `ApiKey` | `string` | `""` | API key for authentication with the external service |
+| `Timeout` | `TimeSpan` | `30 seconds` | HTTP request timeout duration |
+| `MaxRetries` | `int` | `3` | Maximum number of retry attempts for transient failures |
+| `LogRequests` | `bool` | `true` | Whether to log request details (endpoint, attempt count) |
+| `LogResponses` | `bool` | `false` | Whether to log response details (be careful with sensitive data) |
+
+### Public Methods
+
+- `GetAsync<T>(string endpoint)` - Makes a GET request to the specified endpoint and returns a deserialized response of type T
+- `PostAsync<T>(string endpoint, object request)` - Makes a POST request with the provided request object and returns a deserialized response of type T
+
+Both methods automatically handle retries, timeouts, and error conversion to `ExternalApiException` with detailed context.
+
+### Error Handling
+
+All external API failures throw `ExternalApiException` which includes:
+- The endpoint that failed
+- HTTP method (GET/POST)
+- HTTP status code (if available)
+- Detailed error message
+- Additional diagnostic context (attempt count, request body, etc.)
+
+```csharp
+try
+{
+    var response = await _apiClient.GetAsync<WeatherData>("/weather/current");
+}
+catch (ExternalApiException ex)
+{
+    // ex.Endpoint = "/weather/current"
+    // ex.Method = "GET"
+    // ex.StatusCode = 500 (if available)
+    // ex.Message = "Internal server error"
+    // ex.Data["Attempts"] = "3" (if retries exhausted)
+    
+    // Handle gracefully or rethrow
+    throw;
+}
+```
+
+### Retry Strategy
+
+The client retries on:
+- Server errors (HTTP 5xx)
+- Request timeouts (HTTP 408)
+- Connection timeouts
+
+After the configured maximum retries are exhausted, it fails fast and throws an `ExternalApiException` with the attempt count in the context.
+
+---
 
 ## API Reference
 
