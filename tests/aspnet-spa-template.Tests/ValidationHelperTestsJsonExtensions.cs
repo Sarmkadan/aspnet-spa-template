@@ -9,7 +9,7 @@ using System.Text.Json;
 namespace AspNetSpaTemplate.Tests;
 
 /// <summary>
-/// Provides System.Text.Json serialization and deserialization extension methods for <see cref="ValidationHelperTests"/>.
+/// Provides JSON serialization and deserialization extension methods for <see cref="ValidationHelperTests"/> using System.Text.Json.
 /// </summary>
 public static class ValidationHelperTestsJsonExtensions
 {
@@ -20,7 +20,7 @@ public static class ValidationHelperTestsJsonExtensions
     };
 
     /// <summary>
-    /// Serializes the <see cref="ValidationHelperTests"/> to a JSON string.
+    /// Serializes the <see cref="ValidationHelperTests"/> to a JSON string using camelCase property naming.
     /// </summary>
     /// <param name="value">The validation helper tests instance to serialize.</param>
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
@@ -44,10 +44,13 @@ public static class ValidationHelperTestsJsonExtensions
     /// Deserializes a JSON string into a <see cref="ValidationHelperTests"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>A <see cref="ValidationHelperTests"/> instance, or null if the JSON is empty or whitespace.</returns>
+    /// <returns>A <see cref="ValidationHelperTests"/> instance if deserialization succeeds; otherwise, null.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="json"/> is null.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static ValidationHelperTests? FromJson(string json)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         if (string.IsNullOrWhiteSpace(json))
         {
             return null;
@@ -62,13 +65,16 @@ public static class ValidationHelperTestsJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized validation helper tests, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="json"/> is null.</exception>
     public static bool TryFromJson(string json, out ValidationHelperTests? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         value = null;
 
         if (string.IsNullOrWhiteSpace(json))
         {
-            return true;
+            return false;
         }
 
         try
