@@ -5,8 +5,6 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Globalization;
-
 namespace AspNetSpaTemplate.Events;
 
 /// <summary>
@@ -115,8 +113,11 @@ public static class EventBusImplementationExtensionsValidation
     /// <param name="eventBus">The event bus implementation to check.</param>
     /// <returns>True if valid; otherwise, false.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="eventBus"/> is null.</exception>
-    public static bool AreEventBusExtensionsValid(this EventBusImplementation eventBus)
-        => eventBus.ValidateEventBusExtensions().Count == 0;
+public static bool AreEventBusExtensionsValid(this EventBusImplementation eventBus)
+{
+    ArgumentNullException.ThrowIfNull(eventBus);
+    return eventBus.ValidateEventBusExtensions().Count == 0;
+}
 
     /// <summary>
     /// Ensures that the specified <see cref="EventBusImplementation"/> instance has valid extension methods.
