@@ -8,13 +8,17 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace AspNetSpaTemplate.Exceptions
 {
     /// <summary>
-    /// Extension methods for <see cref="ConfigurationException"/> that provide additional functionality
-    /// for working with configuration-related exceptions.
+    /// Provides extension methods for <see cref="ConfigurationException"/> that enhance configuration exception handling
+    /// with improved messaging, aggregation, and key-based operations.
     /// </summary>
+    /// <remarks>
+    /// This static class is implicitly sealed and cannot be inherited from.
+    /// </remarks>
     public static class ConfigurationExceptionExtensions
     {
         /// <summary>
@@ -26,6 +30,7 @@ namespace AspNetSpaTemplate.Exceptions
         /// <param name="args">The arguments for the format string.</param>
         /// <returns>A new <see cref="ConfigurationException"/> with the formatted message.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="exception"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
         public static ConfigurationException WithMessage(
             this ConfigurationException exception,
             string format,
@@ -57,9 +62,8 @@ namespace AspNetSpaTemplate.Exceptions
             ArgumentNullException.ThrowIfNull(exception);
             ArgumentNullException.ThrowIfNull(additionalMessage);
 
-            var baseMessage = exception.Message;
             var combinedMessage = string.Concat(
-                baseMessage,
+                exception.Message,
                 Environment.NewLine,
                 "Additional context: ",
                 additionalMessage);
@@ -75,24 +79,19 @@ namespace AspNetSpaTemplate.Exceptions
         /// </summary>
         /// <param name="exceptions">The collection of configuration exceptions.</param>
         /// <returns>A read-only dictionary mapping configuration keys to exception messages.
-        /// If an exception has no configuration key, it is not included in the dictionary.</returns>
+        /// If an exception has no configuration key or the key is empty/whitespace, it is not included in the dictionary.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="exceptions"/> is null.</exception>
         public static IReadOnlyDictionary<string, string> GetConfigurationKeys(
             this IEnumerable<ConfigurationException> exceptions)
         {
             ArgumentNullException.ThrowIfNull(exceptions);
 
-            var result = new Dictionary<string, string>(StringComparer.Ordinal);
-
-            foreach (var exception in exceptions)
-            {
-                if (exception.ConfigurationKey is { } key && !string.IsNullOrEmpty(key))
-                {
-                    result.TryAdd(key, exception.Message);
-                }
-            }
-
-            return result;
+            return exceptions
+                .Where(ex => ex.ConfigurationKey is { Length: > 0 })
+                .ToDictionary(
+                    ex => ex.ConfigurationKey!,
+                    ex => ex.Message,
+                    StringComparer.Ordinal);
         }
 
         /// <summary>
@@ -110,18 +109,8 @@ namespace AspNetSpaTemplate.Exceptions
             ArgumentNullException.ThrowIfNull(exceptions);
             ArgumentNullException.ThrowIfNull(configurationKey);
 
-            foreach (var exception in exceptions)
-            {
-                if (string.Equals(
-                    exception.ConfigurationKey,
-                    configurationKey,
-                    StringComparison.Ordinal))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return exceptions.Any(ex =>
+                string.Equals(ex.ConfigurationKey, configurationKey, StringComparison.Ordinal));
         }
     }
 }
