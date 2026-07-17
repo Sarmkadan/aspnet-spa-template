@@ -8,11 +8,18 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
 
+/// <summary>
+/// Unit tests for <see cref="ThemeService"/> that verify theme preference management
+/// including getting, setting, clearing, and user isolation.
+/// </summary>
 public sealed class ThemeServiceTests
 {
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    /// <summary>Creates a ThemeService backed by a real in-process MemoryCacheService.</summary>
+    /// <summary>
+/// Creates a <see cref="ThemeService"/> instance backed by a real in-process <see cref="MemoryCacheService"/>.
+/// </summary>
+/// <returns>A new <see cref="ThemeService"/> instance for testing.</returns>
     private static ThemeService BuildSut()
     {
         var cache = new MemoryCacheService(NullLogger<MemoryCacheService>.Instance);
@@ -22,6 +29,9 @@ public sealed class ThemeServiceTests
     // ── GetSchemeAsync ─────────────────────────────────────────────────────────
 
     [Fact]
+/// <summary>
+/// Tests that when no theme preference is stored, the service returns the default <see cref="ColourScheme.System"/>.
+/// </summary>
     public async Task GetSchemeAsync_WhenNothingStored_ReturnsSystem()
     {
         var sut = BuildSut();
@@ -32,6 +42,9 @@ public sealed class ThemeServiceTests
     }
 
     [Fact]
+/// <summary>
+/// Tests that after storing Dark theme preference, the service returns Dark theme when queried.
+/// </summary>
     public async Task GetSchemeAsync_AfterStoringDark_ReturnsDark()
     {
         var sut = BuildSut();
@@ -43,6 +56,9 @@ public sealed class ThemeServiceTests
     }
 
     [Fact]
+/// <summary>
+/// Tests that after storing Light theme preference, the service returns Light theme when queried.
+/// </summary>
     public async Task GetSchemeAsync_AfterStoringLight_ReturnsLight()
     {
         var sut = BuildSut();
@@ -56,6 +72,9 @@ public sealed class ThemeServiceTests
     // ── SetSchemeAsync ─────────────────────────────────────────────────────────
 
     [Fact]
+/// <summary>
+/// Tests that setting theme to System clears any existing preference and reverts to default.
+/// </summary>
     public async Task SetSchemeAsync_WithSystem_ClearsPreference()
     {
         var sut = BuildSut();
@@ -69,6 +88,9 @@ public sealed class ThemeServiceTests
     }
 
     [Fact]
+/// <summary>
+/// Tests that setting a new theme preference overwrites any existing preference for the same user.
+/// </summary>
     public async Task SetSchemeAsync_OverwritesExistingPreference()
     {
         var sut = BuildSut();
@@ -83,6 +105,9 @@ public sealed class ThemeServiceTests
     // ── ClearSchemeAsync ───────────────────────────────────────────────────────
 
     [Fact]
+/// <summary>
+/// Tests that after clearing theme preference, the service returns the default System theme.
+/// </summary>
     public async Task ClearSchemeAsync_ReturnsSystemAfterClear()
     {
         var sut = BuildSut();
@@ -97,6 +122,9 @@ public sealed class ThemeServiceTests
     // ── Isolation ─────────────────────────────────────────────────────────────
 
     [Fact]
+/// <summary>
+/// Tests that theme preferences for different users are properly isolated and do not bleed over.
+/// </summary>
     public async Task GetSchemeAsync_DifferentUsers_AreIsolated()
     {
         var sut = BuildSut();
@@ -111,6 +139,9 @@ public sealed class ThemeServiceTests
     // ── Mock-based: verify cache writes use correct key pattern ───────────────
 
     [Fact]
+/// <summary>
+/// Tests that ClearSchemeAsync calls cache remove with a key containing the user ID.
+/// </summary>
     public async Task ClearSchemeAsync_CallsCacheRemoveWithUserIdInKey()
     {
         var cacheMock = new Mock<ICacheService>();
