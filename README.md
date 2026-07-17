@@ -1085,6 +1085,240 @@ public async Task<IActionResult> DeleteProduct(int id)
 ---
 
 
+## ReviewService
+
+The `ReviewService` handles review-related business logic including creating, retrieving, updating, and managing product reviews. It provides methods for fetching reviews by ID, retrieving product or user reviews, creating new reviews with validation, updating existing reviews (with 30-day edit window), and managing review approval status. The service also maintains product ratings by automatically recalculating them after any review modification.
+
+### Usage Examples
+
+**Get a review by ID:**
+
+```csharp
+// Register ReviewService in Program.cs
+builder.Services.AddScoped<ReviewService>();
+
+// Inject ReviewService in your controller or service
+public class ReviewController : ControllerBase
+{
+    private readonly ReviewService _reviewService;
+    private readonly ILogger<ReviewController> _logger;
+
+    public ReviewController(ReviewService reviewService, ILogger<ReviewController> logger)
+    {
+        _reviewService = reviewService;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> GetReview(int reviewId)
+    {
+        try
+        {
+            var review = await _reviewService.GetReviewByIdAsync(reviewId);
+            
+            if (review == null)
+            {
+                return NotFound();
+            }
+            
+            return Ok(new {
+                review.Id,
+                review.ProductId,
+                review.UserId,
+                review.Rating,
+                review.Title,
+                review.Content,
+                review.IsApproved,
+                review.IsVerifiedPurchase,
+                review.HelpfulCount,
+                review.CreatedAt
+            });
+        }
+        catch (NotFoundException)
+        {
+            return NotFound(new { message = "Review not found" });
+        }
+    }
+}
+```
+
+**Get all approved reviews for a product:**
+
+```csharp
+public async Task<IActionResult> GetProductReviews(int productId)
+{
+    var reviews = await _reviewService.GetProductReviewsAsync(productId);
+    return Ok(reviews);
+}
+```
+
+**Get all reviews for a user:**
+
+```csharp
+public async Task<IActionResult> GetUserReviews(int userId)
+{
+    var reviews = await _reviewService.GetUserReviewsAsync(userId);
+    return Ok(reviews);
+}
+```
+
+**Create a new product review:**
+
+```csharp
+public async Task<IActionResult> CreateReview(int productId, int userId, [FromBody] CreateReviewRequest request)
+{
+    try
+    {
+        var review = await _reviewService.CreateReviewAsync(
+            productId: productId,
+            userId: userId,
+            rating: request.Rating,
+            title: request.Title,
+            content: request.Content,
+            isVerifiedPurchase: request.IsVerifiedPurchase ?? false
+        );
+        
+        return CreatedAtAction(nameof(GetReview), new { reviewId = review.Id }, review);
+    }
+    catch (BusinessException ex) when (ex.ErrorCode == "DUPLICATE_REVIEW")
+    {
+        return BadRequest(new { message = "You have already reviewed this product" });
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Product not found" });
+    }
+    catch (ValidationException ex) when (ex.HasErrorFor("Rating"))
+    {
+        return BadRequest(new { message = "Rating must be between 1 and 5" });
+    }
+}
+```
+
+**Update an existing review:**
+
+```csharp
+public async Task<IActionResult> UpdateReview(int reviewId, [FromBody] UpdateReviewRequest request)
+{
+    try
+    {
+        var updatedReview = await _reviewService.UpdateReviewAsync(
+            id: reviewId,
+            rating: request.Rating,
+            title: request.Title,
+            content: request.Content
+        );
+        
+        return Ok(updatedReview);
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Review not found" });
+    }
+    catch (BusinessException ex) when (ex.ErrorCode == "REVIEW_EDIT_EXPIRED")
+    {
+        return BadRequest(new { message = "Reviews can only be edited within 30 days of creation" });
+    }
+    catch (ValidationException ex) when (ex.HasErrorFor("Title"))
+    {
+        return BadRequest(new { message = "Title must be at least 5 characters" });
+    }
+}
+```
+
+**Delete a review:**
+
+```csharp
+public async Task<IActionResult> DeleteReview(int reviewId)
+{
+    try
+    {
+        await _reviewService.DeleteReviewAsync(reviewId);
+        return NoContent();
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Review not found" });
+    }
+}
+```
+
+**Approve a review:**
+
+```csharp
+public async Task<IActionResult> ApproveReview(int reviewId)
+{
+    try
+    {
+        await _reviewService.ApproveReviewAsync(reviewId);
+        return Ok(new { message = "Review approved successfully" });
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Review not found" });
+    }
+}
+```
+
+**Reject a review:**
+
+```csharp
+public async Task<IActionResult> RejectReview(int reviewId)
+{
+    try
+    {
+        await _reviewService.RejectReviewAsync(reviewId);
+        return Ok(new { message = "Review rejected successfully" });
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Review not found" });
+    }
+}
+```
+
+**Mark a review as helpful:**
+
+```csharp
+public async Task<IActionResult> MarkReviewHelpful(int reviewId)
+{
+    try
+    {
+        await _reviewService.MarkAsHelpfulAsync(reviewId);
+        return Ok(new { message = "Review marked as helpful" });
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Review not found" });
+    }
+}
+```
+
+### Public Methods
+
+| Method | Description |
+|--------|-------------|
+| `GetReviewByIdAsync(int id)` | Retrieves a review by its unique identifier. Returns the `Review` entity if found, or throws `NotFoundException` if the review doesn't exist. |
+| `GetProductReviewsAsync(int productId)` | Retrieves all approved reviews for a specific product, ordered by creation date (newest first). Returns an enumerable of `Review` entities. |
+| `GetUserReviewsAsync(int userId)` | Retrieves all reviews created by a specific user, ordered by creation date (newest first). Returns an enumerable of `Review` entities. |
+| `CreateReviewAsync(int productId, int userId, int rating, string title, string content, bool isVerifiedPurchase)` | Creates a new product review after validating the input. Validates that the user hasn't already reviewed the product, the product exists, and all fields meet requirements. Returns the created `Review` entity. Throws `NotFoundException` if product doesn't exist, `BusinessException` for duplicate reviews, or `ValidationException` for invalid data. |
+| `UpdateReviewAsync(int id, int rating, string title, string content)` | Updates an existing review if it's within the 30-day edit window. Validates the new rating, title, and content. Returns the updated `Review` entity. Throws `NotFoundException` if review doesn't exist or `BusinessException` if edit window has expired. |
+| `DeleteReviewAsync(int id)` | Deletes a review by its ID. Automatically recalculates the product's average rating. Throws `NotFoundException` if the review doesn't exist. |
+| `ApproveReviewAsync(int id)` | Approves a review by setting its `IsApproved` flag to true. Automatically recalculates the product's average rating. Throws `NotFoundException` if the review doesn't exist. |
+| `RejectReviewAsync(int id)` | Rejects a review by setting its `IsApproved` flag to false. Automatically recalculates the product's average rating. Throws `NotFoundException` if the review doesn't exist. |
+| `MarkAsHelpfulAsync(int id)` | Increments the `HelpfulCount` for a review. Throws `NotFoundException` if the review doesn't exist. |
+
+### Related Types
+
+- **Review**: Entity representing a product review with properties like `Id`, `ProductId`, `UserId`, `Rating`, `Title`, `Content`, `IsApproved`, `IsVerifiedPurchase`, `HelpfulCount`, and `CreatedAt`
+- Used in: ReviewController, product detail pages, user profile pages, and recommendation engines
+
+
+
+
+
+---
+
+
 ## PwaService
 
 The `PwaService` provides Progressive Web App (PWA) functionality including push notification management, subscription handling, and offline sync queue operations. It serves as the backend service layer for PWA features that enable users to receive real-time notifications, maintain offline functionality, and synchronize data across devices.
