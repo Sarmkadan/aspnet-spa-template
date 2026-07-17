@@ -2083,6 +2083,88 @@ public class ProductServiceUsageExample
 }
 ```
 
+## ProductServiceIntegrationTests
+
+The `ProductServiceIntegrationTests` class provides comprehensive integration testing for the `ProductService`, verifying end-to-end functionality including CRUD operations, business logic, and repository interactions using an in-memory database. These tests ensure that the service layer works correctly with the data access layer, covering scenarios like complete product lifecycle management, pagination, category filtering, featured products, availability toggling, price validation, product deletion, and rating calculations.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using AspNetSpaTemplate.DTOs;
+
+// ProductServiceIntegrationTests is designed for use within an xUnit test runner
+public class ProductServiceIntegrationTestsExample : IAsyncLifetime
+{
+    private readonly ProductServiceIntegrationTests _tests = new ProductServiceIntegrationTests();
+
+    public async Task InitializeAsync() => await _tests.InitializeAsync();
+    public async Task DisposeAsync() => await _tests.DisposeAsync();
+
+    public async Task RunIntegrationTests()
+    {
+        // Initialize test database and services
+        await _tests.InitializeAsync();
+
+        // Execute end-to-end product workflows
+        await _tests.EndToEnd_CreateUpdateAndSearchProduct_CompleteWorkflow();
+        await _tests.CreateMultipleProducts_PaginationWorks();
+        await _tests.ProductByCategory_FiltersCorrectly();
+        await _tests.FeaturedProducts_ReturnsOnlyFeatured();
+        await _tests.ToggleAvailability_ProductCanBeHiddenAndShown();
+        await _tests.InvalidPrice_PreventProductCreation();
+        await _tests.DeleteProduct_RemovesFromDatabase();
+        await _tests.TopRatedProducts_ReturnsHighestRated();
+
+        // Clean up
+        await _tests.DisposeAsync();
+    }
+}
+
+// Example usage within a test method
+[Fact]
+public async Task TestProductCreationAndRetrieval()
+{
+    // Arrange
+    var tests = new ProductServiceIntegrationTests();
+    await tests.InitializeAsync();
+
+    try
+    {
+        var createRequest = new CreateProductRequest
+        {
+            Name = "Test Product",
+            Description = "A test product",
+            Price = 99.99m,
+            StockQuantity = 10,
+            Category = ProductCategory.Electronics,
+            ImageUrl = "https://example.com/test.jpg",
+            Sku = "TEST-001"
+        };
+
+        // Act - Create product
+        var product = await tests.CreateProductAsync(createRequest);
+
+        // Assert - Product created successfully
+        Assert.NotNull(product);
+        Assert.Equal("Test Product", product.Name);
+        Assert.Equal(99.99m, product.Price);
+        Assert.True(product.IsAvailable);
+
+        // Act - Retrieve product
+        var retrieved = await tests.GetProductByIdAsync(product.Id);
+
+        // Assert - Product retrieved successfully
+        Assert.Equal(product.Id, retrieved.Id);
+        Assert.Equal("Test Product", retrieved.Name);
+    }
+    finally
+    {
+        await tests.DisposeAsync();
+    }
+}
+```
+
 ## MemoryCacheServiceTests
 
 The `MemoryCacheServiceTests` class provides comprehensive unit tests for the `MemoryCacheService`, ensuring all caching operations—such as retrieving, setting, removing, and expiring entries—work correctly under various scenarios. The test suite covers edge cases like expired entries, pattern-based removal, and cache statistics, verifying that the cache behaves reliably as a high-performance in-memory storage solution.
