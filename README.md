@@ -1837,6 +1837,48 @@ public class ReviewServiceUsageExample
 }
 ```
 
+## ProductServiceTests
+
+The `ProductServiceTests` class provides comprehensive unit testing for the `ProductService`, covering CRUD operations, search functionality, and business logic validations. It ensures that product creation, retrieval, updates, and deletion behave correctly under both valid and invalid scenarios.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+
+// ProductServiceTests is designed for use within an xUnit test runner
+public class ProductServiceUsageExample
+{
+    private readonly ProductServiceTests _tests = new ProductServiceTests();
+
+    public async Task RunTestSuite()
+    {
+        // Retrieval tests
+        await _tests.GetProductByIdAsync_WithValidId_ReturnsProduct();
+        await _tests.GetProductByIdAsync_WithInvalidId_ThrowsNotFoundException();
+        await _tests.GetAllProductsAsync_ReturnsPagedProducts();
+        await _tests.GetProductsByCategoryAsync_ReturnsProductsInCategory();
+        await _tests.GetFeaturedProductsAsync_ReturnsFeaturedProducts();
+        await _tests.GetTopRatedProductsAsync_ReturnsTopRatedProducts();
+
+        // Search tests
+        await _tests.SearchProductsAsync_WithValidTerm_ReturnsMatchingProducts();
+        await _tests.SearchProductsAsync_WithEmptyTerm_ReturnsEmptyList();
+        await _tests.SearchProductsAsync_WithNullTerm_ReturnsEmptyList();
+
+        // CRUD tests
+        await _tests.CreateProductAsync_WithValidRequest_CreatesProduct();
+        await _tests.UpdateProductAsync_WithValidId_UpdatesProduct();
+        await _tests.SetProductAvailabilityAsync_WithValidId_UpdatesAvailability();
+        await _tests.DeleteProductAsync_WithValidId_DeletesProduct();
+
+        // Validation tests
+        await _tests.CreateProductAsync_WithEmptyName_ThrowsValidationException();
+        await _tests.CreateProductAsync_WithInvalidPrice_ThrowsValidationException();
+    }
+}
+```
+
 ## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
