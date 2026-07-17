@@ -2247,6 +2247,191 @@ public class ManifestServiceUsageExample
 }
 ```
 
+---
+
+## CacheKeyBuilderTests
+
+The `CacheKeyBuilderTests` class provides comprehensive unit tests for the `CacheKeyBuilder` static class, which generates consistent, collision-free cache keys for various entity types and operations. These tests verify that cache keys follow the correct naming conventions, handle case normalization (especially for emails and search terms), and generate appropriate patterns for cache invalidation strategies.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Caching;
+using AspNetSpaTemplate.Services;
+
+// CacheKeyBuilder is used throughout the application to generate consistent cache keys
+// Here's how to use it in your services:
+
+public class ProductService
+{
+    private readonly ICacheService _cache;
+    
+    public ProductService(ICacheService cache)
+    {
+        _cache = cache;
+    }
+    
+    public async Task<ProductDto> GetProductByIdAsync(int productId)
+    {
+        // Generate cache key using CacheKeyBuilder
+        string cacheKey = CacheKeyBuilder.ProductById(productId);
+        
+        // Try to get from cache first
+        if (await _cache.TryGetAsync<ProductDto>(cacheKey, out var cachedProduct))
+        {
+            return cachedProduct;
+        }
+        
+        // Fetch from database if not in cache
+        var product = await _repository.GetByIdAsync(productId);
+        
+        // Cache the result
+        await _cache.SetAsync(cacheKey, product, TimeSpan.FromHours(1));
+        
+        return product;
+    }
+    
+    public async Task<List<ProductDto>> SearchProductsAsync(string searchTerm)
+    {
+        // Generate cache key for search (automatically converts to lowercase)
+        string cacheKey = CacheKeyBuilder.ProductSearch(searchTerm);
+        
+        if (await _cache.TryGetAsync<List<ProductDto>>(cacheKey, out var cachedResults))
+        {
+            return cachedResults;
+        }
+        
+        var results = await _repository.SearchAsync(searchTerm);
+        await _cache.SetAsync(cacheKey, results, TimeSpan.FromMinutes(30));
+        
+        return results;
+    }
+    
+    public async Task InvalidateProductCacheAsync()
+    {
+        // Invalidate all product-related cache using pattern matching
+        await _cache.RemoveByPatternAsync(CacheKeyBuilder.InvalidationPatterns.AllProducts);
+        
+        // Or invalidate specific product
+        await _cache.RemoveAsync(CacheKeyBuilder.ProductById(123));
+    }
+}
+
+// User service example
+public class UserService
+{
+    private readonly ICacheService _cache;
+    
+    public UserService(ICacheService cache)
+    {
+        _cache = cache;
+    }
+    
+    public async Task<UserDto> GetUserByIdAsync(int userId)
+    {
+        string cacheKey = CacheKeyBuilder.UserById(userId);
+        
+        if (await _cache.TryGetAsync<UserDto>(cacheKey, out var cachedUser))
+        {
+            return cachedUser;
+        }
+        
+        var user = await _repository.GetUserByIdAsync(userId);
+        await _cache.SetAsync(cacheKey, user, TimeSpan.FromHours(24));
+        
+        return user;
+    }
+    
+    public async Task<UserDto> GetUserByEmailAsync(string email)
+    {
+        // Email is automatically converted to lowercase in the cache key
+        string cacheKey = CacheKeyBuilder.UserByEmail(email);
+        
+        if (await _cache.TryGetAsync<UserDto>(cacheKey, out var cachedUser))
+        {
+            return cachedUser;
+        }
+        
+        var user = await _repository.GetUserByEmailAsync(email);
+        await _cache.SetAsync(cacheKey, user, TimeSpan.FromHours(24));
+        
+        return user;
+    }
+}
+
+// Rate limiting example
+public class RateLimitService
+{
+    private readonly ICacheService _cache;
+    
+    public RateLimitService(ICacheService cache)
+    {
+        _cache = cache;
+    }
+    
+    public async Task<bool> IsRateLimitedAsync(string clientId)
+    {
+        string rateLimitKey = CacheKeyBuilder.RateLimitKey(clientId);
+        
+        if (await _cache.TryGetAsync<int>(rateLimitKey, out var requestCount))
+        {
+            if (requestCount >= 100)
+            {
+                return true; // Rate limit exceeded
+            }
+            
+            await _cache.SetAsync(rateLimitKey, requestCount + 1, TimeSpan.FromMinutes(1));
+            return false;
+        }
+        
+        await _cache.SetAsync(rateLimitKey, 1, TimeSpan.FromMinutes(1));
+        return false;
+    }
+}
+
+// Temporary operations example
+public class FileUploadService
+{
+    private readonly ICacheService _cache;
+    
+    public FileUploadService(ICacheService cache)
+    {
+        _cache = cache;
+    }
+    
+    public async Task<string> ReserveUploadSlotAsync()
+    {
+        // Generate unique temporary key for upload operation
+        string tempKey = CacheKeyBuilder.TemporaryKey("upload");
+        
+        // Store upload metadata with expiration
+        await _cache.SetAsync(tempKey, new { Status = "pending", ExpiresAt = DateTime.UtcNow.AddMinutes(30) }, 
+                            TimeSpan.FromMinutes(30));
+        
+        return tempKey;
+    }
+}
+
+// Cache key validation example
+public class CacheService
+{
+    private readonly ICacheService _cache;
+    
+    public CacheService(ICacheService cache)
+    {
+        _cache = cache;
+    }
+    
+    public async Task SetWithValidationAsync(string key, object value, TimeSpan ttl)
+    {
+        // Validate cache key before using it
+        CacheKeyBuilder.ValidateKey(key);
+        
+        await _cache.SetAsync(key, value, ttl);
+    }
+}
+```
+
 ## OrderServiceTests
 
 The `OrderServiceTests` class provides comprehensive unit testing for the `OrderService`, covering order retrieval, creation, status updates, discount application, and revenue calculations. It ensures that order-related operations behave correctly under both valid and invalid scenarios, including validation failures, business rule violations, and data access errors.
