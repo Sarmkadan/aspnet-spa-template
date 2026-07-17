@@ -1504,6 +1504,50 @@ Product? product = orderItem.Product;
 
 ---
 
+
+## RegisterSubscriptionRequest
+
+
+
+
+The `RegisterSubscriptionRequest` DTO is used to register a Web Push subscription from a browser. It encapsulates the VAPID endpoint URL and encryption keys required to send push notifications to a user's device. This request is typically sent by the browser's service worker when a user grants permission for push notifications.
+
+
+
+
+**Usage Example:**
+
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+
+// Create a registration request for a push subscription
+var subscriptionRequest = new RegisterSubscriptionRequest
+{
+    Endpoint = "https://fcm.googleapis.com/fcm/send/device-token-123",
+    P256dhKey = "BLM8xgL5F2JGqgJqgJqgJqgJqgJqgJqgJqgJq",
+    AuthKey = "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB",
+    DeviceLabel = "Work Chrome Browser"
+};
+
+// The request can then be sent to the PwaController:
+// POST /api/v1/pwa/subscribe
+// Body: RegisterSubscriptionRequest
+```
+
+### Properties
+
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Endpoint` | `string` | The browser-provided push service endpoint URL |
+| `P256dhKey` | `string` | The base64url-encoded P-256 Diffie-Hellman public key from the browser subscription |
+| `AuthKey` | `string` | The base64url-encoded authentication secret from the browser subscription |
+| `DeviceLabel` | `string?` | Optional user-provided friendly label for this device (e.g. "Work PC") |
+
+---
+
+
 ## API Reference
 
 ### UpdateProductRequest
@@ -2044,6 +2088,9 @@ User? user = subscription.User;
 ```
 
 ---
+
+
+
 
 ## API Reference
 
