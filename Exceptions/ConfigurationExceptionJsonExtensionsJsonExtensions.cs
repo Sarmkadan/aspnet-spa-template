@@ -13,7 +13,7 @@ namespace AspNetSpaTemplate.Exceptions;
 /// <summary>
 /// Provides System.Text.Json serialization extensions for <see cref="ConfigurationException"/>.
 /// </summary>
-public static class ConfigurationExceptionJsonExtensionsJsonExtensions
+public static sealed class ConfigurationExceptionJsonExtensionsJsonExtensions
 {
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -63,7 +63,8 @@ public static class ConfigurationExceptionJsonExtensionsJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized exception if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
-    public static bool TryFromJson(string json, out ConfigurationException? value)
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+public static bool TryFromJson(string json, out ConfigurationException? value)
     {
         try
         {
