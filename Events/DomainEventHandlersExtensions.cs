@@ -6,7 +6,7 @@
 // =====================================================================
 
 using AspNetSpaTemplate.Caching;
-using System.Globalization;
+using Microsoft.Extensions.Logging;
 
 namespace AspNetSpaTemplate.Events;
 
@@ -16,6 +16,11 @@ namespace AspNetSpaTemplate.Events;
 /// </summary>
 public static class DomainEventHandlersExtensions
 {
+    /// <summary>
+    /// Logger field name in <see cref="DomainEventHandlers"/>.
+    /// </summary>
+    private const string LoggerFieldName = "_logger";
+
     /// <summary>
     /// Processes a collection of product events in a single batch operation.
     /// Useful for bulk operations like importing products or syncing with external systems.
@@ -42,42 +47,26 @@ public static class DomainEventHandlersExtensions
                 case ProductCreatedEvent created:
                     createdEvents.Add(created);
                     break;
+
                 case ProductUpdatedEvent updated:
                     updatedEvents.Add(updated);
                     break;
+
                 case ProductDeletedEvent deleted:
                     deletedEvents.Add(deleted);
                     break;
             }
         }
 
-        // Process created events
-        foreach (var @event in createdEvents)
-        {
-            await handlers.OnProductCreated(@event);
-        }
+        await handlers.ProcessEventsAsync(createdEvents, handlers.OnProductCreated);
+        await handlers.ProcessEventsAsync(updatedEvents, handlers.OnProductUpdated);
+        await handlers.ProcessEventsAsync(deletedEvents, handlers.OnProductDeleted);
 
-        // Process updated events
-        foreach (var @event in updatedEvents)
-        {
-            await handlers.OnProductUpdated(@event);
-        }
-
-        // Process deleted events
-        foreach (var @event in deletedEvents)
-        {
-            await handlers.OnProductDeleted(@event);
-        }
-
-        // Log batch summary
-        if (handlers.GetLogger() is { } logger)
-        {
-            logger.LogInformation(
-                "Processed product batch: {CreatedCount} created, {UpdatedCount} updated, {DeletedCount} deleted",
-                createdEvents.Count,
-                updatedEvents.Count,
-                deletedEvents.Count);
-        }
+        handlers.LogBatchSummary(
+            createdEvents.Count,
+            updatedEvents.Count,
+            deletedEvents.Count,
+            "product batch: {CreatedCount} created, {UpdatedCount} updated, {DeletedCount} deleted");
     }
 
     /// <summary>
@@ -106,42 +95,26 @@ public static class DomainEventHandlersExtensions
                 case OrderPlacedEvent placed:
                     placedEvents.Add(placed);
                     break;
+
                 case OrderCompletedEvent completed:
                     completedEvents.Add(completed);
                     break;
+
                 case OrderCancelledEvent cancelled:
                     cancelledEvents.Add(cancelled);
                     break;
             }
         }
 
-        // Process placed events
-        foreach (var @event in placedEvents)
-        {
-            await handlers.OnOrderPlaced(@event);
-        }
+        await handlers.ProcessEventsAsync(placedEvents, handlers.OnOrderPlaced);
+        await handlers.ProcessEventsAsync(completedEvents, handlers.OnOrderCompleted);
+        await handlers.ProcessEventsAsync(cancelledEvents, handlers.OnOrderCancelled);
 
-        // Process completed events
-        foreach (var @event in completedEvents)
-        {
-            await handlers.OnOrderCompleted(@event);
-        }
-
-        // Process cancelled events
-        foreach (var @event in cancelledEvents)
-        {
-            await handlers.OnOrderCancelled(@event);
-        }
-
-        // Log batch summary
-        if (handlers.GetLogger() is { } logger)
-        {
-            logger.LogInformation(
-                "Processed order batch: {PlacedCount} placed, {CompletedCount} completed, {CancelledCount} cancelled",
-                placedEvents.Count,
-                completedEvents.Count,
-                cancelledEvents.Count);
-        }
+        handlers.LogBatchSummary(
+            placedEvents.Count,
+            completedEvents.Count,
+            cancelledEvents.Count,
+            "order batch: {PlacedCount} placed, {CompletedCount} completed, {CancelledCount} cancelled");
     }
 
     /// <summary>
@@ -169,17 +142,13 @@ public static class DomainEventHandlersExtensions
             }
         }
 
-        foreach (var @event in registeredEvents)
-        {
-            await handlers.OnUserRegistered(@event);
-        }
+        await handlers.ProcessEventsAsync(registeredEvents, handlers.OnUserRegistered);
 
-        if (handlers.GetLogger() is { } logger)
-        {
-            logger.LogInformation(
-                "Processed user batch: {RegisteredCount} registered",
-                registeredEvents.Count);
-        }
+        handlers.LogBatchSummary(
+            registeredEvents.Count,
+            0,
+            0,
+            "user batch: {RegisteredCount} registered");
     }
 
     /// <summary>
@@ -207,16 +176,55 @@ public static class DomainEventHandlersExtensions
             }
         }
 
-        foreach (var @event in submittedEvents)
-        {
-            await handlers.OnReviewSubmitted(@event);
-        }
+        await handlers.ProcessEventsAsync(submittedEvents, handlers.OnReviewSubmitted);
 
+        handlers.LogBatchSummary(
+            submittedEvents.Count,
+            0,
+            0,
+            "review batch: {SubmittedCount} submitted");
+    }
+
+    /// <summary>
+    /// Helper method to process a collection of events with a specific handler.
+    /// </summary>
+    /// <typeparam name="TEvent">The event type.</typeparam>
+    /// <param name="events">The events to process.</param>
+    /// <param name="handler">The handler action.</param>
+    /// <returns>A task representing the operation.</returns>
+    private static async Task ProcessEventsAsync<TEvent>(
+        this DomainEventHandlers handlers,
+        IReadOnlyList<TEvent> events,
+        Func<TEvent, Task> handler)
+        where TEvent : DomainEvent
+    {
+        foreach (var @event in events)
+        {
+            await handler(@event);
+        }
+    }
+
+    /// <summary>
+    /// Helper method to log batch processing summary.
+    /// </summary>
+    /// <param name="count1">First count value.</param>
+    /// <param name="count2">Second count value.</param>
+    /// <param name="count3">Third count value.</param>
+    /// <param name="messageFormat">The log message format with named placeholders.</param>
+    private static void LogBatchSummary(
+        this DomainEventHandlers handlers,
+        int count1,
+        int count2,
+        int count3,
+        string messageFormat)
+    {
         if (handlers.GetLogger() is { } logger)
         {
             logger.LogInformation(
-                "Processed review batch: {SubmittedCount} submitted",
-                submittedEvents.Count);
+                messageFormat,
+                count1,
+                count2,
+                count3);
         }
     }
 
@@ -231,7 +239,7 @@ public static class DomainEventHandlersExtensions
 
         // Use reflection to access the private logger field
         var loggerField = typeof(DomainEventHandlers).GetField(
-            "_logger",
+            LoggerFieldName,
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
         return loggerField?.GetValue(handlers) as ILogger<DomainEventHandlers>;
