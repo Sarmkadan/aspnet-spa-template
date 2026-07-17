@@ -37,6 +37,8 @@ public static class ValidationExceptionExtensionsValidation
     /// <param name="fieldName">The field name to check.</param>
     /// <param name="errorMessage">The error message to check.</param>
     /// <returns>True if both parameters are valid; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="fieldName"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="fieldName"/> is empty or whitespace.</exception>
     public static bool AreParametersValid(string fieldName, string errorMessage)
     {
         try
@@ -123,7 +125,8 @@ public static class ValidationExceptionExtensionsValidation
         if (problems.Count > 0)
         {
             throw new ArgumentException(
-                $"ValidationException is not valid for ValidationExceptionExtensions methods. Problems:\n- {string.Join("\n- ", problems)}");
+                $"ValidationException is not valid for ValidationExceptionExtensions methods. Problems:\n- {
+string.Join("\n- ", problems)}");
         }
     }
 }
