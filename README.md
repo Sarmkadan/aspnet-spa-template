@@ -1610,6 +1610,56 @@ Gets the lock object used for thread-safe operations on subscribers.
 public static object GetSubscriberCountLock(this EventBusImplementation eventBus)
 ```
 
+
+## ValidationHelperTestsExtensions
+
+The `ValidationHelperTestsExtensions` class provides a set of fluent extension methods for unit testing validation logic. It simplifies asserting validation constraints on properties by allowing you to chain validation calls directly onto the values being tested, improving test readability and reducing boilerplate code.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Tests;
+using Xunit;
+
+[Fact]
+public void Validate_Product_Fields()
+{
+    var product = new Product { 
+        Name = "Laptop", 
+        Price = 999.99m, 
+        Category = "Electronics",
+        Stock = 10 
+    };
+
+    // Fluent validation chaining
+    product.Name.NotNullOrEmpty("Name")
+                .LengthBetween(3, 50, "Name");
+    
+    product.Price.InRange(0.01m, 10000m, "Price")
+                 .GreaterThan(0, "Price");
+    
+    product.Category.NotNullOrEmpty("Category");
+    
+    product.Stock.InRange(0, 1000, "Stock");
+}
+
+[Fact]
+public void Validate_User_Email()
+{
+    var email = "test@example.com";
+    email.ValidEmail("Email");
+}
+
+[Fact]
+public void Validate_Collection()
+{
+    var items = new List<string> { "item1", "item2" };
+    items.NotEmpty("Items")
+         .MaxItems<string>(5, "Items")
+         .CountEquals(2, "Items");
+}
+```
+
 ## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
