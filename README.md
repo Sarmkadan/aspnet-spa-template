@@ -1085,6 +1085,177 @@ public async Task<IActionResult> DeleteProduct(int id)
 ---
 
 
+## OrderService
+
+The `OrderService` handles core order management operations including order creation, status updates, discount application, and revenue reporting. It provides methods for retrieving orders by ID, managing user orders, processing pending orders, and calculating total revenue. The service includes comprehensive validation, logging, and proper error handling for all operations, with automatic stock management during order creation and status transitions.
+
+### Usage Examples
+
+**Get an order by ID:**
+
+```csharp
+// Register OrderService in Program.cs
+builder.Services.AddScoped<OrderService>();
+
+// Inject OrderService in your controller or service
+public class OrderController : ControllerBase
+{
+    private readonly OrderService _orderService;
+    private readonly ILogger<OrderController> _logger;
+
+    public OrderController(OrderService orderService, ILogger<OrderController> logger)
+    {
+        _orderService = orderService;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> GetOrder(int orderId)
+    {
+        try
+        {
+            var order = await _orderService.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(order);
+        }
+        catch (NotFoundException)
+        {
+            return NotFound(new { message = "Order not found" });
+        }
+    }
+}
+```
+
+**Create a new order:**
+
+```csharp
+public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request, int userId)
+{
+    try
+    {
+        var order = await _orderService.CreateOrderAsync(userId, request);
+        return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
+    }
+    catch (ValidationException ex) when (ex.HasErrorFor("Items"))
+    {
+        return BadRequest(new { message = "Order must contain at least one item" });
+    }
+    catch (BusinessException ex) when (ex.ErrorCode == "INSUFFICIENT_STOCK")
+    {
+        return BadRequest(new { message = "Insufficient stock for one or more products" });
+    }
+}
+```
+
+**Update an order status:**
+
+```csharp
+public async Task<IActionResult> UpdateOrderStatus(int orderId, [FromBody] UpdateOrderStatusRequest request)
+{
+    try
+    {
+        var updatedOrder = await _orderService.UpdateOrderStatusAsync(orderId, request);
+        return Ok(updatedOrder);
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Order not found" });
+    }
+    catch (ValidationException ex) when (ex.HasErrorFor("Status"))
+    {
+        return BadRequest(new { message = "Invalid order status" });
+    }
+}
+```
+
+**Apply a discount to an order:**
+
+```csharp
+public async Task<IActionResult> ApplyDiscount(int orderId, [FromBody] ApplyDiscountRequest request)
+{
+    try
+    {
+        var updatedOrder = await _orderService.ApplyDiscountAsync(orderId, request);
+        return Ok(updatedOrder);
+    }
+    catch (NotFoundException)
+    {
+        return NotFound(new { message = "Order not found" });
+    }
+    catch (BusinessException ex) when (ex.ErrorCode == "ORDER_FINALIZED")
+    {
+        return BadRequest(new { message = "Cannot apply discount to a finalized order" });
+    }
+}
+```
+
+**Get all orders for a user:**
+
+```csharp
+public async Task<IActionResult> GetUserOrders(int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+{
+    var orders = await _orderService.GetUserOrdersAsync(userId, pageNumber, pageSize);
+    
+    return Ok(new {
+        orders,
+        hasNextPage = pageNumber * pageSize < orders.Count()
+    });
+}
+```
+
+**Get all pending orders:**
+
+```csharp
+public async Task<IActionResult> GetPendingOrders()
+{
+    var pendingOrders = await _orderService.GetPendingOrdersAsync();
+    return Ok(pendingOrders);
+}
+```
+
+**Get total revenue:**
+
+```csharp
+public async Task<IActionResult> GetTotalRevenue()
+{
+    var totalRevenue = await _orderService.GetTotalRevenueAsync();
+    return Ok(new { totalRevenue });
+}
+```
+
+### Public Methods
+
+| Method | Description |
+|--------|-------------|
+| `GetOrderByIdAsync(int id)` | Retrieves an order by its unique identifier. Returns `OrderResponse` if found, or throws `NotFoundException` if the order doesn't exist. |
+| `CreateOrderAsync(int userId, CreateOrderRequest request)` | Creates a new order after validating the request and checking product availability. Returns the created `OrderResponse`. Throws `ValidationException` if items list is empty, `NotFoundException` if product doesn't exist, or `BusinessException` for insufficient stock. |
+| `UpdateOrderStatusAsync(int id, UpdateOrderStatusRequest request)` | Updates the status of an existing order. Validates the new status and returns the updated `OrderResponse`. Throws `NotFoundException` if order doesn't exist or `ValidationException` for invalid status. |
+| `ApplyDiscountAsync(int id, ApplyDiscountRequest request)` | Applies a discount to an order. Validates that the order exists and isn't finalized, then returns the updated `OrderResponse`. Throws `NotFoundException` if order doesn't exist or `BusinessException` if order is finalized. |
+| `GetUserOrdersAsync(int userId, int pageNumber = 1, int pageSize = 10)` | Retrieves all orders for a specific user with pagination support. Returns a collection of `OrderResponse` objects. Throws `ArgumentOutOfRangeException` if userId is invalid. |
+| `GetPendingOrdersAsync()` | Retrieves all pending orders. Returns a collection of `OrderResponse` objects for orders with `Pending` status. |
+| `GetTotalRevenueAsync()` | Calculates and returns the total revenue from all completed orders. |
+| `GetTotalRevenueAsync(int days)` | Calculates and returns the total revenue for the last N days. Throws `ArgumentOutOfRangeException` if days is less than 1. |
+
+### Related Types
+
+- **OrderResponse**: Response DTO containing order details like `Id`, `OrderNumber`, `Status`, `SubTotal`, `TaxAmount`, `ShippingCost`, `Discount`, `Total`, `ShippingAddress`, `Notes`, `OrderedAt`, `ShippedAt`, `DeliveredAt`, and `Items` (list of `OrderItemResponse`)
+- **OrderItemResponse**: Response DTO containing order item details like `Id`, `ProductId`, `ProductName`, `Quantity`, `UnitPrice`, `TaxAmount`, `Discount`, and `Total`
+- **CreateOrderRequest**: Request DTO for creating a new order with required fields like `Items` (list of `OrderItemRequest`) and optional fields like `ShippingAddress`, `BillingAddress`, and `Notes`
+- **UpdateOrderStatusRequest**: Request DTO for updating an order status with required field `Status` and optional field `TrackingNumber`
+- **ApplyDiscountRequest**: Request DTO for applying a discount with required field `DiscountAmount`
+- **OrderStatus**: Enum containing order status values like `Pending`, `Processing`, `Shipped`, `Delivered`, and `Cancelled`
+- Used in: OrderController, shopping cart services, admin dashboards, and revenue reporting systems
+
+
+
+
+---
+
+
 ## ReviewService
 
 The `ReviewService` handles review-related business logic including creating, retrieving, updating, and managing product reviews. It provides methods for fetching reviews by ID, retrieving product or user reviews, creating new reviews with validation, updating existing reviews (with 30-day edit window), and managing review approval status. The service also maintains product ratings by automatically recalculating them after any review modification.
