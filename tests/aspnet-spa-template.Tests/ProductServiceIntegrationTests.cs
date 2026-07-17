@@ -13,6 +13,10 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
 
+/// <summary>
+/// Integration tests for <see cref="ProductService"/> that verify end-to-end functionality
+/// including CRUD operations, business logic, and repository interactions using in-memory database.
+/// </summary>
 public sealed class ProductServiceIntegrationTests : IAsyncLifetime
 {
     private readonly DbContextOptions<AppDbContext> _dbOptions;
@@ -20,6 +24,10 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
     private ProductService _productService = null!;
     private ProductRepository _productRepository = null!;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProductServiceIntegrationTests"/> class.
+    /// Sets up in-memory database configuration for integration testing.
+    /// </summary>
     public ProductServiceIntegrationTests()
     {
         _dbOptions = new DbContextOptionsBuilder<AppDbContext>()
@@ -27,6 +35,12 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
             .Options;
     }
 
+    /// <summary>
+    /// Initializes the test database and service dependencies.
+    /// Creates in-memory database, initializes repository and service instances.
+    /// Called before each test execution.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task InitializeAsync()
     {
         _dbContext = new AppDbContext(_dbOptions);
@@ -35,12 +49,21 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
         _productService = new ProductService(_productRepository, NullLogger<ProductService>.Instance);
     }
 
+    /// <summary>
+    /// Cleans up the test database after each test execution.
+    /// Deletes the in-memory database and disposes database context.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task DisposeAsync()
     {
         await _dbContext.Database.EnsureDeletedAsync();
         _dbContext.Dispose();
     }
 
+    /// <summary>
+    /// Tests complete product lifecycle including creation, update, and search operations.
+    /// Verifies that products can be created, updated, and found through search functionality.
+    /// </summary>
     [Fact]
     public async Task EndToEnd_CreateUpdateAndSearchProduct_CompleteWorkflow()
     {
@@ -89,6 +112,10 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
         searchResults[0].Name.Should().Contain("Gadget");
     }
 
+    /// <summary>
+    /// Tests pagination functionality when creating multiple products.
+    /// Verifies that products can be retrieved in pages and pagination metadata is correct.
+    /// </summary>
     [Fact]
     public async Task CreateMultipleProducts_PaginationWorks()
     {
@@ -124,6 +151,10 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
         page2.Products[0].Name.Should().Be("Product 011");
     }
 
+    /// <summary>
+    /// Tests category filtering functionality.
+    /// Verifies that products can be filtered by their category and only matching products are returned.
+    /// </summary>
     [Fact]
     public async Task ProductByCategory_FiltersCorrectly()
     {
@@ -164,6 +195,10 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
         books.Products[0].Name.Should().Be("Programming Book");
     }
 
+    /// <summary>
+    /// Tests featured products functionality.
+    /// Verifies that only products marked as featured are returned when querying featured products.
+    /// </summary>
     [Fact]
     public async Task FeaturedProducts_ReturnsOnlyFeatured()
     {
@@ -204,6 +239,11 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
         featuredProducts[0].Name.Should().Be("Featured Item");
     }
 
+    /// <summary>
+    /// Tests product availability toggle functionality.
+    /// Verifies that products can be marked as unavailable and then made available again,
+    /// and that availability status affects product listing.
+    /// </summary>
     [Fact]
     public async Task ToggleAvailability_ProductCanBeHiddenAndShown()
     {
@@ -239,6 +279,11 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
         allProductsAgain.Products.Should().Contain(p => p.Id == product.Id);
     }
 
+    /// <summary>
+    /// Tests price validation for product creation.
+    /// Verifies that products with prices exceeding maximum allowed value cannot be created,
+    /// ensuring business rules are enforced.
+    /// </summary>
     [Fact]
     public async Task InvalidPrice_PreventProductCreation()
     {
@@ -258,6 +303,10 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
         await Assert.ThrowsAsync<ValidationException>(() => _productService.CreateProductAsync(invalidRequest));
     }
 
+    /// <summary>
+    /// Tests product deletion functionality.
+    /// Verifies that products can be deleted from the database and subsequent retrieval attempts fail.
+    /// </summary>
     [Fact]
     public async Task DeleteProduct_RemovesFromDatabase()
     {
@@ -286,6 +335,11 @@ public sealed class ProductServiceIntegrationTests : IAsyncLifetime
         await Assert.ThrowsAsync<NotFoundException>(() => _productService.GetProductByIdAsync(product.Id));
     }
 
+    /// <summary>
+    /// Tests top-rated products functionality.
+    /// Verifies that products with highest ratings are returned when querying top-rated products,
+    /// and that ratings are properly calculated and sorted.
+    /// </summary>
     [Fact]
     public async Task TopRatedProducts_ReturnsHighestRated()
     {
