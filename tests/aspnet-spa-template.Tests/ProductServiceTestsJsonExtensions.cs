@@ -38,6 +38,8 @@ public static class ProductServiceTestsJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized <see cref="ProductServiceTests"/> instance, or <see langword="null"/> if the JSON represents a null value.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or consists only of white-space characters.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static ProductServiceTests? FromJson(string json)
     {
@@ -52,6 +54,8 @@ public static class ProductServiceTestsJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized value if successful.</param>
     /// <returns><see langword="true"/> if deserialization succeeds; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or consists only of white-space characters.</exception>
     public static bool TryFromJson(string json, out ProductServiceTests? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
