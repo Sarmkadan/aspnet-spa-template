@@ -1461,6 +1461,50 @@ await eventBus.PublishManyAsync(new[] {
 });
 ```
 
+## DomainEventHandlers
+
+The `DomainEventHandlers` class contains event handler methods that respond to domain events in the application. These handlers implement business logic for actions like cache invalidation, notifications, and analytics updates that should occur when specific domain events are raised. Each handler method follows the same pattern: it receives an event parameter, performs its business logic, and includes error handling with logging.
+
+The handlers are registered with the event bus through the `RegisterEventHandlers` extension method, which subscribes each handler to its corresponding event type.
+
+### Usage Example
+
+```csharp
+using AspNetSpaTemplate.Events;
+using Microsoft.Extensions.DependencyInjection;
+
+// In Program.cs or your DI configuration
+var services = new ServiceCollection();
+
+// Register required services
+services.AddSingleton<ICacheService, MemoryCacheService>();
+services.AddSingleton<NotificationService>();
+services.AddLogging();
+
+// Register DomainEventHandlers
+services.AddSingleton<DomainEventHandlers>();
+
+// Build service provider to register handlers
+var serviceProvider = services.BuildServiceProvider();
+
+// Get event bus (typically registered elsewhere in your application)
+var eventBus = serviceProvider.GetRequiredService<IEventBus>();
+
+// Register all event handlers with the event bus
+services.RegisterEventHandlers(eventBus);
+
+// Usage: When events are published, handlers are automatically invoked
+// For example, in your ProductService:
+await eventBus.PublishAsync(new ProductCreatedEvent {
+    ProductId = 123,
+    ProductName = "New Laptop",
+    Price = 999.99m,
+    AggregateType = "Product"
+});
+
+// This triggers OnProductCreated() which invalidates the product cache
+```
+
 ## EventBusImplementationExtensions
 
 The `EventBusImplementationExtensions` class provides extension methods for the `EventBusImplementation` class, adding functionality for bulk operations, conditional publishing, and subscriber management.
