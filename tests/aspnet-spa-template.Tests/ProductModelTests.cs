@@ -10,8 +10,14 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
 
+/// <summary>
+/// Contains unit tests for the <see cref="Product"/> model to verify its behavior and functionality.
+/// </summary>
 public sealed class ProductModelTests
 {
+    /// <summary>
+    /// Tests that <see cref="Product.IsInStock()"/> returns true when a product is available and has positive stock quantity.
+    /// </summary>
     [Fact]
     public void IsInStock_WhenAvailableAndHasStock_ReturnsTrue()
     {
@@ -25,6 +31,9 @@ public sealed class ProductModelTests
         result.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that <see cref="Product.IsInStock()"/> returns false when a product is not available, regardless of stock quantity.
+    /// </summary>
     [Fact]
     public void IsInStock_WhenProductIsNotAvailable_ReturnsFalse()
     {
@@ -38,6 +47,9 @@ public sealed class ProductModelTests
         result.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests that <see cref="Product.ReduceStock(int)"/> decreases the stock quantity and updates the UpdatedAt timestamp when the reduction is valid.
+    /// </summary>
     [Fact]
     public void ReduceStock_WhenQuantityIsValid_DecreasesStockAndSetsUpdatedAt()
     {
@@ -52,6 +64,9 @@ public sealed class ProductModelTests
         product.UpdatedAt.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests that <see cref="Product.ReduceStock(int)"/> throws an <see cref="InvalidOperationException"/> when attempting to reduce stock by a quantity that exceeds the available stock.
+    /// </summary>
     [Fact]
     public void ReduceStock_WhenQuantityExceedsAvailableStock_ThrowsInvalidOperationException()
     {
