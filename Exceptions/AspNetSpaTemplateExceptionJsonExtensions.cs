@@ -40,18 +40,12 @@ public static class AspNetSpaTemplateExceptionJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized exception, or null if the JSON is invalid.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is malformed and cannot be deserialized.</exception>
     public static AspNetSpaTemplateException? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
 
-        try
-        {
-            return JsonSerializer.Deserialize<AspNetSpaTemplateException>(json, _jsonOptions);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
+        return JsonSerializer.Deserialize<AspNetSpaTemplateException>(json, _jsonOptions);
     }
 
     /// <summary>
@@ -61,10 +55,15 @@ public static class AspNetSpaTemplateExceptionJsonExtensions
     /// <param name="value">The deserialized exception, or null if deserialization failed.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is malformed and cannot be deserialized.</exception>
     public static bool TryFromJson(string json, out AspNetSpaTemplateException? value)
     {
         ArgumentNullException.ThrowIfNull(json);
+        return TryFromJsonCore(json, out value);
+    }
 
+    private static bool TryFromJsonCore(string json, out AspNetSpaTemplateException? value)
+    {
         try
         {
             value = JsonSerializer.Deserialize<AspNetSpaTemplateException>(json, _jsonOptions);
