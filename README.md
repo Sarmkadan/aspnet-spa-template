@@ -504,6 +504,223 @@ public class OrderController : ControllerBase
 
 ---
 
+## CacheKeyBuilder
+
+`CacheKeyBuilder` is a static utility class that provides consistent, type-safe cache key generation for the ASP.NET SPA template. It prevents cache key collisions and simplifies cache invalidation by using a standardized format with colon-separated segments. Each method generates a unique cache key for a specific data type and identifier, making it easy to cache and retrieve data while ensuring proper cache invalidation strategies.
+
+The class includes specialized methods for different entity types (users, products, orders, reviews) as well as utility methods for rate limiting, session data, and temporary operations. It also provides pattern-based invalidation helpers for bulk cache operations and key validation to ensure Redis compatibility.
+
+### Usage Example
+
+```csharp
+// Register ICacheService in Program.cs
+builder.Services.AddScoped<ICacheService, CacheService>();
+
+// Inject ICacheService in your controller or service
+public class ProductController : ControllerBase
+{
+    private readonly ICacheService _cacheService;
+    private readonly ILogger<ProductController> _logger;
+
+    public ProductController(ICacheService cacheService, ILogger<ProductController> logger)
+    {
+        _cacheService = cacheService;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> GetProduct(int productId)
+    {
+        // Generate cache key using CacheKeyBuilder
+        string cacheKey = CacheKeyBuilder.ProductById(productId);
+        
+        // Try to get from cache first
+        var cachedProduct = await _cacheService.GetAsync<ProductResponse>(cacheKey);
+        
+        if (cachedProduct != null)
+        {
+            _logger.LogInformation("Retrieved product {ProductId} from cache", productId);
+            return Ok(cachedProduct);
+        }
+
+        // Cache miss - fetch from database
+        var product = await _productService.GetProductByIdAsync(productId);
+        
+        if (product != null)
+        {
+            // Cache with 5-minute expiration
+            await _cacheService.SetAsync(cacheKey, product, TimeSpan.FromMinutes(5));
+            _logger.LogInformation("Cached product {ProductId}", productId);
+        }
+
+        return Ok(product);
+    }
+
+    public async Task<IActionResult> GetFeaturedProducts()
+    {
+        // Use constant cache key for featured products
+        string cacheKey = CacheKeyBuilder.ProductFeatured;
+        
+        var cachedProducts = await _cacheService.GetAsync<List<ProductResponse>>(cacheKey);
+        
+        if (cachedProducts != null)
+        {
+            return Ok(cachedProducts);
+        }
+
+        // Fetch and cache featured products
+        var featuredProducts = await _productService.GetFeaturedProductsAsync(limit: 8);
+        await _cacheService.SetAsync(cacheKey, featuredProducts, TimeSpan.FromMinutes(10));
+        
+        return Ok(featuredProducts);
+    }
+
+    public async Task<IActionResult> SearchProducts(string searchTerm)
+    {
+        // Generate search cache key (normalized to lowercase)
+        string cacheKey = CacheKeyBuilder.ProductSearch(searchTerm.Trim());
+        
+        var cachedResults = await _cacheService.GetAsync<List<ProductResponse>>(cacheKey);
+        
+        if (cachedResults != null)
+        {
+            return Ok(cachedResults);
+        }
+
+        // Perform search and cache results
+        var results = await _productService.SearchProductsAsync(searchTerm);
+        await _cacheService.SetAsync(cacheKey, results, TimeSpan.FromMinutes(15));
+        
+        return Ok(results);
+    }
+
+    public async Task<IActionResult> GetUserOrders(int userId, int pageNumber = 1, int pageSize = 10)
+    {
+        // Generate user-specific cache key
+        string cacheKey = CacheKeyBuilder.OrdersByUserId(userId);
+        
+        var cachedOrders = await _cacheService.GetAsync<List<OrderResponse>>(cacheKey);
+        
+        if (cachedOrders != null)
+        {
+            return Ok(cachedOrders);
+        }
+
+        // Fetch and cache user orders
+        var orders = await _orderService.GetUserOrdersAsync(userId, pageNumber, pageSize);
+        await _cacheService.SetAsync(cacheKey, orders.ToList(), TimeSpan.FromMinutes(5));
+        
+        return Ok(orders);
+    }
+
+    public async Task<IActionResult> ClearUserCache(int userId)
+    {
+        // Invalidate all user-related cache entries
+        await _cacheService.InvalidateUserCacheAsync(userId);
+        
+        return Ok(new { message = "User cache invalidated successfully" });
+    }
+
+    public async Task<IActionResult> ClearProductCache()
+    {
+        // Invalidate all product-related cache entries
+        await _cacheService.RemoveByPatternAsync(CacheKeyBuilder.InvalidationPatterns.AllProducts);
+        
+        return Ok(new { message = "Product cache invalidated successfully" });
+    }
+
+    public async Task<IActionResult> GetConfigValue(string configKey)
+    {
+        // Get configuration value from cache
+        string cacheKey = CacheKeyBuilder.Config(configKey);
+        
+        var cachedValue = await _cacheService.GetAsync<string>(cacheKey);
+        
+        if (cachedValue != null)
+        {
+            return Ok(new { key = configKey, value = cachedValue });
+        }
+
+        // Fetch from database and cache
+        var configValue = await _configService.GetConfigValueAsync(configKey);
+        await _cacheService.SetAsync(cacheKey, configValue, TimeSpan.FromHours(1));
+        
+        return Ok(new { key = configKey, value = configValue });
+    }
+
+    public async Task<IActionResult> ProcessWithLock(string jobId)
+    {
+        // Generate lock key for distributed coordination
+        string lockKey = CacheKeyBuilder.LockKey(jobId);
+        
+        try
+        {
+            // Try to acquire lock (expires after 30 seconds)
+            bool acquired = await _cacheService.AcquireLockAsync(lockKey, TimeSpan.FromSeconds(30));
+            
+            if (!acquired)
+            {
+                return StatusCode(429, new { message = "Resource is currently locked" });
+            }
+
+            // Process the job
+            var result = await _backgroundJobService.ProcessJobAsync(jobId);
+            
+            return Ok(result);
+        }
+        finally
+        {
+            // Release the lock
+            await _cacheService.ReleaseLockAsync(lockKey);
+        }
+    }
+
+    public async Task<IActionResult> GetTemporaryKey()
+    {
+        // Generate a temporary key for one-time operations
+        string tempKey = CacheKeyBuilder.TemporaryKey("email-send");
+        
+        // Use the temporary key for tracking
+        await _cacheService.SetAsync(tempKey, true, TimeSpan.FromMinutes(10));
+        
+        return Ok(new { tempKey, expiresAt = DateTime.UtcNow.AddMinutes(10) });
+    }
+}
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `UserById(int userId)` | `string` | Generates a cache key for retrieving a user by their unique identifier (e.g., `user:id:42`). |
+| `UserByEmail(string email)` | `string` | Generates a cache key for retrieving a user by email address (normalized to lowercase, e.g., `user:email:user@example.com`). |
+| `UserSession(string sessionId)` | `string` | Generates a cache key for user session data (e.g., `user:session:abc123xyz`). |
+| `ProductById(int productId)` | `string` | Generates a cache key for retrieving a product by its unique identifier (e.g., `product:id:101`). |
+| `ProductCategory(string category)` | `string` | Generates a cache key for retrieving products by category (e.g., `product:category:Electronics`). |
+| `ProductFeatured` | `string` | Returns a constant cache key for featured products (`product:featured`). |
+| `ProductSearch(string term)` | `string` | Generates a cache key for product search results (normalized to lowercase, e.g., `product:search:laptop`). |
+| `OrderById(int orderId)` | `string` | Generates a cache key for retrieving an order by its unique identifier (e.g., `order:id:789`). |
+| `OrdersByUserId(int userId)` | `string` | Generates a cache key for retrieving all orders for a specific user (e.g., `order:user:42`). |
+| `OrdersByStatus(string status)` | `string` | Generates a cache key for retrieving orders by status (e.g., `order:status:Pending`). |
+| `ReviewsByProductId(int productId)` | `string` | Generates a cache key for retrieving reviews by product ID (e.g., `review:product:101`). |
+| `ReviewsByUserId(int userId)` | `string` | Generates a cache key for retrieving reviews by user ID (e.g., `review:user:42`). |
+| `Config(string configKey)` | `string` | Generates a cache key for configuration values (e.g., `config:site:title`). |
+| `Settings` | `string` | Returns a constant cache key for application settings (`settings`). |
+| `RateLimitKey(string clientId)` | `string` | Generates a cache key for rate limiting by client identifier (e.g., `ratelimit:client123`). |
+| `RequestCount(string endpoint)` | `string` | Generates a cache key for tracking request counts by endpoint (e.g., `requests:/api/products`). |
+| `SessionData(string sessionId, string key)` | `string` | Generates a cache key for session-specific data (e.g., `session:abc123:cart`). |
+| `LockKey(string resource)` | `string` | Generates a cache key for distributed locks (e.g., `lock:order-processing`). |
+| `ProcessingKey(string jobId)` | `string` | Generates a cache key for tracking job processing status (e.g., `processing:job-456`). |
+| `Pattern(string prefix)` | `string` | Creates a pattern for cache invalidation (e.g., `product:*` for all products). |
+| `InvalidationPatterns` | `class` | Static class containing common invalidation patterns like `AllProducts`, `AllOrders`, `AllReviews`, `AllUsers`, `AllSessions`, and `AllRateLimits`. |
+| `ValidateKey(string key)` | `void` | Validates cache key format for Redis compatibility (ensures no spaces, proper length, non-empty). Throws `ArgumentException` for invalid keys. |
+| `TemporaryKey(string prefix)` | `string` | Generates a unique temporary key with timestamp and random suffix for one-time operations (e.g., `temp:email-send:7f3a:8c9d4e7f`). |
+
+### Related Types
+
+- **ICacheService**: Interface defining cache operations like `GetAsync`, `SetAsync`, `RemoveAsync`, `RemoveByPatternAsync`, `AcquireLockAsync`, and `ReleaseLockAsync`
+- Used in: All service classes that need caching (ProductService, OrderService, UserService, ReviewService), background jobs, and API controllers
+
+---
+
 ## UserRepository
 
 `UserRepository` is a specialized repository for managing user entities in the application. It extends `RepositoryBase<User>` to provide user-specific query methods including retrieval by email, filtering by account status (active/verified), location-based queries, and count operations. The repository is essential for user management, authentication flows, user listing functionality, and administrative operations.
