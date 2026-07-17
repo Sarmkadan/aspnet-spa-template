@@ -1656,6 +1656,62 @@ var createRequest = new CreateProductRequest
 - **ProductCategory**: Enum containing product categories (Electronics, Clothing, Books, Home, Sports)
 - Used in: ProductsController.Post(CreateProductRequest request)
 
+## CreateUserRequest
+
+The `CreateUserRequest` DTO is used to create a new user account in the system. It encapsulates all required fields for user registration with built-in validation rules that ensure data integrity before processing the new user. The request supports creating user accounts with personal information, contact details, and authentication credentials.
+
+**Usage Example:**
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+
+// Create a new user registration request
+var userRequest = new CreateUserRequest
+{
+    FirstName = "John",
+    LastName = "Doe",
+    Email = "john.doe@example.com",
+    Password = "SecurePassword123!",
+    PhoneNumber = "+1234567890",
+    Address = "123 Main St",
+    City = "New York",
+    PostalCode = "10001",
+    Country = "USA"
+};
+
+// The request can then be sent to the UsersController:
+// POST /api/users
+// Body: CreateUserRequest
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `FirstName` | `string` | The user's first name (required) |
+| `LastName` | `string` | The user's last name (required) |
+| `Email` | `string` | The user's email address (required) |
+| `Password` | `string` | The user's password (required) |
+| `PhoneNumber` | `string?` | The user's phone number (optional) |
+| `Address` | `string?` | The user's street address (optional) |
+| `City` | `string?` | The user's city (optional) |
+| `PostalCode` | `string?` | The user's postal/zip code (optional) |
+| `Country` | `string?` | The user's country (optional) |
+
+### Validation Rules
+
+- **FirstName**: Required, cannot be empty or whitespace
+- **LastName**: Required, cannot be empty or whitespace
+- **Email**: Required, must be a valid email format
+- **Password**: Required, minimum length requirements enforced by ASP.NET Core Identity
+- All optional fields are validated for appropriate format when provided
+
+### Related Types
+
+- **UserResponse**: Response DTO containing user details after successful creation
+- **LoginRequest**: Used for subsequent user authentication
+- Used in: UsersController.Post(CreateUserRequest request)
+
 ## ExternalApiClient
 
 The `ExternalApiClient` class provides a robust, retry-capable HTTP client for consuming external APIs from your ASP.NET Core services. It handles common concerns like automatic retries on transient failures, configurable timeouts, structured error handling, and detailed logging—making external API calls more reliable and easier to debug.
