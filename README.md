@@ -6608,6 +6608,136 @@ public class CustomProductRepository : RepositoryBase<Product>
 
 ---
 
+## ServiceConfiguration
+
+`ServiceConfiguration` is a static class that provides extension methods for configuring application services in the dependency injection container. It centralizes service registration logic, middleware pipeline configuration, and caching policies, separating infrastructure concerns from the main `Program.cs` entry point for better readability and maintainability.
+
+The class includes methods for registering application services (`AddApplicationServices`), configuring HTTP clients (`AddHttpClients`), setting up middleware (`UseApplicationMiddleware`), and configuring caching policies (`ConfigureCaching`). It also provides a method for registering event handlers (`RegisterEventHandlers`) that subscribes domain event handlers to the event bus after the service container is built.
+
+### Usage Example
+
+```csharp
+// In Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+// Configure services using ServiceConfiguration extension methods
+builder.Services.AddApplicationServices(builder.Configuration);
+builder.Services.AddHttpClients(builder.Configuration);
+builder.Services.ConfigureCaching();
+
+var app = builder.Build();
+
+// Configure middleware pipeline
+app.UseApplicationMiddleware();
+
+// Register event handlers after app is built
+app.RegisterEventHandlers();
+
+app.Run();
+```
+
+### Public Members
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `AddApplicationServices(IServiceCollection, IConfiguration)` | `IServiceCollection` | Registers all application services including caching, event bus, integration clients, background workers, and health monitoring services. |
+| `AddHttpClients(IServiceCollection, IConfiguration)` | `IServiceCollection` | Configures HTTP clients for external API integration with timeout and header settings. |
+| `UseApplicationMiddleware(IApplicationBuilder)` | `IApplicationBuilder` | Configures the middleware pipeline with correlation ID tracking, authentication, rate limiting, and error handling in the correct order. |
+| `ConfigureCaching(IServiceCollection)` | `IServiceCollection` | Configures caching policies for different data types with configurable TTL values. |
+| `RegisterEventHandlers(IApplicationBuilder)` | `void` | Registers event handlers in the event bus by subscribing domain event handlers to specific events. |
+
+### Related Types
+
+- **CachePolicyConfiguration**: Configuration class containing TTL values for different cache types (`ProductCacheTtl`, `UserCacheTtl`, `OrderCacheTtl`, `SearchResultsCacheTtl`, `SessionCacheTtl`, `ConfigurationCacheTtl`)
+- **ApplicationSettings**: Main configuration class containing nested settings classes (`DatabaseSettings`, `CachingSettings`, `AuthenticationSettings`, `NotificationSettings`)
+- Used in: `Program.cs` for service registration and application startup
+
+### CachePolicyConfiguration
+
+The `CachePolicyConfiguration` class defines time-to-live (TTL) values for different types of cached data:
+
+```csharp
+var cacheConfig = new CachePolicyConfiguration
+{
+    ProductCacheTtl = TimeSpan.FromHours(1),
+    UserCacheTtl = TimeSpan.FromMinutes(30),
+    OrderCacheTtl = TimeSpan.FromMinutes(5),
+    SearchResultsCacheTtl = TimeSpan.FromMinutes(10),
+    SessionCacheTtl = TimeSpan.FromHours(24),
+    ConfigurationCacheTtl = TimeSpan.FromHours(12)
+};
+```
+
+### ApplicationSettings
+
+The `ApplicationSettings` class provides a structured way to organize application configuration:
+
+```csharp
+public class ApplicationSettings
+{
+    public DatabaseSettings Database { get; set; } = new();
+    public CachingSettings Caching { get; set; } = new();
+    public AuthenticationSettings Authentication { get; set; } = new();
+    public NotificationSettings Notifications { get; set; } = new();
+}
+```
+
+### DatabaseSettings
+
+Configuration for database connections:
+
+```csharp
+public class DatabaseSettings
+{
+    public string ConnectionString { get; set; } = "";
+    public int CommandTimeout { get; set; } = 30;
+    public bool EnableLogging { get; set; } = false;
+}
+```
+
+### CachingSettings
+
+Configuration for caching behavior:
+
+```csharp
+public class CachingSettings
+{
+    public bool Enabled { get; set; } = true;
+    public string Provider { get; set; } = "Memory"; // Memory, Redis
+    public int MaxItemCount { get; set; } = 10000;
+}
+```
+
+### AuthenticationSettings
+
+Configuration for authentication behavior:
+
+```csharp
+public class AuthenticationSettings
+{
+    public bool Enabled { get; set; } = true;
+    public int SessionTimeoutMinutes { get; set; } = 60;
+    public bool RequireHttpsOnly { get; set; } = true;
+}
+```
+
+### NotificationSettings
+
+Configuration for notification delivery:
+
+```csharp
+public class NotificationSettings
+{
+    public bool Enabled { get; set; } = true;
+    public int BatchSize { get; set; } = 100;
+    public int RetryCount { get; set; } = 3;
+    public string EmailProvider { get; set; } = "SendGrid";
+    public string SmsProvider { get; set; } = "Twilio";
+}
+```
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
