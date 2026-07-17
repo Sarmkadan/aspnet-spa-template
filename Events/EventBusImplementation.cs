@@ -22,6 +22,21 @@ public class EventBusImplementation : IEventBus
         _logger = logger;
     }
 
+    /// <summary>
+    /// Gets the logger instance used by this event bus.
+    /// </summary>
+    internal ILogger<EventBusImplementation> Logger => _logger;
+
+    /// <summary>
+    /// Gets the subscriber lock object.
+    /// </summary>
+    internal object SubscriberLock => _subscriberLock;
+
+    /// <summary>
+    /// Gets the subscribers dictionary.
+    /// </summary>
+    internal IReadOnlyDictionary<Type, List<Delegate>> Subscribers => _subscribers;
+
     public void Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : DomainEvent
     {
         if (handler is null)

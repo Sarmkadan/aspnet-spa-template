@@ -2,8 +2,10 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =====================================================================
+// ====================================================================
 
+using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -35,7 +37,7 @@ public static class EventBusImplementationValidationJsonExtensions
     /// <param name="indented">Whether to format the JSON with indentation.</param>
     /// <returns>A JSON string representation of the validation problems.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="problems"/> is null.</exception>
-    public static string ToJson(IReadOnlyList<string> problems, bool indented = false)
+    public static string ToJson(this IReadOnlyList<string> problems, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(problems);
 
@@ -48,10 +50,16 @@ public static class EventBusImplementationValidationJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A list of validation problems, or null if the JSON is null or empty.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid.</exception>
     public static IReadOnlyList<string>? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
 
         return JsonSerializer.Deserialize<List<string>>(json, _jsonOptions);
     }
