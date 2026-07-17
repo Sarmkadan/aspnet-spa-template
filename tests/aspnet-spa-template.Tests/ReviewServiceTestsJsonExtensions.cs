@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace AspNetSpaTemplate.Tests;
@@ -54,7 +55,7 @@ public static class ReviewServiceTestsJsonExtensions
     /// <param name="value">Receives the deserialized instance if successful, otherwise <see langword="null"/>.</param>
     /// <returns><see langword="true"/> if deserialization succeeds; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
-    public static bool TryFromJson(string json, out ReviewServiceTests? value)
+    public static bool TryFromJson(string json, [NotNullWhen(true)] out ReviewServiceTests? value)
     {
         ArgumentNullException.ThrowIfNull(json);
 
