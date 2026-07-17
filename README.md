@@ -2179,6 +2179,47 @@ Application health status.
 
 ---
 
+## OrderItemRequest
+
+The `OrderItemRequest` DTO represents an individual item to be added to an order. It contains the essential information needed to identify a product and specify the quantity for order creation. This DTO is used within the `CreateOrderRequest` collection to build complete order submissions.
+
+**Usage Example:**
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+
+// Create an order item request for a product
+var orderItem = new OrderItemRequest
+{
+    ProductId = 101,
+    Quantity = 2
+};
+
+// The request can then be added to a CreateOrderRequest:
+// POST /api/orders
+// Body: CreateOrderRequest containing Items list with OrderItemRequest objects
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ProductId` | `int` | The unique identifier of the product to order (required) |
+| `Quantity` | `int` | The number of units to order (must be greater than 0) |
+
+### Validation Rules
+
+- **ProductId**: Must be a positive integer
+- **Quantity**: Must be a positive integer (greater than 0)
+
+
+### Related Types
+
+- **CreateOrderRequest**: The parent DTO that contains a collection of `OrderItemRequest` objects
+- Used in: OrdersController.Post(CreateOrderRequest request)
+
+---
+
 ## ErrorResponse
 
 The `ErrorResponse` class represents a standardized error response format used throughout the API to provide consistent error information to clients. It includes essential fields like error message, status code, optional error code, trace ID for debugging, and detailed validation errors when applicable.
