@@ -33,6 +33,7 @@ public sealed class Order
     // Navigation properties
     public User? User { get; set; }
     public ICollection<OrderItem>? Items { get; set; }
+    public ICollection<StatusHistory>? StatusHistory { get; set; }
 
     public int GetTotalItems() => Items?.Sum(i => i.Quantity) ?? 0;
 

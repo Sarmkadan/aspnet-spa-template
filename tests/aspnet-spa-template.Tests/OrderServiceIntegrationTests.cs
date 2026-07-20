@@ -7,8 +7,10 @@ using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
 using AspNetSpaTemplate.Services;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
@@ -26,6 +28,7 @@ public sealed class OrderServiceIntegrationTests : IAsyncLifetime
 	private ProductService _productService = null!;
 	private OrderRepository _orderRepository = null!;
 	private ProductRepository _productRepository = null!;
+    private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor = new();
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="OrderServiceIntegrationTests"/> class.
@@ -50,7 +53,7 @@ public sealed class OrderServiceIntegrationTests : IAsyncLifetime
 
 		_orderRepository = new OrderRepository(_dbContext);
 		_productRepository = new ProductRepository(_dbContext);
-		_orderService = new OrderService(_orderRepository, _productRepository, NullLogger<OrderService>.Instance);
+		_orderService = new OrderService(_orderRepository, _productRepository, NullLogger<OrderService>.Instance, _mockHttpContextAccessor.Object);
 		_productService = new ProductService(_productRepository, NullLogger<ProductService>.Instance);
 	}
 

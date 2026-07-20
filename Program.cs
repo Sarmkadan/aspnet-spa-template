@@ -27,6 +27,7 @@ builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<ProductRepository>();
 builder.Services.AddScoped<OrderRepository>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(RepositoryBase<>));
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProductService>();

@@ -129,6 +129,17 @@ public sealed class OrdersController : ApiControllerBase
         return ApiSuccess(order, "Order cancelled successfully");
     }
 
+    [HttpGet("{id:int}/status-history")]
+    [ProducesResponseType(typeof(List<StatusHistoryResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOrderStatusHistory(int id)
+    {
+        var order = await _orderService.GetOrderByIdAsync(id);
+        if (order == null)
+            return NotFound();
+
+        return ApiSuccess(order.StatusHistory);
+    }
+
     [HttpGet("revenue/total")]
     [ProducesResponseType(typeof(decimal), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTotalRevenue([FromQuery] int? days = null)
