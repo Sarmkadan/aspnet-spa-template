@@ -6,6 +6,7 @@
 
 using AspNetSpaTemplate.BackgroundWorkers;
 using AspNetSpaTemplate.Caching;
+using AspNetSpaTemplate.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AspNetSpaTemplate.Controllers;
@@ -22,15 +23,18 @@ public sealed class HealthController : ControllerBase
     private readonly ICacheHealthMonitor _cacheHealthMonitor;
     private readonly IBackgroundTaskScheduler _taskScheduler;
     private readonly ILogger<HealthController> _logger;
+    private readonly MetricsRegistry _metricsRegistry;
 
     public HealthController(
         ICacheHealthMonitor cacheHealthMonitor,
         IBackgroundTaskScheduler taskScheduler,
-        ILogger<HealthController> logger)
+        ILogger<HealthController> logger,
+        MetricsRegistry metricsRegistry)
     {
         _cacheHealthMonitor = cacheHealthMonitor;
         _taskScheduler = taskScheduler;
         _logger = logger;
+        _metricsRegistry = metricsRegistry;
     }
 
     /// <summary>
@@ -118,6 +122,21 @@ public sealed class HealthController : ControllerBase
         };
 
         return Ok(diagnostics);
+    }
+
+    /// <summary>
+    /// GET /api/health/metrics - Returns comprehensive application metrics including uptime, memory, threads, and request counters.
+    /// </summary>
+    [HttpGet("metrics")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult GetMetrics()
+    {
+        var metrics = _metricsRegistry.GetMetricsReport();
+
+        // Increment request counter for this endpoint
+        _metricsRegistry.IncrementRequestCount();
+
+        return Ok(metrics);
     }
 
     /// <summary>
