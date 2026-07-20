@@ -120,4 +120,12 @@ public sealed class ProductsController : ApiControllerBase
         await _productService.DeleteProductAsync(id);
         return NoContent();
     }
+
+    [HttpPost("prices/bulk-update")]
+    [ProducesResponseType(typeof(UpdateProductPriceResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdatePrices([FromBody] UpdateProductPriceRequest request)
+    {
+        var response = await _productService.UpdatePricesAsync(request);
+        return ApiSuccess(response, "Bulk price update completed");
+    }
 }

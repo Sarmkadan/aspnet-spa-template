@@ -369,4 +369,105 @@ public sealed class ProductService
         product.UpdateDetails(request.Name, request.Description, request.Price, request.Category, request.ImageUrl);
         product.SetAvailability(request.IsAvailable);
     }
+
+    /// <summary>
+    /// Updates prices for multiple products in a single operation.
+    /// </summary>
+    /// <param name="request">The bulk price update request.</param>
+    /// <returns>A response with per-item results.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
+    public async Task<UpdateProductPriceResponse> UpdatePricesAsync(UpdateProductPriceRequest request)
+    {
+        _logger.LogInformation("Starting bulk price update for {ProductCount} products", request?.PriceUpdates?.Count ?? 0);
+
+        if (request is null)
+        {
+            _logger.LogWarning("UpdatePricesAsync called with null request");
+            throw new ArgumentNullException(nameof(request));
+        }
+
+        if (request.PriceUpdates is null || request.PriceUpdates.Count == 0)
+        {
+            _logger.LogWarning("UpdatePricesAsync called with empty price updates list");
+            throw new ValidationException("PriceUpdates", "Price updates list cannot be empty");
+        }
+
+        if (request.PriceUpdates.Count > 1000)
+        {
+            _logger.LogWarning("UpdatePricesAsync called with too many products: {Count}", request.PriceUpdates.Count);
+            throw new ValidationException("PriceUpdates", "Cannot update more than 1000 products in one request");
+        }
+
+        var response = new UpdateProductPriceResponse
+        {
+            TotalProcessed = request.PriceUpdates.Count,
+            Results = new List<ProductPriceUpdateResult>()
+        };
+
+        var processedCount = 0;
+        var successCount = 0;
+        var failureCount = 0;
+
+        foreach (var update in request.PriceUpdates)
+        {
+            var result = new ProductPriceUpdateResult
+            {
+                ProductId = update.ProductId,
+                NewPrice = update.NewPrice
+            };
+
+            try
+            {
+                if (update.NewPrice < AppConstants.Product.MinPrice || update.NewPrice > AppConstants.Product.MaxPrice)
+                {
+                    result.Success = false;
+                    result.ErrorMessage = $"Price must be between {AppConstants.Product.MinPrice} and {AppConstants.Product.MaxPrice}";
+                    result.ErrorCode = "INVALID_PRICE_RANGE";
+                    failureCount++;
+                    response.Results.Add(result);
+                    continue;
+                }
+
+                var product = await _productRepository.GetByIdAsync(update.ProductId);
+                if (product is null)
+                {
+                    result.Success = false;
+                    result.ErrorMessage = "Product not found";
+                    result.ErrorCode = "PRODUCT_NOT_FOUND";
+                    failureCount++;
+                    response.Results.Add(result);
+                    continue;
+                }
+
+                product.UpdateDetails(product.Name, product.Description, update.NewPrice, product.Category, product.ImageUrl);
+                _productRepository.Update(product);
+                await _productRepository.SaveChangesAsync();
+
+                result.Success = true;
+                result.ProductName = product.Name;
+                successCount++;
+                _logger.LogInformation("Price updated successfully for product {ProductId}: {OldPrice} -> {NewPrice}",
+                    product.Id, product.Price, update.NewPrice);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Failed to update price for product {ProductId}", update.ProductId);
+                result.Success = false;
+                result.ErrorMessage = ex.Message;
+                result.ErrorCode = "PRICE_UPDATE_FAILED";
+                failureCount++;
+            }
+
+            response.Results.Add(result);
+            processedCount++;
+        }
+
+        response.SuccessCount = successCount;
+        response.FailureCount = failureCount;
+
+        _logger.LogInformation("Bulk price update completed: {SuccessCount} succeeded, {FailureCount} failed out of {TotalProcessed} total",
+            successCount, failureCount, processedCount);
+
+        return response;
+    }
 }
