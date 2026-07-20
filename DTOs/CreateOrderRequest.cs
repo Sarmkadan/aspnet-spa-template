@@ -27,6 +27,15 @@ public sealed class CreateOrderRequest
 }
 
 /// <summary>
+/// Response containing the idempotency key for order creation.
+/// </summary>
+public sealed class CreateOrderIdempotencyResponse
+{
+    public string IdempotencyKey { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>
 /// Data transfer object for order item response.
 /// </summary>
 public sealed class OrderItemResponse

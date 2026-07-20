@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =====================================================================
 
+using AspNetSpaTemplate.Caching;
 using AspNetSpaTemplate.DTOs;
 using AspNetSpaTemplate.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,10 +17,12 @@ namespace AspNetSpaTemplate.Controllers;
 public sealed class OrdersController : ApiControllerBase
 {
     private readonly OrderService _orderService;
+    private readonly ICacheService _cacheService;
 
-    public OrdersController(OrderService orderService)
+    public OrdersController(OrderService orderService, ICacheService cacheService)
     {
         _orderService = orderService;
+        _cacheService = cacheService;
     }
 
     [HttpGet("{id:int}")]
@@ -32,13 +35,40 @@ public sealed class OrdersController : ApiControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(OrderResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(CreateOrderIdempotencyResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
     {
         if (!IsAuthenticated)
             return Unauthorized();
 
         var userId = GetUserId();
+
+        // Check for idempotency key
+        var idempotencyKey = Request.Headers.TryGetValue("Idempotency-Key", out var keyHeader) && !string.IsNullOrWhiteSpace(keyHeader)
+            ? keyHeader.ToString()
+            : null;
+
+        if (!string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            // Idempotency key provided - check cache for existing response
+            var cacheKey = $"idempotency:order:{userId}:{idempotencyKey}";
+            var cachedResponse = await _cacheService.GetAsync<OrderResponse>(cacheKey);
+
+            if (cachedResponse != null)
+            {
+                return ApiSuccess(cachedResponse, "Order created successfully (idempotent)", StatusCodes.Status201Created);
+            }
+        }
+
         var order = await _orderService.CreateOrderAsync(userId, request);
+
+        if (!string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            // Store response snapshot with 24h TTL
+            var cacheKey = $"idempotency:order:{userId}:{idempotencyKey}";
+            await _cacheService.SetAsync(cacheKey, order, TimeSpan.FromHours(24));
+        }
+
         return ApiSuccess(order, "Order created successfully", StatusCodes.Status201Created);
     }
 
