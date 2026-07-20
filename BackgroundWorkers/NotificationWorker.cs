@@ -4,6 +4,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using AspNetSpaTemplate.Configuration;
+using AspNetSpaTemplate.Data;
 using AspNetSpaTemplate.Integration;
 
 namespace AspNetSpaTemplate.BackgroundWorkers;
@@ -20,60 +22,72 @@ public class NotificationWorker : IBackgroundTask
 
     private readonly NotificationService _notificationService;
     private readonly ILogger<NotificationWorker> _logger;
+    private readonly PwaOptions _pwaOptions;
+    private readonly AppDbContext _dbContext;
     private DateTime? _lastExecutedAt;
     private int _totalNotificationsSent;
     private int _totalNotificationsFailed;
+    private int _totalSubscriptionsCleaned;
 
     public NotificationWorker(
         NotificationService notificationService,
-        ILogger<NotificationWorker> logger)
+        ILogger<NotificationWorker> logger,
+        PwaOptions pwaOptions,
+        AppDbContext dbContext)
     {
         _notificationService = notificationService;
         _logger = logger;
+        _pwaOptions = pwaOptions;
+        _dbContext = dbContext;
     }
 
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         try
         {
+            // Clean up stale push subscriptions
+            await CleanupStalePushSubscriptionsAsync(cancellationToken);
+
             // Get pending notifications (max 100 per batch)
             var notifications = _notificationService.GetPendingNotifications(100).ToList();
 
             if (notifications.Count == 0)
             {
                 _logger.LogDebug("No pending notifications to send");
-                return;
             }
-
-            _logger.LogInformation($"Processing {notifications.Count} pending notifications");
-
-            var batchSent = 0;
-            var batchFailed = 0;
-
-            foreach (var notification in notifications)
+            else
             {
-                if (cancellationToken.IsCancellationRequested)
-                    break;
+                _logger.LogInformation($"Processing {notifications.Count} pending notifications");
 
-                try
-                {
-                    await SendNotificationAsync(notification, cancellationToken);
-                    _totalNotificationsSent++;
-                    batchSent++;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to send notification: {NotificationType} to {Recipient}", notification.Type, notification.Recipient);
-                    _totalNotificationsFailed++;
-                    batchFailed++;
+                var batchSent = 0;
+                var batchFailed = 0;
 
-                    // In production, re-queue for retry with exponential backoff
-                    // For now, just log and discard
+                foreach (var notification in notifications)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+
+                    try
+                    {
+                        await SendNotificationAsync(notification, cancellationToken);
+                        _totalNotificationsSent++;
+                        batchSent++;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to send notification: {NotificationType} to {Recipient}", notification.Type, notification.Recipient);
+                        _totalNotificationsFailed++;
+                        batchFailed++;
+
+                        // In production, re-queue for retry with exponential backoff
+                        // For now, just log and discard
+                    }
                 }
+
+                _logger.LogInformation("Notification processing complete. Sent: {SentCount}, Failed: {FailedCount}", batchSent, batchFailed);
             }
 
             _lastExecutedAt = DateTime.UtcNow;
-            _logger.LogInformation("Notification processing complete. Sent: {SentCount}, Failed: {FailedCount}", batchSent, batchFailed);
         }
         catch (Exception ex)
         {
@@ -88,8 +102,62 @@ public class NotificationWorker : IBackgroundTask
             TaskName = TaskName,
             LastExecutedAt = _lastExecutedAt,
             ExecutionCount = _totalNotificationsSent + _totalNotificationsFailed,
-            FailureCount = _totalNotificationsFailed
+            FailureCount = _totalNotificationsFailed,
+            AdditionalInfo = $"Cleaned stale subscriptions: {_totalSubscriptionsCleaned}"
         };
+    }
+
+    private async Task CleanupStalePushSubscriptionsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (_pwaOptions.InactiveSubscriptionPurgeDays <= 0)
+            {
+                _logger.LogDebug("Stale subscription cleanup disabled (InactiveSubscriptionPurgeDays <= 0)");
+                return;
+            }
+
+            var cutoffDate = DateTime.UtcNow.AddDays(-_pwaOptions.InactiveSubscriptionPurgeDays);
+            var staleSubscriptions = _dbContext.PushSubscriptions
+                .Where(s => s.IsActive && (s.LastActiveAt == null || s.LastActiveAt < cutoffDate))
+                .ToList();
+
+            if (staleSubscriptions.Count == 0)
+            {
+                _logger.LogDebug("No stale push subscriptions found for cleanup");
+                return;
+            }
+
+            _logger.LogInformation("Cleaning up {Count} stale push subscriptions (older than {Days} days)",
+                staleSubscriptions.Count, _pwaOptions.InactiveSubscriptionPurgeDays);
+
+            foreach (var subscription in staleSubscriptions)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                try
+                {
+                    subscription.Deactivate();
+                    _dbContext.PushSubscriptions.Remove(subscription);
+                    _logger.LogInformation("Removed stale push subscription for user {UserId} (ID: {SubscriptionId})",
+                        subscription.UserId, subscription.Id);
+                    _totalSubscriptionsCleaned++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to clean up push subscription {SubscriptionId} for user {UserId}",
+                        subscription.Id, subscription.UserId);
+                }
+            }
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Stale push subscription cleanup completed. Removed: {Count}", staleSubscriptions.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cleaning up stale push subscriptions");
+        }
     }
 
     private async Task SendNotificationAsync(NotificationMessage notification, CancellationToken cancellationToken)

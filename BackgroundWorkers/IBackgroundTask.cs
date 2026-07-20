@@ -51,6 +51,7 @@ public sealed class BackgroundTaskStatus
     public int ExecutionCount { get; set; }
     public int FailureCount { get; set; }
     public string? LastError { get; set; }
+    public string? AdditionalInfo { get; set; }
     public string Status => IsRunning ? "Running" : LastError is not null ? "Failed" : "Idle";
 }
 
