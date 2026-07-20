@@ -6,6 +6,10 @@
 
 using AspNetSpaTemplate.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AspNetSpaTemplate.Controllers;
 
@@ -47,15 +51,35 @@ public sealed class ManifestController : ControllerBase
 
         Response.Headers["Vary"] = "Host";
 
-        return new JsonResult(manifest, new System.Text.Json.JsonSerializerOptions
+        var jsonOptions = new JsonSerializerOptions
         {
-            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             WriteIndented = false
-        })
+        };
+
+        var json = JsonSerializer.Serialize(manifest, jsonOptions);
+        var etag = ComputeETag(json);
+
+        if (Request.Headers.IfNoneMatch.ToString() == etag)
+        {
+            return StatusCode(StatusCodes.Status304NotModified);
+        }
+
+        Response.Headers.ETag = etag;
+
+        return new JsonResult(manifest, jsonOptions)
         {
             ContentType = "application/manifest+json"
         };
+    }
+
+    private static string ComputeETag(string content)
+    {
+        using var sha256 = SHA256.Create();
+        var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(content));
+        var hash = Convert.ToBase64String(bytes);
+        return $"\"{hash}\"";
     }
 
     /// <summary>
