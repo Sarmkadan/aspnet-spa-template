@@ -56,6 +56,9 @@ public sealed class User
     /// <summary>Gets or sets when the user last logged in.</summary>
     public DateTime? LastLoginAt { get; set; }
 
+/// <summary>Gets or sets when the user was deleted (soft delete).</summary>
+public DateTime? DeletedAt { get; set; }
+
     /// <summary>Gets or sets the collection of orders placed by this user.</summary>
     public ICollection<Order>? Orders { get; set; }
 
@@ -117,4 +120,22 @@ public sealed class User
         IsActive = true;
         UpdatedAt = DateTime.UtcNow;
     }
+
+/// <summary>Soft deletes the user account.</summary>
+public void SoftDelete()
+{
+    DeletedAt = DateTime.UtcNow;
+    UpdatedAt = DateTime.UtcNow;
+}
+
+/// <summary>Restores a soft-deleted user account.</summary>
+public void Restore()
+{
+    DeletedAt = null;
+    UpdatedAt = DateTime.UtcNow;
+}
+
+/// <summary>Checks if the user account is soft deleted.</summary>
+/// <returns>True if the user is soft deleted; otherwise false.</returns>
+public bool IsDeleted() => DeletedAt.HasValue;
 }

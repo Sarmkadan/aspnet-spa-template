@@ -45,6 +45,12 @@ public sealed class UserService
             throw new NotFoundException("User", id);
         }
 
+        if (user.IsDeleted())
+        {
+            _logger.LogWarning("User is deleted: {UserId}", id);
+            throw new NotFoundException("User", id);
+        }
+
         _logger.LogInformation("Retrieved user: {UserId} - {FullName} ({Email})", user.Id, user.GetFullName(), user.Email);
         return MapToResponse(user);
     }
@@ -176,6 +182,48 @@ public sealed class UserService
         _logger.LogInformation("User activated: {UserId} - {FullName}", user.Id, user.GetFullName());
     }
 
+    public async Task SoftDeleteUserAsync(int id)
+    {
+        _logger.LogInformation("Soft deleting user: {UserId}", id);
+
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user is null)
+        {
+            _logger.LogWarning("User not found for soft delete: {UserId}", id);
+            throw new NotFoundException("User", id);
+        }
+
+        user.SoftDelete();
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        _logger.LogInformation("User soft deleted: {UserId} - {FullName}", user.Id, user.GetFullName());
+    }
+
+    public async Task RestoreUserAsync(int id)
+    {
+        _logger.LogInformation("Restoring user: {UserId}", id);
+
+        var user = await _userRepository.GetByIdIncludingDeletedAsync(id);
+        if (user is null)
+        {
+            _logger.LogWarning("User not found for restore: {UserId}", id);
+            throw new NotFoundException("User", id);
+        }
+
+        if (!user.IsDeleted())
+        {
+            _logger.LogWarning("User is not deleted, cannot restore: {UserId}", id);
+            throw new BusinessException("User is not deleted", "USER_NOT_DELETED");
+        }
+
+        user.Restore();
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        _logger.LogInformation("User restored: {UserId} - {FullName}", user.Id, user.GetFullName());
+    }
+
     public async Task<LoginResponse> AuthenticateAsync(LoginRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -282,7 +330,8 @@ public sealed class UserService
             IsActive = user.IsActive,
             IsEmailVerified = user.IsEmailVerified,
             CreatedAt = user.CreatedAt,
-            LastLoginAt = user.LastLoginAt
+            LastLoginAt = user.LastLoginAt,
+            DeletedAt = user.DeletedAt
         };
     }
 }

@@ -54,6 +54,7 @@ public sealed class UserResponse
     public bool IsEmailVerified { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    public DateTime? DeletedAt { get; set; }
 }
 
 /// <summary>
