@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Collections.Generic;
 using AspNetSpaTemplate.Data.Repositories;
 using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
@@ -220,6 +221,45 @@ public sealed class ReviewService
         await _reviewRepository.SaveChangesAsync();
 
         _logger.LogDebug("Review marked as helpful: {ReviewId} (HelpfulCount: {HelpfulCount})", review.Id, review.HelpfulCount);
+    }
+
+    /// <summary>
+    /// Returns a rating summary for the specified product, including average rating,
+    /// total review count, and a per‑star breakdown.
+    /// </summary>
+    public async Task<RatingSummary> GetRatingSummaryAsync(int productId)
+    {
+        _logger.LogDebug("Getting rating summary for product: {ProductId}", productId);
+
+        var reviews = await _reviewRepository.FindAsync(r => r.ProductId == productId && r.IsApproved);
+        var reviewList = reviews.ToList();
+
+        var count = reviewList.Count;
+        var average = count == 0 ? 0m : (decimal)reviewList.Average(r => r.Rating);
+
+        var starCounts = new Dictionary<int, int>();
+        for (int i = 1; i <= 5; i++)
+        {
+            starCounts[i] = 0;
+        }
+
+        foreach (var rev in reviewList)
+        {
+            if (rev.Rating >= 1 && rev.Rating <= 5)
+            {
+                starCounts[rev.Rating]++;
+            }
+        }
+
+        var summary = new RatingSummary
+        {
+            AverageRating = average,
+            ReviewCount = count,
+            StarCounts = starCounts
+        };
+
+        _logger.LogInformation("Rating summary for product {ProductId}: Avg={AverageRating}, Count={ReviewCount}", productId, average, count);
+        return summary;
     }
 
     private async Task UpdateProductRatingAsync(int productId)
