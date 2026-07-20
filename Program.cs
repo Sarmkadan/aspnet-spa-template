@@ -38,6 +38,9 @@ builder.Services.AddSingleton<ICacheService, MemoryCacheService>(sp =>
     new MemoryCacheService(sp.GetRequiredService<ILogger<MemoryCacheService>>()));
 builder.Services.AddScoped<IThemeService, ThemeService>();
 
+// Metrics registry for health metrics
+builder.Services.AddSingleton<MetricsRegistry>();
+
 // PWA manifest
 builder.Services.AddSingleton<IManifestService, ManifestService>();
 
