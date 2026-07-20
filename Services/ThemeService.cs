@@ -33,6 +33,9 @@ public sealed class ThemeService : IThemeService
     }
 
     /// <inheritdoc/>
+    public event EventHandler<ThemeChangedEventArgs> ThemeChanged;
+
+    /// <inheritdoc/>
     public async Task<ColourScheme> GetSchemeAsync(int userId, CancellationToken ct = default)
     {
         if (userId <= 0)
@@ -71,10 +74,16 @@ public sealed class ThemeService : IThemeService
         try
         {
             var key = BuildKey(userId);
+            var stored = await _cache.GetAsync<ThemeEntry>(key);
+
+            if (stored is not null && stored.Scheme == scheme)
+                return;
+
             var entry = new ThemeEntry { Scheme = scheme, UpdatedAt = DateTime.UtcNow };
             await _cache.SetAsync(key, entry, PreferenceTtl);
 
             _logger.LogInformation("Theme preference updated for user {UserId}: {Scheme}", userId, scheme);
+            ThemeChanged?.Invoke(this, new ThemeChangedEventArgs(userId, scheme));
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -92,9 +101,15 @@ public sealed class ThemeService : IThemeService
         try
         {
             var key = BuildKey(userId);
+            var stored = await _cache.GetAsync<ThemeEntry>(key);
+
+            if (stored is null)
+                return;
+
             await _cache.RemoveAsync(key);
 
             _logger.LogDebug("Theme preference cleared for user {UserId}", userId);
+            ThemeChanged?.Invoke(this, new ThemeChangedEventArgs(userId, ColourScheme.System));
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
