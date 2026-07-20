@@ -6,8 +6,10 @@
 
 using AspNetSpaTemplate.BackgroundWorkers;
 using AspNetSpaTemplate.Caching;
+using AspNetSpaTemplate.Configuration;
 using AspNetSpaTemplate.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace AspNetSpaTemplate.Controllers;
 
@@ -24,17 +26,23 @@ public sealed class HealthController : ControllerBase
     private readonly IBackgroundTaskScheduler _taskScheduler;
     private readonly ILogger<HealthController> _logger;
     private readonly MetricsRegistry _metricsRegistry;
+    private readonly AspnetSpaTemplateOptions _aspnetSpaTemplateOptions;
+    private readonly PwaOptions _pwaOptions;
 
     public HealthController(
         ICacheHealthMonitor cacheHealthMonitor,
         IBackgroundTaskScheduler taskScheduler,
         ILogger<HealthController> logger,
-        MetricsRegistry metricsRegistry)
+        MetricsRegistry metricsRegistry,
+        IOptions<AspnetSpaTemplateOptions> aspnetSpaTemplateOptions,
+        IOptions<PwaOptions> pwaOptions)
     {
         _cacheHealthMonitor = cacheHealthMonitor;
         _taskScheduler = taskScheduler;
         _logger = logger;
         _metricsRegistry = metricsRegistry;
+        _aspnetSpaTemplateOptions = aspnetSpaTemplateOptions.Value;
+        _pwaOptions = pwaOptions.Value;
     }
 
     /// <summary>
@@ -137,6 +145,57 @@ public sealed class HealthController : ControllerBase
         _metricsRegistry.IncrementRequestCount();
 
         return Ok(metrics);
+    }
+
+    /// <summary>
+    /// GET /api/health/config - Returns a sanitized snapshot of active AspnetSpaTemplateOptions and PwaOptions.
+    /// </summary>
+    [HttpGet("config")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult GetConfig()
+    {
+        var config = new
+        {
+            AspnetSpaTemplate = new
+            {
+                Environment = _aspnetSpaTemplateOptions.Environment,
+                RequestLogging = new
+                {
+                    Enabled = _aspnetSpaTemplateOptions.RequestLogging.Enabled,
+                    VerbosityLevel = _aspnetSpaTemplateOptions.RequestLogging.VerbosityLevel,
+                    SlowRequestThresholdMs = _aspnetSpaTemplateOptions.RequestLogging.SlowRequestThresholdMs,
+                    ExcludedPaths = _aspnetSpaTemplateOptions.RequestLogging.ExcludedPaths
+                },
+                Webhooks = new
+                {
+                    // Mask secret values
+                    PaymentProviderSecret = "***REDACTED***",
+                    EmailServiceSecret = "***REDACTED***",
+                    ShippingProviderSecret = "***REDACTED***"
+                }
+            },
+            Pwa = new
+            {
+                EnablePushNotifications = _pwaOptions.EnablePushNotifications,
+                EnableOfflineSync = _pwaOptions.EnableOfflineSync,
+                MaxNotificationsPerBatch = _pwaOptions.MaxNotificationsPerBatch,
+                MaxSyncRetries = _pwaOptions.MaxSyncRetries,
+                SyncRetryBaseDelaySeconds = _pwaOptions.SyncRetryBaseDelaySeconds,
+                SyncQueueMaxAgeHours = _pwaOptions.SyncQueueMaxAgeHours,
+                PushDeliveryTimeoutSeconds = _pwaOptions.PushDeliveryTimeoutSeconds,
+                InactiveSubscriptionPurgeDays = _pwaOptions.InactiveSubscriptionPurgeDays,
+                Vapid = new
+                {
+                    PublicKey = !string.IsNullOrWhiteSpace(_pwaOptions.Vapid.PublicKey) ?
+                        "***CONFIGURED***" : "***NOT CONFIGURED***",
+                    Subject = _pwaOptions.Vapid.Subject
+                },
+                IsVapidConfigured = _pwaOptions.IsVapidConfigured
+            },
+            Timestamp = DateTime.UtcNow
+        };
+
+        return Ok(config);
     }
 
     /// <summary>
