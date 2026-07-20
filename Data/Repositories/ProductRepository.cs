@@ -125,4 +125,9 @@ public class ProductRepository : RepositoryBase<Product>
     {
         return await DbSet.CountAsync(p => p.IsAvailable && p.StockQuantity > 0);
     }
+
+    public virtual async Task<IEnumerable<Product>> GetAllAsync()
+    {
+        return await DbSet.ToListAsync();
+    }
 }
