@@ -123,16 +123,23 @@ public sealed class ProductService
     }
 
     /// <summary>
-    /// Searches products by term.
+    /// Searches products by query, category, and price range.
     /// </summary>
-    /// <param name="searchTerm">The search term.</param>
+    /// <param name="query">The search query term.</param>
+    /// <param name="category">Optional category filter.</param>
+    /// <param name="minPrice">Optional minimum price filter.</param>
+    /// <param name="maxPrice">Optional maximum price filter.</param>
     /// <returns>A list of matching products.</returns>
-    public async Task<List<ProductResponse>> SearchProductsAsync(string searchTerm)
+    public async Task<List<ProductResponse>> SearchProductsAsync(
+        string query,
+        ProductCategory? category = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null)
     {
-        if (string.IsNullOrWhiteSpace(searchTerm))
+        if (string.IsNullOrWhiteSpace(query))
             return new List<ProductResponse>();
 
-        var products = await _productRepository.SearchAsync(searchTerm);
+        var products = await _productRepository.SearchAsync(query, category, minPrice, maxPrice);
         return products.Select(MapToResponse).ToList();
     }
 

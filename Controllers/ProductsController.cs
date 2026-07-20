@@ -65,9 +65,13 @@ public sealed class ProductsController : ApiControllerBase
 
     [HttpGet("search")]
     [ProducesResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> SearchProducts([FromQuery] string searchTerm)
+    public async Task<IActionResult> SearchProducts(
+        [FromQuery] string query,
+        [FromQuery] ProductCategory? category,
+        [FromQuery] decimal? minPrice,
+        [FromQuery] decimal? maxPrice)
     {
-        var products = await _productService.SearchProductsAsync(searchTerm);
+        var products = await _productService.SearchProductsAsync(query, category, minPrice, maxPrice);
         return ApiSuccess(products);
     }
 

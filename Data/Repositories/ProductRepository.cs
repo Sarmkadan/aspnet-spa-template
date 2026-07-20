@@ -62,13 +62,39 @@ public class ProductRepository : RepositoryBase<Product>
             .ToListAsync();
     }
 
-    public virtual async Task<IEnumerable<Product>> SearchAsync(string searchTerm)
+    public virtual async Task<IEnumerable<Product>> SearchAsync(
+        string searchTerm,
+        ProductCategory? category = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null)
     {
+        var query = DbSet
+            .Where(p => p.IsAvailable)
+            .AsQueryable();
+
         var term = searchTerm.ToLower();
-        return await DbSet
-            .Where(p => (p.Name.ToLower().Contains(term) ||
-                         p.Description.ToLower().Contains(term)) &&
-                        p.IsAvailable)
+
+        // Apply text search
+        query = query.Where(p => p.Name.ToLower().Contains(term) || p.Description.ToLower().Contains(term));
+
+        // Apply category filter if specified
+        if (category.HasValue)
+        {
+            query = query.Where(p => p.Category == category.Value);
+        }
+
+        // Apply price range filters if specified
+        if (minPrice.HasValue)
+        {
+            query = query.Where(p => p.Price >= minPrice.Value);
+        }
+
+        if (maxPrice.HasValue)
+        {
+            query = query.Where(p => p.Price <= maxPrice.Value);
+        }
+
+        return await query
             .OrderByDescending(p => p.Rating)
             .ToListAsync();
     }
