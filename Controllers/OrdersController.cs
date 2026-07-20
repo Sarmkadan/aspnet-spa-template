@@ -109,4 +109,12 @@ public sealed class OrdersController : ApiControllerBase
 
         return ApiSuccess(revenue);
     }
+
+    [HttpGet("stats")]
+    [ProducesResponseType(typeof(OrderStatsResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOrderStats([FromQuery] int? days = null)
+    {
+        var stats = await _orderService.GetOrderStatsAsync(days);
+        return ApiSuccess(stats);
+    }
 }
