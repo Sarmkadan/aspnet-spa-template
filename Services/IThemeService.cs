@@ -14,6 +14,11 @@ namespace AspNetSpaTemplate.Services;
 public interface IThemeService
 {
     /// <summary>
+    /// Event raised when the theme changes.
+    /// </summary>
+    event EventHandler<ThemeChangedEventArgs> ThemeChanged;
+
+    /// <summary>
     /// Returns the saved colour scheme for the given user.
     /// Returns <see cref="ColourScheme.System"/> when no explicit preference has been stored.
     /// </summary>
@@ -51,4 +56,31 @@ public enum ColourScheme
 
     /// <summary>Always use the dark theme.</summary>
     Dark = 2
+}
+
+/// <summary>
+/// Event arguments for the ThemeChanged event.
+/// </summary>
+public class ThemeChangedEventArgs : EventArgs
+{
+    /// <summary>
+    /// The ID of the user whose theme changed.
+    /// </summary>
+    public int UserId { get; }
+
+    /// <summary>
+    /// The new theme scheme.
+    /// </summary>
+    public ColourScheme Scheme { get; }
+
+    /// <summary>
+    /// Initializes a new instance of the ThemeChangedEventArgs class.
+    /// </summary>
+    /// <param name="userId">The ID of the user whose theme changed.</param>
+    /// <param name="scheme">The new theme scheme.</param>
+    public ThemeChangedEventArgs(int userId, ColourScheme scheme)
+    {
+        UserId = userId;
+        Scheme = scheme;
+    }
 }
