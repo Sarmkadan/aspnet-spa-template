@@ -44,6 +44,9 @@ public sealed class AppDbContext : DbContext
             entity.HasIndex(e => e.Email).IsUnique();
             entity.HasMany(e => e.Orders).WithOne(o => o.User).HasForeignKey(o => o.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasMany(e => e.Reviews).WithOne(r => r.User).HasForeignKey(r => r.UserId).OnDelete(DeleteBehavior.Cascade);
+
+            // Global query filter to exclude soft-deleted users by default
+            entity.HasQueryFilter(e => !e.DeletedAt.HasValue);
         });
 
         // Product configuration

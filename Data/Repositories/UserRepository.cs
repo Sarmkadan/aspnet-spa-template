@@ -26,19 +26,19 @@ public class UserRepository : RepositoryBase<User>
 
     public virtual async Task<IEnumerable<User>> GetActiveUsersAsync()
     {
-        return await DbSet.Where(u => u.IsActive).ToListAsync();
+        return await DbSet.Where(u => u.IsActive && !u.IsDeleted()).ToListAsync();
     }
 
     public virtual async Task<IEnumerable<User>> GetVerifiedUsersAsync()
     {
-        return await DbSet.Where(u => u.IsEmailVerified && u.IsActive).ToListAsync();
+        return await DbSet.Where(u => u.IsEmailVerified && u.IsActive && !u.IsDeleted()).ToListAsync();
     }
 
     public virtual async Task<IEnumerable<User>> GetRecentlyActiveAsync(int days = 30)
     {
         var cutoffDate = DateTime.UtcNow.AddDays(-days);
         return await DbSet
-            .Where(u => u.LastLoginAt != null && u.LastLoginAt >= cutoffDate)
+            .Where(u => u.LastLoginAt != null && u.LastLoginAt >= cutoffDate && u.IsActive && !u.IsDeleted())
             .OrderByDescending(u => u.LastLoginAt)
             .ToListAsync();
     }
@@ -46,22 +46,49 @@ public class UserRepository : RepositoryBase<User>
     public virtual async Task<IEnumerable<User>> GetUsersByCountryAsync(string country)
     {
         return await DbSet
-            .Where(u => u.Country == country && u.IsActive)
+            .Where(u => u.Country == country && u.IsActive && !u.IsDeleted())
             .ToListAsync();
     }
 
     public virtual async Task<int> GetUserCountAsync()
     {
-        return await DbSet.CountAsync();
+        return await DbSet.CountAsync(u => !u.IsDeleted());
     }
 
     public virtual async Task<int> GetActiveUserCountAsync()
     {
-        return await DbSet.CountAsync(u => u.IsActive);
+        return await DbSet.CountAsync(u => u.IsActive && !u.IsDeleted());
     }
 
     public virtual async Task<bool> EmailExistsAsync(string email)
     {
-        return await DbSet.AnyAsync(u => u.Email.ToLower() == email.ToLower());
+        return await DbSet.AnyAsync(u => u.Email.ToLower() == email.ToLower() && !u.IsDeleted());
+    }
+
+    public virtual async Task<User?> GetByIdAsync(int id)
+    {
+        return await DbSet.FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted());
+    }
+
+    public virtual async Task<IEnumerable<User>> GetAllAsync()
+    {
+        return await DbSet.Where(u => !u.IsDeleted()).ToListAsync();
+    }
+
+    public virtual async Task<User?> GetByIdIncludingDeletedAsync(int id)
+    {
+        return await DbSet.FirstOrDefaultAsync(u => u.Id == id);
+    }
+
+    public virtual void SoftDelete(User user)
+    {
+        user.SoftDelete();
+        Update(user);
+    }
+
+    public virtual void Restore(User user)
+    {
+        user.Restore();
+        Update(user);
     }
 }

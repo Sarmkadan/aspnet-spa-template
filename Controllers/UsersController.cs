@@ -95,6 +95,28 @@ public sealed class UsersController : ApiControllerBase
         return NoContent();
     }
 
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        if (!IsAuthenticated)
+            return Unauthorized();
+
+        await _userService.SoftDeleteUserAsync(id);
+        return NoContent();
+    }
+
+    [HttpPost("{id:int}/restore")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> RestoreUser(int id)
+    {
+        if (!IsAuthenticated)
+            return Unauthorized();
+
+        await _userService.RestoreUserAsync(id);
+        return NoContent();
+    }
+
     [HttpGet]
     [ProducesResponseType(typeof(List<UserResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllUsers()
