@@ -2,7 +2,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using AspNetSpaTemplate.DTOs;
 using AspNetSpaTemplate.Services;
@@ -84,6 +84,19 @@ public sealed class OrdersController : ApiControllerBase
     {
         var orders = await _orderService.GetPendingOrdersAsync();
         return ApiSuccess(orders);
+    }
+
+    [HttpPost("{id:int}/cancel")]
+    [ProducesResponseType(typeof(OrderResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CancelOrder(int id)
+    {
+        if (!IsAuthenticated)
+            return Unauthorized();
+
+        var userId = GetUserId();
+        var order = await _orderService.CancelOrderAsync(id, userId);
+        return ApiSuccess(order, "Order cancelled successfully");
     }
 
     [HttpGet("revenue/total")]

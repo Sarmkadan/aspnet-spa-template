@@ -275,6 +275,46 @@ public sealed class OrderService
     }
 
     /// <summary>
+    /// Cancels an order.
+    /// </summary>
+    /// <param name="id">The order ID.</param>
+    /// <param name="userId">The user ID attempting to cancel.</param>
+    /// <returns>The cancelled order response.</returns>
+    /// <exception cref="NotFoundException">Thrown when order is not found.</exception>
+    /// <exception cref="BusinessException">Thrown when order cannot be cancelled.</exception>
+    /// <exception cref="UnauthorizedAccessException">Thrown when user does not own the order.</exception>
+    public async Task<OrderResponse> CancelOrderAsync(int id, int userId)
+    {
+        _logger.LogInformation("Cancelling order: {OrderId} by user {UserId}", id, userId);
+
+        var order = await _orderRepository.GetByIdAsync(id);
+        if (order is null)
+        {
+            _logger.LogWarning("Order not found for cancellation: {OrderId}", id);
+            throw new NotFoundException("Order", id);
+        }
+
+        if (order.UserId != userId)
+        {
+            _logger.LogWarning("User {UserId} attempted to cancel order {OrderId} that doesn't belong to them", userId, id);
+            throw new UnauthorizedAccessException("You can only cancel your own orders");
+        }
+
+        if (!order.CanBeCancelled())
+        {
+            _logger.LogWarning("Cannot cancel order {OrderId} with status: {Status}", id, order.Status.ToDisplayName());
+            throw new BusinessException("Order cannot be cancelled in its current state", "ORDER_NOT_CANCELLABLE");
+        }
+
+        order.Cancel();
+        _orderRepository.Update(order);
+        await _orderRepository.SaveChangesAsync();
+
+        _logger.LogInformation("Order cancelled successfully: {OrderId} - New Status: {Status}", order.Id, order.Status.ToDisplayName());
+        return MapToResponse(order);
+    }
+
+    /// <summary>
     /// Gets orders for a user.
     /// </summary>
     /// <param name="userId">The user ID.</param>
