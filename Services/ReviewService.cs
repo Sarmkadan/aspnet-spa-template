@@ -262,6 +262,59 @@ public sealed class ReviewService
         return summary;
     }
 
+    /// <summary>
+    /// Recalculates rating summaries for all products by rebuilding RatingSummary data from reviews.
+    /// This is useful when reviews have been modified outside normal channels or when data integrity issues occur.
+    /// </summary>
+    /// <returns>Number of products updated</returns>
+    public async Task<int> RecalculateAsync()
+    {
+        _logger.LogInformation("Starting rating recalculation for all products");
+
+        var allProducts = await _productRepository.GetAllAsync();
+        var updatedCount = 0;
+
+        foreach (var product in allProducts)
+        {
+            var reviews = await _reviewRepository.FindAsync(r => r.ProductId == product.Id && r.IsApproved);
+            var reviewList = reviews.ToList();
+
+            var count = reviewList.Count;
+            var average = count == 0 ? 0m : (decimal)reviewList.Average(r => r.Rating);
+
+            var starCounts = new Dictionary<int, int>();
+            for (int i = 1; i <= 5; i++)
+            {
+                starCounts[i] = 0;
+            }
+
+            foreach (var rev in reviewList)
+            {
+                if (rev.Rating >= 1 && rev.Rating <= 5)
+                {
+                    starCounts[rev.Rating]++;
+                }
+            }
+
+            // Update product rating (this is the existing UpdateProductRatingAsync logic)
+            if (count == 0)
+            {
+                product.UpdateRating(0, 0);
+            }
+            else
+            {
+                product.UpdateRating(average, count);
+            }
+
+            _productRepository.Update(product);
+            updatedCount++;
+        }
+
+        await _productRepository.SaveChangesAsync();
+        _logger.LogInformation("Rating recalculation completed for {UpdatedCount} products", updatedCount);
+        return updatedCount;
+    }
+
     private async Task UpdateProductRatingAsync(int productId)
     {
         var product = await _productRepository.GetByIdAsync(productId);

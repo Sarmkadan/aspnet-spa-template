@@ -62,6 +62,22 @@ public sealed class ReviewsController : ApiControllerBase
         var reviews = await _reviewService.GetProductReviewsAsync(productId);
         return ApiSuccess(reviews.ToList());
     }
+
+    /// <summary>
+    /// Admin endpoint to recalculate rating summaries for all products.
+    /// This rebuilds rating data from reviews and is useful for data integrity issues.
+    /// Requires admin privileges.
+    /// </summary>
+    /// <returns>Success response with count of updated products</returns>
+    [HttpPost("admin/recalculate")]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RecalculateRatings()
+    {
+        var updatedCount = await _reviewService.RecalculateAsync();
+        return ApiSuccess(updatedCount, "Rating recalculation completed successfully");
+    }
 }
 
 /// <summary>
