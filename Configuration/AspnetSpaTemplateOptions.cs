@@ -19,6 +19,7 @@ public class AspnetSpaTemplateOptions
     public string Environment { get; set; } = "Production";
 
     public RequestLoggingOptions RequestLogging { get; set; } = new();
+    public WebhookOptions Webhooks { get; set; } = new();
 }
 
 public class RequestLoggingOptions
@@ -37,4 +38,16 @@ public class RequestLoggingOptions
     public int SlowRequestThresholdMs { get; set; } = 1000;
 
     public List<string> ExcludedPaths { get; set; } = new();
+}
+
+public class WebhookOptions
+{
+    [Required]
+    public string PaymentProviderSecret { get; set; } = string.Empty;
+
+    [Required]
+    public string EmailServiceSecret { get; set; } = string.Empty;
+
+    [Required]
+    public string ShippingProviderSecret { get; set; } = string.Empty;
 }

@@ -2,10 +2,14 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
+using AspNetSpaTemplate.Configuration;
 using AspNetSpaTemplate.Integration;
+using AspNetSpaTemplate.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace AspNetSpaTemplate.Controllers;
 
@@ -20,11 +24,16 @@ public sealed class WebhooksController : ControllerBase
 {
     private readonly WebhookHandler _webhookHandler;
     private readonly ILogger<WebhooksController> _logger;
+    private readonly AspnetSpaTemplateOptions _options;
 
-    public WebhooksController(WebhookHandler webhookHandler, ILogger<WebhooksController> logger)
+    public WebhooksController(
+        WebhookHandler webhookHandler,
+        ILogger<WebhooksController> logger,
+        AspnetSpaTemplateOptions options)
     {
         _webhookHandler = webhookHandler;
         _logger = logger;
+        _options = options;
     }
 
     /// <summary>
@@ -45,6 +54,17 @@ public sealed class WebhooksController : ControllerBase
                 Acknowledged = false,
                 ErrorCode = "INVALID_PAYLOAD",
                 Message = "Payload cannot be empty"
+            });
+        }
+
+        // Verify X-Signature header before processing
+        if (!VerifySignature("payment-provider", request.Payload))
+        {
+            return Unauthorized(new WebhookResponse
+            {
+                Acknowledged = false,
+                ErrorCode = "SIGNATURE_INVALID",
+                Message = "Invalid webhook signature"
             });
         }
 
@@ -70,6 +90,57 @@ public sealed class WebhooksController : ControllerBase
     }
 
     /// <summary>
+    /// Verifies webhook signature using HMAC-SHA256.
+    /// Validates the X-Signature header against the raw request body.
+    /// </summary>
+    private bool VerifySignature(string provider, string payload)
+    {
+        // Get X-Signature header from request
+        if (!Request.Headers.TryGetValue("X-Signature", out var signatureHeader))
+        {
+            _logger.LogWarning("X-Signature header is missing for provider {Provider}", provider);
+            return false;
+        }
+
+        string signature = signatureHeader.ToString();
+
+        if (string.IsNullOrWhiteSpace(signature))
+        {
+            _logger.LogWarning("X-Signature header is empty for provider {Provider}", provider);
+            return false;
+        }
+
+        string secret = provider switch
+        {
+            "payment-provider" => _options.Webhooks.PaymentProviderSecret,
+            "email-service" => _options.Webhooks.EmailServiceSecret,
+            "shipping-provider" => _options.Webhooks.ShippingProviderSecret,
+            _ => string.Empty
+        };
+
+        if (string.IsNullOrWhiteSpace(secret))
+        {
+            _logger.LogWarning("No webhook secret configured for provider {Provider}", provider);
+            return false;
+        }
+
+        // Compute expected signature using HMAC-SHA256
+        var expectedSignature = EncryptionHelper.ComputeHmacSha256(payload, secret);
+
+        // Compare signatures (constant-time comparison to prevent timing attacks)
+        var signatureValid = CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(expectedSignature),
+            Encoding.UTF8.GetBytes(signature));
+
+        if (!signatureValid)
+        {
+            _logger.LogWarning("Invalid X-Signature header for provider {Provider}", provider);
+        }
+
+        return signatureValid;
+    }
+
+    /// <summary>
     /// Receives webhook from email service (delivery status, bounces, complaints).
     /// </summary>
     [HttpPost("email")]
@@ -77,6 +148,17 @@ public sealed class WebhooksController : ControllerBase
     [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleEmailWebhook([FromBody] WebhookRequest request)
     {
+        // Verify X-Signature header before processing
+        if (!VerifySignature("email-service", request.Payload))
+        {
+            return Unauthorized(new WebhookResponse
+            {
+                Acknowledged = false,
+                ErrorCode = "SIGNATURE_INVALID",
+                Message = "Invalid webhook signature"
+            });
+        }
+
         var success = await _webhookHandler.HandleWebhookAsync("email-service", request.Payload, request.Signature);
 
         if (!success)
@@ -104,6 +186,17 @@ public sealed class WebhooksController : ControllerBase
     [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleShippingWebhook([FromBody] WebhookRequest request)
     {
+        // Verify X-Signature header before processing
+        if (!VerifySignature("shipping-provider", request.Payload))
+        {
+            return Unauthorized(new WebhookResponse
+            {
+                Acknowledged = false,
+                ErrorCode = "SIGNATURE_INVALID",
+                Message = "Invalid webhook signature"
+            });
+        }
+
         var success = await _webhookHandler.HandleWebhookAsync("shipping-provider", request.Payload, request.Signature);
 
         if (!success)
@@ -150,6 +243,17 @@ public sealed class WebhooksController : ControllerBase
                 Acknowledged = false,
                 ErrorCode = "INVALID_PAYLOAD",
                 Message = "Payload cannot be empty"
+            });
+        }
+
+        // Verify X-Signature header before processing
+        if (!VerifySignature(provider, request.Payload))
+        {
+            return Unauthorized(new WebhookResponse
+            {
+                Acknowledged = false,
+                ErrorCode = "SIGNATURE_INVALID",
+                Message = "Invalid webhook signature"
             });
         }
 
