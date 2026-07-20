@@ -65,6 +65,12 @@ builder.Services.AddOptions<AspnetSpaTemplateOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+// Configure PWA options
+builder.Services.AddOptions<PwaOptions>()
+    .Bind(builder.Configuration.GetSection(PwaOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 // CORS configuration
 builder.Services.AddCors(options =>
 {
