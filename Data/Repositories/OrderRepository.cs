@@ -104,6 +104,42 @@ public class OrderRepository : RepositoryBase<Order>
             .AverageAsync(o => o.Total);
     }
 
+    public virtual async Task<Dictionary<string, int>> GetStatusCountsAsync()
+    {
+        var statusGroups = await DbSet
+            .Where(o => o.Status != OrderStatus.Cancelled && o.Status != OrderStatus.Refunded)
+            .GroupBy(o => o.Status)
+            .Select(g => new { Status = g.Key.ToDisplayName(), Count = g.Count() })
+            .ToDictionaryAsync(x => x.Status, x => x.Count);
+
+        // Ensure all statuses are included
+        foreach (var status in Enum.GetValues<OrderStatus>())
+        {
+            var displayName = status.ToDisplayName();
+            if (!statusGroups.ContainsKey(displayName))
+            {
+                statusGroups[displayName] = 0;
+            }
+        }
+
+        return statusGroups;
+    }
+
+    public virtual async Task<int> GetTotalOrdersCountAsync()
+    {
+        return await DbSet.CountAsync();
+    }
+
+    public virtual async Task<int> GetCancelledOrdersCountAsync()
+    {
+        return await DbSet.CountAsync(o => o.Status == OrderStatus.Cancelled);
+    }
+
+    public virtual async Task<int> GetRefundedOrdersCountAsync()
+    {
+        return await DbSet.CountAsync(o => o.Status == OrderStatus.Refunded);
+    }
+
     public override async Task<Order?> GetByIdAsync(int id)
     {
         return await DbSet

@@ -385,6 +385,40 @@ public sealed class OrderService
         return revenue;
     }
 
+    /// <summary>
+    /// Gets order statistics grouped by status and total revenue.
+    /// </summary>
+    /// <param name="days">Optional number of days to filter by.</param>
+    /// <returns>Order statistics response.</returns>
+    public async Task<OrderStatsResponse> GetOrderStatsAsync(int? days = null)
+    {
+        _logger.LogDebug("Getting order statistics for last {Days} days", days ?? 0);
+
+        var response = new OrderStatsResponse();
+
+        // Get status counts (excluding cancelled and refunded)
+        response.StatusCounts = await _orderRepository.GetStatusCountsAsync();
+
+        // Get total revenue (excluding cancelled and refunded)
+        response.TotalRevenue = await _orderRepository.GetTotalRevenueAsync();
+
+        // Get date range revenue if specified
+        if (days.HasValue && days.Value > 0)
+        {
+            response.DateRangeRevenue = await _orderRepository.GetTotalRevenueAsync(days.Value);
+        }
+
+        // Get total order counts
+        response.TotalOrders = await _orderRepository.GetTotalOrdersCountAsync();
+        response.CancelledOrders = await _orderRepository.GetCancelledOrdersCountAsync();
+        response.RefundedOrders = await _orderRepository.GetRefundedOrdersCountAsync();
+
+        _logger.LogInformation("Retrieved order statistics - TotalOrders: {TotalOrders}, TotalRevenue: {TotalRevenue}",
+            response.TotalOrders, response.TotalRevenue);
+
+        return response;
+    }
+
     private string GenerateOrderNumber()
     {
         return $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
