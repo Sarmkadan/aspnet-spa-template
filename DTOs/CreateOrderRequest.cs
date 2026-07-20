@@ -69,6 +69,7 @@ public sealed class OrderResponse
     public DateTime? ShippedAt { get; set; }
     public DateTime? DeliveredAt { get; set; }
     public List<OrderItemResponse> Items { get; set; } = new();
+    public List<StatusHistoryResponse> StatusHistory { get; set; } = new();
 }
 
 /// <summary>

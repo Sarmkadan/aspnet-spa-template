@@ -9,6 +9,7 @@ using AspNetSpaTemplate.Data.Repositories;
 using AspNetSpaTemplate.DTOs;
 using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace AspNetSpaTemplate.Services;
@@ -21,6 +22,7 @@ public sealed class OrderService
     private readonly OrderRepository _orderRepository;
     private readonly ProductRepository _productRepository;
     private readonly ILogger<OrderService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     /// <summary>
     /// Initializes a new instance of <see cref="OrderService"/>
@@ -28,12 +30,14 @@ public sealed class OrderService
     /// <param name="orderRepository">The order repository.</param>
     /// <param name="productRepository">The product repository.</param>
     /// <param name="logger">The logger.</param>
-    /// <exception cref="ArgumentNullException">Thrown when orderRepository, productRepository, or logger is null.</exception>
-    public OrderService(OrderRepository orderRepository, ProductRepository productRepository, ILogger<OrderService> logger)
+    /// <param name="httpContextAccessor">The HTTP context accessor.</param>
+    /// <exception cref="ArgumentNullException">Thrown when orderRepository, productRepository, logger, or httpContextAccessor is null.</exception>
+    public OrderService(OrderRepository orderRepository, ProductRepository productRepository, ILogger<OrderService> logger, IHttpContextAccessor httpContextAccessor)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
     }
 
     /// <summary>
@@ -197,6 +201,10 @@ public sealed class OrderService
             throw new NotFoundException("Order", id);
         }
 
+        // Record status change history
+        var oldStatus = order.Status;
+        var changedBy = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "System";
+
         if (Enum.TryParse<OrderStatus>(request.Status, true, out var newStatus))
         {
             switch (newStatus)
@@ -221,6 +229,17 @@ public sealed class OrderService
                     _logger.LogWarning("Invalid order status: {Status}", request.Status);
                     throw new ValidationException("Status", "Invalid order status");
             }
+
+            // Add to status history
+            order.StatusHistory ??= new List<StatusHistory>();
+            order.StatusHistory.Add(new StatusHistory
+            {
+                FromStatus = oldStatus,
+                ToStatus = newStatus,
+                ChangedAt = DateTime.UtcNow,
+                ChangedBy = changedBy,
+                Notes = $"Status changed from {oldStatus.ToDisplayName()} to {newStatus.ToDisplayName()}"
+            });
         }
         else
         {
@@ -451,7 +470,16 @@ public sealed class OrderService
                 TaxAmount = i.TaxAmount,
                 Discount = i.Discount,
                 Total = i.Total
-            }).ToList() ?? new List<OrderItemResponse>()
+            }).ToList() ?? new List<OrderItemResponse>(),
+            StatusHistory = order.StatusHistory?.Select(h => new StatusHistoryResponse
+            {
+                Id = h.Id,
+                FromStatus = h.FromStatus.ToDisplayName(),
+                ToStatus = h.ToStatus.ToDisplayName(),
+                ChangedAt = h.ChangedAt,
+                ChangedBy = h.ChangedBy,
+                Notes = h.Notes
+            }).ToList() ?? new List<StatusHistoryResponse>()
         };
     }
 }

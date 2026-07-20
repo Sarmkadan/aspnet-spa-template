@@ -6,6 +6,7 @@ using AspNetSpaTemplate.Exceptions;
 using AspNetSpaTemplate.Models;
 using AspNetSpaTemplate.Services;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
@@ -21,6 +22,7 @@ public sealed class OrderServiceTests
 {
     private readonly Mock<OrderRepository> _mockOrderRepository;
     private readonly Mock<ProductRepository> _mockProductRepository;
+    private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
     private readonly OrderService _orderService;
 
     /// <summary>
@@ -31,7 +33,8 @@ public sealed class OrderServiceTests
     {
         _mockOrderRepository = new Mock<OrderRepository>();
         _mockProductRepository = new Mock<ProductRepository>();
-        _orderService = new OrderService(_mockOrderRepository.Object, _mockProductRepository.Object, NullLogger<OrderService>.Instance);
+        _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        _orderService = new OrderService(_mockOrderRepository.Object, _mockProductRepository.Object, NullLogger<OrderService>.Instance, _mockHttpContextAccessor.Object);
     }
 
     /// <summary>
