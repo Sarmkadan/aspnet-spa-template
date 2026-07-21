@@ -379,4 +379,285 @@ public sealed class ProductServiceTests
         _mockProductRepository.Verify(r => r.Remove(product), Times.Once);
         _mockProductRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
     }
+
+    [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetAllProductsAsync(int, int)"/> returns paginated results with correct metadata.
+    /// Verifies that pagination parameters are correctly passed to the repository and response contains expected metadata.
+    /// </summary>
+    public async Task GetAllProductsAsync_WithPaginationParameters_ReturnsPaginatedResponse()
+    {
+        // Arrange
+        var pageNumber = 2;
+        var pageSize = 5;
+        var products = new List<Product>
+        {
+            new Product { Id = 6, Name = "Product 6", IsAvailable = true },
+            new Product { Id = 7, Name = "Product 7", IsAvailable = true },
+            new Product { Id = 8, Name = "Product 8", IsAvailable = true }
+        };
+        _mockProductRepository.Setup(r => r.CountAsync(It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(15);
+        _mockProductRepository.Setup(r => r.GetPagedAsync(pageNumber, pageSize, It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(products);
+
+        // Act
+        var result = await _productService.GetAllProductsAsync(pageNumber, pageSize);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Products.Should().HaveCount(3);
+        result.TotalCount.Should().Be(15);
+        result.PageNumber.Should().Be(pageNumber);
+        result.PageSize.Should().Be(pageSize);
+        result.TotalPages.Should().Be(3); // 15 items / 5 per page = 3 pages
+        result.HasNextPage.Should().BeTrue();
+        result.HasPreviousPage.Should().BeTrue();
+    }
+
+    [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetAllProductsAsync(int, int)"/> clamps page size to valid range.
+    /// Verifies that the service enforces minimum and maximum page size constraints.
+    /// </summary>
+    public async Task GetAllProductsAsync_WithInvalidPageSize_ClampsToValidRange()
+    {
+        // Arrange
+        var pageNumber = 1;
+        var invalidPageSize = 200; // Exceeds maximum of 100
+        var products = new List<Product>();
+        _mockProductRepository.Setup(r => r.CountAsync(It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(50);
+        _mockProductRepository.Setup(r => r.GetPagedAsync(pageNumber, AppConstants.Pagination.MaxPageSize, It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(products);
+
+        // Act
+        var result = await _productService.GetAllProductsAsync(pageNumber, invalidPageSize);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.PageSize.Should().Be(AppConstants.Pagination.MaxPageSize); // Should be clamped to 100
+        result.TotalCount.Should().Be(50);
+    }
+
+    [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetAllProductsAsync(int, int)"/> handles first page correctly.
+    /// Verifies that page 1 returns items starting from index 0.
+    /// </summary>
+    public async Task GetAllProductsAsync_WithPage1_ReturnsFirstPage()
+    {
+        // Arrange
+        var pageNumber = 1;
+        var pageSize = 10;
+        var products = new List<Product>
+        {
+            new Product { Id = 1, Name = "Product 1", IsAvailable = true },
+            new Product { Id = 2, Name = "Product 2", IsAvailable = true }
+        };
+        _mockProductRepository.Setup(r => r.CountAsync(It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(100);
+        _mockProductRepository.Setup(r => r.GetPagedAsync(pageNumber, pageSize, It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(products);
+
+        // Act
+        var result = await _productService.GetAllProductsAsync(pageNumber, pageSize);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.PageNumber.Should().Be(1);
+        result.HasPreviousPage.Should().BeFalse();
+        result.HasNextPage.Should().BeTrue();
+    }
+
+    [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetAllProductsAsync(int, int)"/> handles last page correctly.
+    /// Verifies that the last page has no next page.
+    /// </summary>
+    public async Task GetAllProductsAsync_WithLastPage_HasNoNextPage()
+    {
+        // Arrange
+        var pageNumber = 5;
+        var pageSize = 10;
+        var totalCount = 47; // 4 full pages (40 items) + 7 items on page 5
+        var products = new List<Product>();
+        for (int i = 41; i <= 47; i++)
+        {
+            products.Add(new Product { Id = i, Name = $"Product {i}", IsAvailable = true });
+        }
+        _mockProductRepository.Setup(r => r.CountAsync(It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(totalCount);
+        _mockProductRepository.Setup(r => r.GetPagedAsync(pageNumber, pageSize, It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(products);
+
+        // Act
+        var result = await _productService.GetAllProductsAsync(pageNumber, pageSize);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.PageNumber.Should().Be(pageNumber);
+        result.TotalCount.Should().Be(totalCount);
+        result.HasNextPage.Should().BeFalse();
+        result.HasPreviousPage.Should().BeTrue();
+    }
+
+    [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetProductsByCategoryAsync(ProductCategory, int, int)"/> returns paginated results filtered by category.
+    /// Verifies that category filter and pagination work together correctly.
+    /// </summary>
+    public async Task GetProductsByCategoryAsync_WithPagination_ReturnsFilteredPaginatedResults()
+    {
+        // Arrange
+        var category = ProductCategory.Books;
+        var pageNumber = 3;
+        var pageSize = 4;
+        var products = new List<Product>
+        {
+            new Product { Id = 11, Name = "Book 11", Category = category, IsAvailable = true },
+            new Product { Id = 12, Name = "Book 12", Category = category, IsAvailable = true }
+        };
+        _mockProductRepository.Setup(r => r.GetPagedByCategoryAsync(category, pageNumber, pageSize)).ReturnsAsync(products);
+        _mockProductRepository.Setup(r => r.CountAsync(It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(25);
+
+        // Act
+        var result = await _productService.GetProductsByCategoryAsync(category, pageNumber, pageSize);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Products.Should().HaveCount(2);
+        result.TotalCount.Should().Be(25);
+        result.PageNumber.Should().Be(pageNumber);
+        result.PageSize.Should().Be(pageSize);
+        result.Products.All(p => p.Category.Contains("Books")).Should().BeTrue();
+    }
+
+    [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.GetProductsByCategoryAsync(ProductCategory, int, int)"/> returns empty list when no products match category.
+    /// Verifies that pagination works correctly with empty result sets.
+    /// </summary>
+    public async Task GetProductsByCategoryAsync_WithNoMatchingProducts_ReturnsEmptyList()
+    {
+        // Arrange
+        var category = ProductCategory.Toys;
+        var pageNumber = 1;
+        var pageSize = 10;
+        var products = new List<Product>();
+        _mockProductRepository.Setup(r => r.GetPagedByCategoryAsync(category, pageNumber, pageSize)).ReturnsAsync(products);
+        _mockProductRepository.Setup(r => r.CountAsync(It.IsAny<Expression<Func<Product, bool>>>())).ReturnsAsync(0);
+
+        // Act
+        var result = await _productService.GetProductsByCategoryAsync(category, pageNumber, pageSize);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Products.Should().BeEmpty();
+        result.TotalCount.Should().Be(0);
+        result.HasNextPage.Should().BeFalse();
+        result.HasPreviousPage.Should().BeFalse();
+    }
+
+    [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.CreateProductAsync(CreateProductRequest)"/> creates product with default availability.
+    /// Verifies that new products are created as available by default.
+    /// </summary>
+    public async Task CreateProductAsync_CreatesProductWithDefaultAvailability()
+    {
+        // Arrange
+        var request = new CreateProductRequest
+        {
+            Name = "Default Available Product",
+            Description = "A product that should be available",
+            Price = 25.99m,
+            StockQuantity = 20,
+            Category = ProductCategory.Clothing,
+            ImageUrl = "https://example.com/image2.jpg",
+            Sku = "SKU-002"
+        };
+        _mockProductRepository.Setup(r => r.Add(It.IsAny<Product>()));
+        _mockProductRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+
+        // Act
+        var result = await _productService.CreateProductAsync(request);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsAvailable.Should().BeTrue();
+    }
+
+    [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.UpdateProductAsync(int, UpdateProductRequest)"/> throws NotFoundException for non-existent product.
+    /// Verifies error handling for update operations on non-existent resources.
+    /// </summary>
+    public async Task UpdateProductAsync_WithNonExistentId_ThrowsNotFoundException()
+    {
+        // Arrange
+        var productId = 999;
+        var request = new UpdateProductRequest
+        {
+            Name = "Updated Name",
+            Description = "Updated Description",
+            Price = 100m,
+            Category = ProductCategory.Electronics,
+            ImageUrl = "https://example.com/image.jpg",
+            IsAvailable = true
+        };
+        _mockProductRepository.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync((Product?)null);
+
+        // Act
+        var act = () => _productService.UpdateProductAsync(productId, request);
+
+        // Assert
+        await act.Should().ThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.SetProductAvailabilityAsync(int, bool)"/> updates availability status.
+    /// Verifies that availability can be toggled between true and false.
+    /// </summary>
+    public async Task SetProductAvailabilityAsync_TogglesAvailabilityStatus()
+    {
+        // Arrange
+        var productId = 1;
+        var initialProduct = new Product { Id = productId, Name = "Test Product", IsAvailable = true };
+        _mockProductRepository.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(initialProduct);
+        _mockProductRepository.Setup(r => r.Update(It.IsAny<Product>()));
+        _mockProductRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+
+        // Act - set to unavailable
+        await _productService.SetProductAvailabilityAsync(productId, false);
+
+        // Assert
+        initialProduct.IsAvailable.Should().BeFalse();
+        _mockProductRepository.Verify(r => r.Update(initialProduct), Times.Once);
+
+        // Arrange - set back to available
+        initialProduct.IsAvailable = true;
+        _mockProductRepository.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(initialProduct);
+
+        // Act - set to available
+        await _productService.SetProductAvailabilityAsync(productId, true);
+
+        // Assert
+        initialProduct.IsAvailable.Should().BeTrue();
+    }
+
+    [Fact]
+    /// <summary>
+    /// Tests that <see cref="ProductService.SetProductFeaturedAsync(int, bool)"/> updates featured status.
+    /// Verifies that featured flag can be toggled.
+    /// </summary>
+    public async Task SetProductFeaturedAsync_TogglesFeaturedStatus()
+    {
+        // Arrange
+        var productId = 1;
+        var initialProduct = new Product { Id = productId, Name = "Featured Product", IsFeatured = false };
+        _mockProductRepository.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(initialProduct);
+        _mockProductRepository.Setup(r => r.Update(It.IsAny<Product>()));
+        _mockProductRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+
+        // Act - set to featured
+        await _productService.SetProductFeaturedAsync(productId, true);
+
+        // Assert
+        initialProduct.IsFeatured.Should().BeTrue();
+        _mockProductRepository.Verify(r => r.Update(initialProduct), Times.Once);
+    }
 }
