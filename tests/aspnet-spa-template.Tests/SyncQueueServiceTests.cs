@@ -21,7 +21,7 @@ public sealed class SyncQueueServiceTests
 	// ── Enqueue ────────────────────────────────────────────────────────────────
 
 	/// <summary>
-	/// Tests that Enqueue returns a positive ID for valid requests.
+	/// Tests that <c>Enqueue</c> returns a positive ID for a valid request.
 	/// </summary>
 	[Fact]
 	public void Enqueue_ReturnsPositiveId()
@@ -34,7 +34,7 @@ public sealed class SyncQueueServiceTests
 	}
 
 	/// <summary>
-	/// Tests that subsequent calls to Enqueue return incrementally higher IDs.
+	/// Tests that subsequent calls to <c>Enqueue</c> return incrementally higher IDs.
 	/// </summary>
 	[Fact]
 	public void Enqueue_SecondCall_ReturnsHigherId()
@@ -48,7 +48,7 @@ public sealed class SyncQueueServiceTests
 	}
 
 	/// <summary>
-	/// Tests that Enqueue deduplicates requests with the same client request ID.
+	/// Tests that <c>Enqueue</c> deduplicates requests with the same client request ID.
 	/// </summary>
 	[Fact]
 	public void Enqueue_DuplicateClientRequestId_ReturnsSameId()
@@ -58,11 +58,11 @@ public sealed class SyncQueueServiceTests
 		var id1 = sut.Enqueue(userId: 1, "idempotent-key", "POST", "/api/orders");
 		var id2 = sut.Enqueue(userId: 1, "idempotent-key", "POST", "/api/orders");
 
-		id2.Should().Be(id1, "duplicate entries must be silently de-duplicated");
+		id2.Should().Be(id1, "duplicate entries must be silently de‑duplicated");
 	}
 
 	/// <summary>
-	/// Tests that Enqueue normalizes HTTP methods to uppercase.
+	/// Tests that <c>Enqueue</c> normalises HTTP methods to uppercase.
 	/// </summary>
 	[Fact]
 	public void Enqueue_MethodIsNormalisedToUppercase()
@@ -76,10 +76,10 @@ public sealed class SyncQueueServiceTests
 			.Which.Method.Should().Be("POST");
 	}
 
-	// ── GetPending ─────────────────────────────────────────────────────────────
+	// ── GetPending (dequeue) ─────────────────────────────────────────────────────
 
 	/// <summary>
-	/// Tests that GetPending returns an empty collection when no entries exist.
+	/// Tests that <c>GetPending</c> returns an empty collection when no entries exist.
 	/// </summary>
 	[Fact]
 	public void GetPending_WithNoEntries_ReturnsEmpty()
@@ -92,24 +92,22 @@ public sealed class SyncQueueServiceTests
 	}
 
 	/// <summary>
-	/// Tests that GetPending only returns entries that are still pending (not completed).
+	/// Tests that <c>GetPending</c> returns entries ordered by <c>QueuedAt</c> ascending.
 	/// </summary>
 	[Fact]
-	public void GetPending_OnlyReturnsPendingEntries()
+	public void GetPending_OrderedByQueuedAtAscending()
 	{
 		var sut = BuildSut();
-		var id1 = sut.Enqueue(userId: 5, "req-1", "POST", "/api/orders");
-		var id2 = sut.Enqueue(userId: 5, "req-2", "DELETE", "/api/cart/1");
-		sut.Complete(id1);
+		sut.Enqueue(userId: 1, "req-first", "POST", "/api/orders/1");
+		sut.Enqueue(userId: 1, "req-second", "POST", "/api/orders/2");
 
-		var pending = sut.GetPending(userId: 5);
+		var pending = sut.GetPending(userId: 1);
 
-		pending.Should().ContainSingle()
-			.Which.Id.Should().Be(id2);
+		pending.Should().BeInAscendingOrder(e => e.QueuedAt);
 	}
 
 	/// <summary>
-	/// Tests that GetPending isolates entries by user ID.
+	/// Tests that <c>GetPending</c> isolates entries by user ID.
 	/// </summary>
 	[Fact]
 	public void GetPending_IsolatesEntriesByUser()
@@ -125,24 +123,26 @@ public sealed class SyncQueueServiceTests
 	}
 
 	/// <summary>
-	/// Tests that GetPending returns entries ordered by queued timestamp in ascending order.
+	/// Tests that <c>GetPending</c> only returns entries that are still pending (not completed or failed).
 	/// </summary>
 	[Fact]
-	public void GetPending_OrderedByQueuedAtAscending()
+	public void GetPending_OnlyReturnsPendingEntries()
 	{
 		var sut = BuildSut();
-		sut.Enqueue(userId: 1, "req-first", "POST", "/api/orders/1");
-		sut.Enqueue(userId: 1, "req-second", "POST", "/api/orders/2");
+		var id1 = sut.Enqueue(userId: 5, "req-1", "POST", "/api/orders");
+		var id2 = sut.Enqueue(userId: 5, "req-2", "DELETE", "/api/cart/1");
+		sut.Complete(id1);
 
-		var pending = sut.GetPending(userId: 1);
+		var pending = sut.GetPending(userId: 5);
 
-		pending.Should().BeInAscendingOrder(e => e.QueuedAt);
+		pending.Should().ContainSingle()
+			.Which.Id.Should().Be(id2);
 	}
 
-	// ── Complete ──────────────────────────────────────────────────────────────
+	// ── Complete (success path) ────────────────────────────────────────────────
 
 	/// <summary>
-	/// Tests that Complete returns true when successfully completing a valid entry.
+	/// Tests that <c>Complete</c> returns <c>true</c> when successfully completing a valid entry.
 	/// </summary>
 	[Fact]
 	public void Complete_WithValidId_ReturnsTrue()
@@ -156,7 +156,7 @@ public sealed class SyncQueueServiceTests
 	}
 
 	/// <summary>
-	/// Tests that Complete removes the completed entry from the pending queue.
+	/// Tests that <c>Complete</c> removes the completed entry from the pending queue.
 	/// </summary>
 	[Fact]
 	public void Complete_RemovesEntryFromPending()
@@ -170,7 +170,7 @@ public sealed class SyncQueueServiceTests
 	}
 
 	/// <summary>
-	/// Tests that Complete returns false when attempting to complete an unknown entry ID.
+	/// Tests that <c>Complete</c> returns <c>false</c> when the entry ID is unknown.
 	/// </summary>
 	[Fact]
 	public void Complete_WithUnknownId_ReturnsFalse()
@@ -182,10 +182,10 @@ public sealed class SyncQueueServiceTests
 		result.Should().BeFalse();
 	}
 
-	// ── Fail ──────────────────────────────────────────────────────────────────
+	// ── Fail (error path) ───────────────────────────────────────────────────────
 
 	/// <summary>
-	/// Tests that Fail returns true when successfully failing a valid entry.
+	/// Tests that <c>Fail</c> returns <c>true</c> when successfully failing a valid entry.
 	/// </summary>
 	[Fact]
 	public void Fail_WithValidId_ReturnsTrue()
@@ -199,7 +199,7 @@ public sealed class SyncQueueServiceTests
 	}
 
 	/// <summary>
-	/// Tests that Fail records the error message and removes the entry from pending queue.
+	/// Tests that <c>Fail</c> records the error message and removes the entry from the pending queue.
 	/// </summary>
 	[Fact]
 	public void Fail_RecordsErrorMessage()
@@ -213,7 +213,7 @@ public sealed class SyncQueueServiceTests
 	}
 
 	/// <summary>
-	/// Tests that Fail returns false when attempting to fail an unknown entry ID.
+	/// Tests that <c>Fail</c> returns <c>false</c> when attempting to fail an unknown entry ID.
 	/// </summary>
 	[Fact]
 	public void Fail_WithUnknownId_ReturnsFalse()
@@ -225,10 +225,10 @@ public sealed class SyncQueueServiceTests
 		result.Should().BeFalse();
 	}
 
-	// ── PendingCount ────────────────────────────────────────────────────────────
+	// ── PendingCount ─────────────────────────────────────────────────────────────
 
 	/// <summary>
-	/// Tests that PendingCount reflects the current number of pending entries.
+	/// Tests that <c>PendingCount</c> reflects the current number of pending entries.
 	/// </summary>
 	[Fact]
 	public void PendingCount_ReflectsCurrentQueueDepth()
@@ -241,7 +241,7 @@ public sealed class SyncQueueServiceTests
 	}
 
 	/// <summary>
-	/// Tests that PendingCount decreases after completing an entry.
+	/// Tests that <c>PendingCount</c> decreases after completing an entry.
 	/// </summary>
 	[Fact]
 	public void PendingCount_DecreasesAfterComplete()
