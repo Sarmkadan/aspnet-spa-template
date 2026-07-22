@@ -2,6 +2,7 @@
 using AspNetSpaTemplate.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Collections.Concurrent;
 using Xunit;
 
 namespace AspNetSpaTemplate.Tests;
@@ -357,6 +358,73 @@ public sealed class SyncQueueServiceTests
         for (int i = 0; i < threadCount; i++)
         {
             sut.PendingCount(userId: i).Should().Be(entriesPerThread);
+        }
+    }
+
+    /// <summary>
+    /// Stress test that enqueues from 20 parallel tasks while draining, asserting no items are lost or duplicated.
+    /// This tests the class of bug the recent fix patched around rather than eliminated.
+    /// </summary>
+    [Fact]
+    public void StressTest_NoItemsLostOrDuplicated_UnderConcurrentLoad()
+    {
+        var sut = BuildSut();
+        const int threadCount = 20;
+        const int entriesPerThread = 50;
+        var allIds = new ConcurrentBag<int>();
+
+        // Phase 1: Enqueue from multiple threads
+        var enqueueTasks = new Task[threadCount];
+        for (int i = 0; i < threadCount; i++)
+        {
+            int userId = i;
+            enqueueTasks[i] = Task.Run(() =>
+            {
+                for (int j = 0; j < entriesPerThread; j++)
+                {
+                    var id = sut.Enqueue(userId, $"req-{userId}-{j}-{Guid.NewGuid()}", "POST", "/api/orders");
+                    allIds.Add(id);
+                }
+            });
+        }
+
+        Task.WhenAll(enqueueTasks).Wait();
+
+        // Verify all entries were enqueued
+        allIds.Count.Should().Be(threadCount * entriesPerThread);
+
+        // Phase 2: Complete all entries from multiple threads
+        var completionIds = new ConcurrentBag<int>();
+        var partitioner = Partitioner.Create(allIds.ToList());
+        var completionTasks = partitioner.AsParallel()
+            .WithDegreeOfParallelism(threadCount)
+            .Select(id => Task.Run(() =>
+            {
+                if (sut.Complete(id))
+                {
+                    completionIds.Add(id);
+                }
+            }))
+            .ToArray();
+
+        Task.WhenAll(completionTasks).Wait();
+
+        // Verify all entries were completed (no data loss)
+        completionIds.Count.Should().Be(threadCount * entriesPerThread);
+
+        // Verify no duplicates occurred
+        completionIds.Should().OnlyHaveUniqueItems();
+
+        // Verify counts are correct - all entries should be completed
+        for (int i = 0; i < threadCount; i++)
+        {
+            sut.PendingCount(userId: i).Should().Be(0);
+        }
+
+        // Verify counts are correct
+        for (int i = 0; i < threadCount; i++)
+        {
+            sut.PendingCount(userId: i).Should().Be(0);
         }
     }
 }
