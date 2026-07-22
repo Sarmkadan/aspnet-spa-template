@@ -22,6 +22,7 @@ public sealed class SyncQueueService : ISyncQueueService
     private readonly ConcurrentDictionary<string, int> _idempotency = new();
     private readonly ILogger<SyncQueueService> _logger;
     private int _sequence;
+    private readonly object _lock = new();
 
     /// <summary>Initialises the service with a logger.</summary>
     public SyncQueueService(ILogger<SyncQueueService> logger)
@@ -44,21 +45,27 @@ public sealed class SyncQueueService : ISyncQueueService
             return existingId;
         }
 
-        var id = Interlocked.Increment(ref _sequence);
-        var entry = new SyncQueueEntry
-        {
-            Id = id,
-            UserId = userId,
-            ClientRequestId = clientRequestId,
-            Method = method.ToUpperInvariant(),
-            RelativePath = relativePath,
-            BodyJson = bodyJson,
-            Status = SyncEntryStatus.Pending,
-            QueuedAt = DateTime.UtcNow
-        };
+        int id;
+        SyncQueueEntry entry;
 
-        _store[id] = entry;
-        _idempotency[clientRequestId] = id;
+        lock (_lock)
+        {
+            id = Interlocked.Increment(ref _sequence);
+            entry = new SyncQueueEntry
+            {
+                Id = id,
+                UserId = userId,
+                ClientRequestId = clientRequestId,
+                Method = method.ToUpperInvariant(),
+                RelativePath = relativePath,
+                BodyJson = bodyJson,
+                Status = SyncEntryStatus.Pending,
+                QueuedAt = DateTime.UtcNow
+            };
+
+            _store[id] = entry;
+            _idempotency[clientRequestId] = id;
+        }
 
         _logger.LogInformation(
             "Offline sync entry queued: id={Id} user={UserId} {Method} {Path}",
@@ -81,8 +88,15 @@ public sealed class SyncQueueService : ISyncQueueService
         if (!_store.TryGetValue(id, out var entry))
             return false;
 
-        entry.Status = SyncEntryStatus.Completed;
-        entry.ResolvedAt = DateTime.UtcNow;
+        lock (_lock)
+        {
+            // Check if already completed or failed
+            if (entry.Status != SyncEntryStatus.Pending)
+                return false;
+
+            entry.Status = SyncEntryStatus.Completed;
+            entry.ResolvedAt = DateTime.UtcNow;
+        }
         _logger.LogDebug("Sync entry {Id} completed", id);
         return true;
     }
@@ -93,9 +107,16 @@ public sealed class SyncQueueService : ISyncQueueService
         if (!_store.TryGetValue(id, out var entry))
             return false;
 
-        entry.Status = SyncEntryStatus.Failed;
-        entry.LastError = error;
-        entry.ResolvedAt = DateTime.UtcNow;
+        lock (_lock)
+        {
+            // Check if already completed or failed
+            if (entry.Status != SyncEntryStatus.Pending)
+                return false;
+
+            entry.Status = SyncEntryStatus.Failed;
+            entry.LastError = error;
+            entry.ResolvedAt = DateTime.UtcNow;
+        }
         _logger.LogWarning("Sync entry {Id} failed: {Error}", id, error);
         return true;
     }
@@ -113,10 +134,13 @@ public sealed class SyncQueueService : ISyncQueueService
             .Select(e => e.Id)
             .ToList();
 
-        foreach (var id in stale)
+        lock (_lock)
         {
-            if (_store.TryRemove(id, out var removed))
-                _idempotency.TryRemove(removed.ClientRequestId, out _);
+            foreach (var id in stale)
+            {
+                if (_store.TryRemove(id, out var removed))
+                    _idempotency.TryRemove(removed.ClientRequestId, out _);
+            }
         }
     }
 }
