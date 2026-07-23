@@ -24,7 +24,7 @@ public static class ReviewServiceTestsValidation
     private static readonly MethodInfo? _createReviewShortTitleMethod = typeof(ReviewServiceTests).GetMethod(nameof(ReviewServiceTests.CreateReviewAsync_WithShortTitle_ThrowsValidationException));
     private static readonly MethodInfo? _createReviewShortContentMethod = typeof(ReviewServiceTests).GetMethod(nameof(ReviewServiceTests.CreateReviewAsync_WithShortContent_ThrowsValidationException));
     private static readonly MethodInfo? _createReviewNonExistentProductMethod = typeof(ReviewServiceTests).GetMethod(nameof(ReviewServiceTests.CreateReviewAsync_WithNonExistentProduct_ThrowsNotFoundException));
-    private static readonly MethodInfo? _createReviewDuplicateMethod = typeof(ReviewServiceTests).GetMethod(nameof(ReviewServiceTests.CreateReviewAsync_WithDuplicateReview_ThrowsBusinessException));
+    private static readonly MethodInfo? _createReviewDuplicateMethod = typeof(ReviewServiceTests).GetMethod(nameof(ReviewServiceTests.CreateReviewAsync_WithDuplicateReview_UpdatesExistingReview));
     private static readonly MethodInfo? _getProductReviewsMethod = typeof(ReviewServiceTests).GetMethod(nameof(ReviewServiceTests.GetProductReviewsAsync_ReturnsApprovedReviews));
     private static readonly MethodInfo? _getUserReviewsMethod = typeof(ReviewServiceTests).GetMethod(nameof(ReviewServiceTests.GetUserReviewsAsync_ReturnsUserReviews));
     private static readonly MethodInfo? _approveReviewMethod = typeof(ReviewServiceTests).GetMethod(nameof(ReviewServiceTests.ApproveReviewAsync_WithValidId_ApprovesReview));
@@ -55,7 +55,7 @@ public static class ReviewServiceTestsValidation
         ValidateMethod(_createReviewShortTitleMethod, nameof(ReviewServiceTests.CreateReviewAsync_WithShortTitle_ThrowsValidationException), problems);
         ValidateMethod(_createReviewShortContentMethod, nameof(ReviewServiceTests.CreateReviewAsync_WithShortContent_ThrowsValidationException), problems);
         ValidateMethod(_createReviewNonExistentProductMethod, nameof(ReviewServiceTests.CreateReviewAsync_WithNonExistentProduct_ThrowsNotFoundException), problems);
-        ValidateMethod(_createReviewDuplicateMethod, nameof(ReviewServiceTests.CreateReviewAsync_WithDuplicateReview_ThrowsBusinessException), problems);
+        ValidateMethod(_createReviewDuplicateMethod, nameof(ReviewServiceTests.CreateReviewAsync_WithDuplicateReview_UpdatesExistingReview), problems);
         ValidateMethod(_getProductReviewsMethod, nameof(ReviewServiceTests.GetProductReviewsAsync_ReturnsApprovedReviews), problems);
         ValidateMethod(_getUserReviewsMethod, nameof(ReviewServiceTests.GetUserReviewsAsync_ReturnsUserReviews), problems);
         ValidateMethod(_approveReviewMethod, nameof(ReviewServiceTests.ApproveReviewAsync_WithValidId_ApprovesReview), problems);
