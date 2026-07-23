@@ -31,6 +31,11 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<IProductService>(sp =>
+    new CachedProductService(
+        sp.GetRequiredService<ProductService>(),
+        sp.GetRequiredService<ICacheService>(),
+        sp.GetRequiredService<ILogger<CachedProductService>>()));
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<ReviewService>();
 
