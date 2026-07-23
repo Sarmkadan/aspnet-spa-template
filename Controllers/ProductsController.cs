@@ -31,22 +31,54 @@ public sealed class ProductsController : ApiControllerBase
         return ApiSuccess(product);
     }
 
+    /// <summary>
+    /// Gets all available products, paginated.
+    /// </summary>
+    /// <param name="pagination">The pagination parameters.</param>
+    /// <returns>A <see cref="PagedResult{T}"/> envelope of <see cref="ProductResponse"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="pagination"/> is null.</exception>
     [HttpGet]
-    [ProducesResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<ProductResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetProducts([FromQuery] PaginationRequest pagination)
     {
+        ArgumentNullException.ThrowIfNull(pagination);
+
         var products = await _productService.GetAllProductsAsync(pagination.PageNumber, pagination.PageSize);
-        return ApiSuccess(products);
+        var page = PagedResult<ProductResponse>.Create(products.Products, products.PageNumber, products.PageSize, products.TotalCount);
+        return ApiSuccess(page);
     }
 
+    /// <summary>
+    /// Gets products belonging to a category, paginated. The category name is matched
+    /// case-insensitively; an unrecognized category yields a 200 response with an
+    /// empty <see cref="PagedResult{T}.Items"/> collection rather than a 404 or 400.
+    /// </summary>
+    /// <param name="category">The category name (case-insensitive).</param>
+    /// <param name="pagination">The pagination parameters.</param>
+    /// <returns>A <see cref="PagedResult{T}"/> envelope of <see cref="ProductResponse"/>.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="category"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="pagination"/> is null.</exception>
     [HttpGet("category/{category}")]
-    [ProducesResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetProductsByCategory(ProductCategory category, [FromQuery] PaginationRequest pagination)
+    [ProducesResponseType(typeof(PagedResult<ProductResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetProductsByCategory(string category, [FromQuery] PaginationRequest pagination)
     {
-        var products = await _productService.GetProductsByCategoryAsync(category, pagination.PageNumber, pagination.PageSize);
-        return ApiSuccess(products);
+        ArgumentException.ThrowIfNullOrEmpty(category);
+        ArgumentNullException.ThrowIfNull(pagination);
+
+        if (!Enum.TryParse<ProductCategory>(category, ignoreCase: true, out var parsedCategory))
+            return ApiSuccess(PagedResult<ProductResponse>.Empty(pagination.PageNumber, pagination.PageSize));
+
+        var products = await _productService.GetProductsByCategoryAsync(parsedCategory, pagination.PageNumber, pagination.PageSize);
+        var page = PagedResult<ProductResponse>.Create(products.Products, products.PageNumber, products.PageSize, products.TotalCount);
+        return ApiSuccess(page);
     }
 
+    /// <summary>
+    /// Gets a bounded set of featured products. This endpoint is unpaged: it returns a
+    /// plain array capped at <paramref name="limit"/> items rather than a <see cref="PagedResult{T}"/>.
+    /// </summary>
+    /// <param name="limit">The maximum number of products to return.</param>
+    /// <returns>A plain array of <see cref="ProductResponse"/>, not wrapped in a paging envelope.</returns>
     [HttpGet("featured")]
     [ProducesResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFeaturedProducts([FromQuery] int limit = 10)
