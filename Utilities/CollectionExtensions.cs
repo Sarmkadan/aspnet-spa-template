@@ -2,7 +2,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 namespace AspNetSpaTemplate.Utilities;
 
@@ -112,9 +112,31 @@ public static class CollectionExtensions
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
 
-        var total = source.TryGetNonEnumeratedCount(out var count) ? count : source.Count();
-        var items = source.Skip((pageNumber - 1) * pageSize).Take(pageSize);
-        return (items, total);
+        // Try to get count without enumerating. If successful, we can optimize pagination.
+        if (source.TryGetNonEnumeratedCount(out var count))
+        {
+            var skip = (pageNumber - 1) * pageSize;
+            if (skip >= count)
+            {
+                return (Enumerable.Empty<T>(), count);
+            }
+
+            var items = source.Skip(skip).Take(pageSize);
+            return (items, count);
+        }
+
+        // Fallback for one-shot enumerables: enumerate once to get both count and items
+        // This is necessary because we can't use Skip/Take without enumerating from the start
+        var list = source.ToList();
+        var total = list.Count;
+        var skipCount = (pageNumber - 1) * pageSize;
+        if (skipCount >= total)
+        {
+            return (Enumerable.Empty<T>(), total);
+        }
+
+        var resultItems = list.Skip(skipCount).Take(pageSize);
+        return (resultItems, total);
     }
 
     /// <summary>
