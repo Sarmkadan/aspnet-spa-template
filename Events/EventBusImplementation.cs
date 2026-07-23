@@ -4,6 +4,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace AspNetSpaTemplate.Events;
 
 /// <summary>
@@ -13,13 +15,45 @@ namespace AspNetSpaTemplate.Events;
 /// </summary>
 public class EventBusImplementation : IEventBus
 {
+    /// <summary>
+    /// Maximum number of invocation attempts (initial attempt plus retries) made per handler before
+    /// the event is routed to the dead-letter sink.
+    /// </summary>
+    private const int MaxAttempts = 3;
+
+    /// <summary>
+    /// Base delay used for the exponential backoff applied between retry attempts.
+    /// </summary>
+    private static readonly TimeSpan BaseRetryDelay = TimeSpan.FromMilliseconds(100);
+
     private readonly Dictionary<Type, List<Delegate>> _subscribers = new();
     private readonly object _subscriberLock = new();
     private readonly ILogger<EventBusImplementation> _logger;
+    private readonly IDeadLetterSink _deadLetterSink;
 
+    /// <summary>
+    /// Initializes a new event bus with a default logging-based dead-letter sink.
+    /// </summary>
+    /// <param name="logger">Logger used for diagnostic and error logging.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="logger"/> is <c>null</c>.</exception>
     public EventBusImplementation(ILogger<EventBusImplementation> logger)
+        : this(logger, new LoggingDeadLetterSink(NullLogger<LoggingDeadLetterSink>.Instance))
     {
+    }
+
+    /// <summary>
+    /// Initializes a new event bus with the given logger and dead-letter sink.
+    /// </summary>
+    /// <param name="logger">Logger used for diagnostic and error logging.</param>
+    /// <param name="deadLetterSink">Sink that receives events whose handlers exhaust their retry budget.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="logger"/> or <paramref name="deadLetterSink"/> is <c>null</c>.</exception>
+    public EventBusImplementation(ILogger<EventBusImplementation> logger, IDeadLetterSink deadLetterSink)
+    {
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(deadLetterSink);
+
         _logger = logger;
+        _deadLetterSink = deadLetterSink;
     }
 
     /// <summary>
@@ -84,24 +118,75 @@ public class EventBusImplementation : IEventBus
                 handlers = new List<Delegate>(handlers); // Copy to avoid locking during execution
         }
 
-        // Call handlers sequentially
+        // Call handlers sequentially. Each handler gets its own retry budget; one handler
+        // exhausting its retries and being dead-lettered never prevents the remaining
+        // handlers from receiving the event.
         foreach (var handler in handlers)
         {
-            try
+            if (handler is Func<TEvent, Task> typedHandler)
             {
-                if (handler is Func<TEvent, Task> typedHandler)
-                {
-                    await typedHandler(@event);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error in event handler for {eventType.Name}");
-                // Continue with other handlers instead of failing
+                await InvokeHandlerWithRetryAsync(typedHandler, @event, eventType);
             }
         }
 
         _logger.LogInformation($"Event published: {eventType.Name} (handled by {handlers.Count} subscribers)");
+    }
+
+    /// <summary>
+    /// Invokes a single handler with retry (exponential backoff with jitter, up to <see cref="MaxAttempts"/>
+    /// attempts). If every attempt fails, all captured exceptions are aggregated and the event is routed to
+    /// the configured <see cref="IDeadLetterSink"/> instead of propagating the failure to the caller.
+    /// </summary>
+    /// <typeparam name="TEvent">The event type, constrained to <see cref="DomainEvent"/>.</typeparam>
+    /// <param name="handler">The subscriber delegate to invoke.</param>
+    /// <param name="event">The event payload passed to the handler.</param>
+    /// <param name="eventType">The runtime type of <typeparamref name="TEvent"/>, used for logging.</param>
+    private async Task InvokeHandlerWithRetryAsync<TEvent>(Func<TEvent, Task> handler, TEvent @event, Type eventType)
+        where TEvent : DomainEvent
+    {
+        var attemptExceptions = new List<Exception>(MaxAttempts);
+
+        for (var attempt = 1; attempt <= MaxAttempts; attempt++)
+        {
+            try
+            {
+                await handler(@event);
+                return;
+            }
+            catch (Exception ex)
+            {
+                attemptExceptions.Add(ex);
+
+                if (attempt == MaxAttempts)
+                    break;
+
+                _logger.LogWarning(
+                    ex,
+                    $"Handler attempt {attempt}/{MaxAttempts} failed for {eventType.Name} (ID: {@event.EventId}); retrying");
+
+                await Task.Delay(ComputeBackoffDelay(attempt));
+            }
+        }
+
+        var aggregate = new AggregateException(
+            $"Handler for {eventType.Name} failed after {MaxAttempts} attempts",
+            attemptExceptions);
+
+        _logger.LogError(aggregate, $"Error in event handler for {eventType.Name}");
+
+        await _deadLetterSink.SendAsync(@event, aggregate);
+    }
+
+    /// <summary>
+    /// Computes the delay before the next retry attempt using exponential backoff with full jitter.
+    /// </summary>
+    /// <param name="attempt">The 1-based index of the attempt that just failed.</param>
+    /// <returns>The delay to wait before the next attempt.</returns>
+    private static TimeSpan ComputeBackoffDelay(int attempt)
+    {
+        var exponentialMs = BaseRetryDelay.TotalMilliseconds * Math.Pow(2, attempt - 1);
+        var jitteredMs = Random.Shared.NextDouble() * exponentialMs;
+        return TimeSpan.FromMilliseconds(jitteredMs);
     }
 
     public async Task PublishManyAsync<TEvent>(IEnumerable<TEvent> events) where TEvent : DomainEvent
