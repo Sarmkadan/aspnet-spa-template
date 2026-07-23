@@ -293,8 +293,100 @@ public class EventBusImplementationTests
                 LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error in event handler for ProductCreatedEvent")),
-                It.IsAny<InvalidOperationException>(),
+                It.IsAny<AggregateException>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()!),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task PublishAsync_WithHandlerThatFailsTwiceThenSucceeds_ShouldRetryAndSucceedWithoutDeadLettering()
+    {
+        // Arrange
+        var deadLetterSinkMock = new Mock<IDeadLetterSink>();
+        var eventBus = new EventBusImplementation(_loggerMock.Object, deadLetterSinkMock.Object);
+
+        var attemptCount = 0;
+        var succeeded = new TaskCompletionSource<bool>();
+
+        Func<ProductCreatedEvent, Task> handler = _ => Task.Run(() =>
+        {
+            attemptCount++;
+            if (attemptCount < 3)
+                throw new InvalidOperationException($"Attempt {attemptCount} failed");
+
+            succeeded.SetResult(true);
+        });
+
+        eventBus.Subscribe(handler);
+
+        var @event = new ProductCreatedEvent
+        {
+            ProductId = 1,
+            ProductName = "Test Product",
+            Price = 9.99m
+        };
+
+        // Act
+        await eventBus.PublishAsync(@event);
+        await succeeded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        // Assert
+        attemptCount.Should().Be(3);
+        deadLetterSinkMock.Verify(
+            x => x.SendAsync(It.IsAny<ProductCreatedEvent>(), It.IsAny<Exception>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task PublishAsync_WithHandlerThatAlwaysFails_ShouldDeadLetterAfterRetriesAndStillRunOtherHandlers()
+    {
+        // Arrange
+        var deadLetterSinkMock = new Mock<IDeadLetterSink>();
+        deadLetterSinkMock
+            .Setup(x => x.SendAsync(It.IsAny<ProductCreatedEvent>(), It.IsAny<Exception>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var eventBus = new EventBusImplementation(_loggerMock.Object, deadLetterSinkMock.Object);
+
+        var failingAttempts = 0;
+        var secondHandlerCalled = false;
+        var secondHandlerExecuted = new TaskCompletionSource<bool>();
+
+        Func<ProductCreatedEvent, Task> failingHandler = _ => Task.Run(() =>
+        {
+            failingAttempts++;
+            throw new InvalidOperationException($"Attempt {failingAttempts} failed");
+        });
+
+        Func<ProductCreatedEvent, Task> secondHandler = _ => Task.Run(() =>
+        {
+            secondHandlerCalled = true;
+            secondHandlerExecuted.SetResult(true);
+        });
+
+        eventBus.Subscribe(failingHandler);
+        eventBus.Subscribe(secondHandler);
+
+        var @event = new ProductCreatedEvent
+        {
+            ProductId = 1,
+            ProductName = "Test Product",
+            Price = 9.99m
+        };
+
+        // Act
+        Func<Task> act = async () => await eventBus.PublishAsync(@event);
+
+        // Assert
+        await act.Should().NotThrowAsync();
+        await secondHandlerExecuted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        failingAttempts.Should().Be(3);
+        secondHandlerCalled.Should().BeTrue();
+        deadLetterSinkMock.Verify(
+            x => x.SendAsync(
+                It.Is<ProductCreatedEvent>(e => e.EventId == @event.EventId),
+                It.IsAny<AggregateException>(),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
