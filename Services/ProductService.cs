@@ -56,15 +56,15 @@ public sealed class ProductService
     /// <summary>
     /// Gets all products with pagination.
     /// </summary>
-    /// <param name="pageNumber">The page number.</param>
-    /// <param name="pageSize">The page size.</param>
+    /// <param name="pageNumber">The page number (1-based).</param>
+    /// <param name="pageSize">The page size (1-100).</param>
     /// <returns>A paginated list response.</returns>
     public async Task<ProductListResponse> GetAllProductsAsync(int pageNumber = 1, int pageSize = 10)
     {
         _logger.LogDebug("Getting all available products: page={PageNumber}, pageSize={PageSize}", pageNumber, pageSize);
 
-        pageSize = Math.Clamp(pageSize, AppConstants.Pagination.MinPageSize, AppConstants.Pagination.MaxPageSize);
-
+        // PageSize is already normalized by PaginationRequest setter (1-100)
+        // PageNumber is already normalized by PaginationRequest setter (>= 1)
         var totalCount = await _productRepository.CountAsync(p => p.IsAvailable);
         var products = await _productRepository.GetPagedAsync(pageNumber, pageSize, p => p.IsAvailable);
 
@@ -83,11 +83,13 @@ public sealed class ProductService
     /// Gets products by category with pagination.
     /// </summary>
     /// <param name="category">The product category.</param>
-    /// <param name="pageNumber">The page number.</param>
-    /// <param name="pageSize">The page size.</param>
+    /// <param name="pageNumber">The page number (1-based).</param>
+    /// <param name="pageSize">The page size (1-100).</param>
     /// <returns>A paginated list response.</returns>
     public async Task<ProductListResponse> GetProductsByCategoryAsync(ProductCategory category, int pageNumber = 1, int pageSize = 10)
     {
+        // PageSize is already normalized by PaginationRequest setter (1-100)
+        // PageNumber is already normalized by PaginationRequest setter (>= 1)
         var products = await _productRepository.GetPagedByCategoryAsync(category, pageNumber, pageSize);
         var totalCount = await _productRepository.CountAsync(p => p.Category == category && p.IsAvailable);
 

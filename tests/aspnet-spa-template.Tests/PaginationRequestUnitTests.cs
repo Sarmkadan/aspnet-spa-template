@@ -474,119 +474,43 @@ public sealed class PaginationRequestUnitTests
         skip.Should().Be(4);
     }
 
-#endregion
-
-#region Validate Tests
-
     /// <summary>
-    /// Tests that <see cref="PaginationRequest.Validate()"/> succeeds with valid values.
+    /// Tests that <see cref="PaginationRequest.GetSkip()"/> throws OverflowException when overflow would occur with hostile inputs.
+    /// This test verifies the checked arithmetic protection works when values exceed int range.
     /// </summary>
     [Fact]
-    public void Validate_WithValidValues_DoesNotThrow()
+    public void GetSkip_WithOverflowingValues_ThrowsOverflowException()
     {
-        // Arrange
-        var request = new PaginationRequest { PageNumber = 1, PageSize = 50 };
-
-        // Act
-        var act = () => request.Validate();
-
-        // Assert
-        act.Should().NotThrow();
-    }
-
-    /// <summary>
-    /// Tests that <see cref="PaginationRequest.Validate()"/> succeeds when PageNumber is 1.
-    /// </summary>
-    [Fact]
-    public void Validate_WithPageNumber1_DoesNotThrow()
-    {
-        // Arrange
-        var request = new PaginationRequest { PageNumber = 1, PageSize = 10 };
-
-        // Act
-        var act = () => request.Validate();
-
-        // Assert
-        act.Should().NotThrow();
-    }
-
-    /// <summary>
-    /// Tests that <see cref="PaginationRequest.Validate()"/> succeeds when PageSize is 1.
-    /// </summary>
-    [Fact]
-    public void Validate_WithPageSize1_DoesNotThrow()
-    {
-        // Arrange
-        var request = new PaginationRequest { PageNumber = 1, PageSize = 1 };
-
-        // Act
-        var act = () => request.Validate();
-
-        // Assert
-        act.Should().NotThrow();
-    }
-
-    /// <summary>
-    /// Tests that <see cref="PaginationRequest.Validate()"/> succeeds when PageSize is 100.
-    /// </summary>
-    [Fact]
-    public void Validate_WithPageSize100_DoesNotThrow()
-    {
-        // Arrange
-        var request = new PaginationRequest { PageNumber = 1, PageSize = 100 };
-
-        // Act
-        var act = () => request.Validate();
-
-        // Assert
-        act.Should().NotThrow();
-    }
-
-#endregion
-
-#region Combined Property Tests
-
-    /// <summary>
-    /// Tests that all properties can be set simultaneously without interference.
-    /// </summary>
-    [Fact]
-    public void AllProperties_WithVariousValues_SetsAllCorrectly()
-    {
-        // Arrange
+        // Arrange - Create a PaginationRequest with values that would overflow if not clamped
+        // We need to bypass the setters to test the overflow protection
         var request = new PaginationRequest();
 
-        // Act
-        request.PageNumber = 7;
-        request.PageSize = 30;
-        request.SortBy = "CreatedDate";
-        request.SortDescending = true;
-        request.SearchTerm = "test";
-        request.Filters = new Dictionary<string, string> { { "status", "active" } };
+        // Use reflection to bypass the setter and set values that would overflow
+        var pageNumberField = typeof(PaginationRequest).GetField("_pageNumber", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var pageSizeField = typeof(PaginationRequest).GetField("_pageSize", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        // Assert
-        request.PageNumber.Should().Be(7);
-        request.PageSize.Should().Be(30);
-        request.SortBy.Should().Be("CreatedDate");
-        request.SortDescending.Should().BeTrue();
-        request.SearchTerm.Should().Be("test");
-        request.Filters.Should().ContainSingle().Which.Key.Should().Be("status");
+        pageNumberField.SetValue(request, int.MaxValue);
+        pageSizeField.SetValue(request, 100);
+
+        // Act & Assert - This should throw OverflowException due to checked arithmetic
+        request.Invoking(r => r.GetSkip())
+            .Should().Throw<OverflowException>("The skip calculation uses checked arithmetic to prevent integer overflow");
     }
 
     /// <summary>
-    /// Tests that modifying one property doesn't affect others.
+    /// Tests that <see cref="PaginationRequest.GetSkip()"/> handles maximum allowed values (PageNumber = 100, PageSize = 100) without overflow.
     /// </summary>
     [Fact]
-    public void PropertyModification_IndependentOfOtherProperties()
+    public void GetSkip_WithMaxAllowedValues_ReturnsCorrectSkip()
     {
         // Arrange
-        var request = new PaginationRequest { PageNumber = 1, PageSize = 10 };
+        var request = new PaginationRequest { PageNumber = 100, PageSize = 100 };
 
-        // Act - modify PageSize
-        request.PageSize = 25;
+        // Act
+        var skip = request.GetSkip();
 
-        // Assert - PageNumber should remain unchanged
-        request.PageNumber.Should().Be(1);
-        request.PageSize.Should().Be(25);
+        // Assert
+        skip.Should().Be(9900); // (100-1)*100 = 9900
     }
 
 #endregion

@@ -33,17 +33,17 @@ public sealed class ProductsController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetProducts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetProducts([FromQuery] PaginationRequest pagination)
     {
-        var products = await _productService.GetAllProductsAsync(pageNumber, pageSize);
+        var products = await _productService.GetAllProductsAsync(pagination.PageNumber, pagination.PageSize);
         return ApiSuccess(products);
     }
 
     [HttpGet("category/{category}")]
     [ProducesResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetProductsByCategory(ProductCategory category, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetProductsByCategory(ProductCategory category, [FromQuery] PaginationRequest pagination)
     {
-        var products = await _productService.GetProductsByCategoryAsync(category, pageNumber, pageSize);
+        var products = await _productService.GetProductsByCategoryAsync(category, pagination.PageNumber, pagination.PageSize);
         return ApiSuccess(products);
     }
 
