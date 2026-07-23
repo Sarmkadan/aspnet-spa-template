@@ -16,7 +16,7 @@ namespace AspNetSpaTemplate.Services;
 /// <summary>
 /// Service for product-related business logic, including querying, creation, and management.
 /// </summary>
-public sealed class ProductService
+public sealed class ProductService : IProductService
 {
     private readonly ProductRepository _productRepository;
     private readonly ILogger<ProductService> _logger;
