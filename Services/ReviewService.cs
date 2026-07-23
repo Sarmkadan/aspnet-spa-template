@@ -61,7 +61,21 @@ public sealed class ReviewService
         return reviews.OrderByDescending(r => r.CreatedAt).ToList();
     }
 
-    public async Task<Review> CreateReviewAsync(int productId, int userId, int rating, string title, string content, bool isVerifiedPurchase = false)
+    /// <summary>
+        /// Creates a new product review or updates an existing one if the user has already reviewed this product.
+        /// This provides idempotent review submission - multiple submissions for the same (user, product) pair
+        /// will update the existing review rather than creating duplicates.
+        /// </summary>
+        /// <param name="productId">The ID of the product being reviewed.</param>
+        /// <param name="userId">The ID of the user submitting the review.</param>
+        /// <param name="rating">The rating (1-5 stars).</param>
+        /// <param name="title">The review title.</param>
+        /// <param name="content">The review content.</param>
+        /// <param name="isVerifiedPurchase">Whether this is a verified purchase.</param>
+        /// <returns>The created or updated review.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when product or user is not found.</exception>
+        /// <exception cref="ValidationException">Thrown when validation fails.</exception>
+        public async Task<Review> CreateReviewAsync(int productId, int userId, int rating, string title, string content, bool isVerifiedPurchase = false)
     {
         _logger.LogInformation("Creating review for product {ProductId} by user {UserId}: Rating={Rating}/5, Title={Title}", productId, userId, rating, title);
 
@@ -76,38 +90,55 @@ public sealed class ReviewService
 
         // Check if user already reviewed this product
         var existingReview = await _reviewRepository.FirstOrDefaultAsync(r => r.ProductId == productId && r.UserId == userId);
+        Review review;
+
         if (existingReview is not null)
         {
-            _logger.LogWarning("User {UserId} already reviewed product {ProductId}", userId, productId);
-            throw new BusinessException("User has already reviewed this product", "DUPLICATE_REVIEW");
-        }
+            _logger.LogInformation("User {UserId} already reviewed product {ProductId} - updating existing review", userId, productId);
 
-        var review = new Review
+            // Update existing review instead of creating a duplicate
+            existingReview.UpdateReview(rating, title, content);
+            review = existingReview;
+        }
+        else
         {
-            ProductId = productId,
-            UserId = userId,
-            Rating = rating,
-            Title = title,
-            Content = content,
-            IsVerifiedPurchase = isVerifiedPurchase,
-            IsApproved = true,
-            CreatedAt = DateTime.UtcNow
-        };
+            // Create new review
+            review = new Review
+            {
+                ProductId = productId,
+                UserId = userId,
+                Rating = rating,
+                Title = title,
+                Content = content,
+                IsVerifiedPurchase = isVerifiedPurchase,
+                IsApproved = true,
+                CreatedAt = DateTime.UtcNow
+            };
+        }
 
         try
         {
-            _reviewRepository.Add(review);
+            if (existingReview is null)
+            {
+                _reviewRepository.Add(review);
+                _logger.LogInformation("Review created successfully: {ReviewId} - Product: {ProductId}, Rating: {Rating}/5", review.Id, productId, rating);
+            }
+            else
+            {
+                _reviewRepository.Update(review);
+                _logger.LogInformation("Review updated successfully: {ReviewId} - Product: {ProductId}, Rating: {Rating}/5", review.Id, productId, rating);
+            }
+
             await _reviewRepository.SaveChangesAsync();
 
             // Update product rating
             await UpdateProductRatingAsync(productId);
 
-            _logger.LogInformation("Review created successfully: {ReviewId} - Product: {ProductId}, Rating: {Rating}/5", review.Id, productId, rating);
             return review;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Failed to create review for product {ProductId} by user {UserId}", productId, userId);
+            _logger.LogError(ex, "Failed to {(existingReview is null ? \"create\" : \"update\")} review for product {ProductId} by user {UserId}", productId, userId);
             throw;
         }
     }
