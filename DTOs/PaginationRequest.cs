@@ -8,23 +8,34 @@ namespace AspNetSpaTemplate.DTOs;
 
 /// <summary>
 /// Standard request DTO for paginated API endpoints.
-/// Encapsulates pagination parameters with validation.
+/// Encapsulates pagination parameters with automatic normalization and bounds enforcement.
+/// Prevents unbounded page sizes and integer overflow attacks.
 /// </summary>
 public sealed class PaginationRequest
 {
+    private const int MaxPageSize = 100;
     private int _pageNumber = 1;
     private int _pageSize = 10;
 
+    /// <summary>
+    /// Gets or sets the page number (1-based).
+    /// Values less than 1 are coerced to 1.
+    /// </summary>
     public int PageNumber
     {
         get => _pageNumber;
         set => _pageNumber = Math.Max(1, value);
     }
 
+    /// <summary>
+    /// Gets or sets the page size.
+    /// Values less than 1 are coerced to 1.
+    /// Values greater than <see cref="MaxPageSize"/> are coerced to <see cref="MaxPageSize"/>.
+    /// </summary>
     public int PageSize
     {
         get => _pageSize;
-        set => _pageSize = Math.Max(1, Math.Min(value, 100)); // Cap at 100 to prevent DOS
+        set => _pageSize = Math.Max(1, Math.Min(value, MaxPageSize));
     }
 
     public string? SortBy { get; set; }
@@ -33,23 +44,25 @@ public sealed class PaginationRequest
     public Dictionary<string, string>? Filters { get; set; }
 
     /// <summary>
-    /// Validates pagination parameters.
-    /// Throws ArgumentException if invalid.
+    /// Calculates skip count for database queries with overflow protection.
+    /// Uses checked arithmetic to prevent integer overflow from hostile inputs like PageNumber = int.MaxValue.
     /// </summary>
-    public void Validate()
+    /// <exception cref="OverflowException">Thrown when the calculated skip value would overflow.</exception>
+    public int GetSkip()
     {
-        if (PageNumber < 1)
-            throw new ArgumentException("PageNumber must be >= 1");
-        if (PageSize < 1)
-            throw new ArgumentException("PageSize must be >= 1");
-        if (PageSize > 100)
-            throw new ArgumentException("PageSize cannot exceed 100");
+        // Calculate skip with overflow protection: (PageNumber - 1) * PageSize
+        // If PageNumber is 1, skip is 0 regardless of PageSize
+        // If PageSize is 0 (shouldn't happen due to setter), result is 0
+        // Check for potential overflow before performing the multiplication
+        if (PageNumber > 1)
+        {
+            checked
+            {
+                return (PageNumber - 1) * PageSize;
+            }
+        }
+        return 0;
     }
-
-    /// <summary>
-    /// Calculates skip count for database queries.
-    /// </summary>
-    public int GetSkip() => (PageNumber - 1) * PageSize;
 }
 
 /// <summary>
