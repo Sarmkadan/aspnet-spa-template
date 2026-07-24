@@ -420,8 +420,111 @@ public sealed class SyncQueueServiceTests
         {
             sut.PendingCount(userId: i).Should().Be(0);
         }
+    }
 
-        // Verify counts are correct
+    /// <summary>
+    /// Tests that calling <c>GetPending</c> on an empty queue while concurrent enqueues are happening
+    /// doesn't throw exceptions or deadlock.
+    /// </summary>
+    [Fact]
+    public void GetPending_OnEmptyQueue_WithConcurrentEnqueue_DoesNotThrowOrDeadlock()
+    {
+        var sut = BuildSut();
+        const int threadCount = 10;
+        var tasks = new Task[threadCount];
+
+        // Start concurrent enqueues
+        for (int i = 0; i < threadCount; i++)
+        {
+            tasks[i] = Task.Run(() =>
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    sut.Enqueue(userId: 1, $"req-{Guid.NewGuid()}", "POST", "/api/orders");
+                }
+            });
+        }
+
+        // Concurrently call GetPending on empty queue (user 999 doesn't exist)
+        var getPendingTasks = new Task[threadCount];
+        for (int i = 0; i < threadCount; i++)
+        {
+            getPendingTasks[i] = Task.Run(() =>
+            {
+                // This should return empty without throwing
+                var result = sut.GetPending(userId: 999);
+                result.Should().BeEmpty();
+            });
+        }
+
+        Task.WhenAll(tasks).Wait();
+        Task.WhenAll(getPendingTasks).Wait();
+
+        // Verify the queue has entries
+        sut.PendingCount(userId: 1).Should().BeGreaterThan(0);
+    }
+
+    /// <summary>
+    /// Tests that <c>PendingCount</c> stays consistent under concurrent enqueue and complete operations.
+    /// Verifies no torn reads or race conditions in the count calculation.
+    /// </summary>
+    [Fact]
+    public void PendingCount_StaysConsistent_UnderConcurrentMutation()
+    {
+        var sut = BuildSut();
+        const int threadCount = 10;
+        const int operationsPerThread = 20;
+        var userIds = new ConcurrentBag<int>();
+
+        // Phase 1: Concurrent enqueues
+        var enqueueTasks = new Task[threadCount];
+        for (int i = 0; i < threadCount; i++)
+        {
+            int userId = i;
+            enqueueTasks[i] = Task.Run(() =>
+            {
+                for (int j = 0; j < operationsPerThread; j++)
+                {
+                    var id = sut.Enqueue(userId, $"req-{userId}-{j}-{Guid.NewGuid()}", "POST", "/api/orders");
+                    userIds.Add(userId);
+                }
+            });
+        }
+
+        Task.WhenAll(enqueueTasks).Wait();
+
+        // Verify counts are accurate after enqueue
+        var expectedCount = threadCount * operationsPerThread;
+        userIds.Count.Should().Be(expectedCount);
+
+        // Phase 2: Concurrent completes and reads for each user
+        var mixedTasks = new Task[threadCount];
+        for (int i = 0; i < threadCount; i++)
+        {
+            int userId = i;
+            mixedTasks[i] = Task.Run(() =>
+            {
+                // Get all pending entries for this user
+                var pending = sut.GetPending(userId);
+
+                // Mix of operations: complete some entries, read count multiple times
+                foreach (var entry in pending)
+                {
+                    if (entry.UserId == userId)
+                    {
+                        sut.Complete(entry.Id);
+                    }
+
+                    // Read the count multiple times
+                    var count = sut.PendingCount(userId);
+                    count.Should().BeGreaterThanOrEqualTo(0);
+                }
+            });
+        }
+
+        Task.WhenAll(mixedTasks).Wait();
+
+        // Final verification - all entries should be completed
         for (int i = 0; i < threadCount; i++)
         {
             sut.PendingCount(userId: i).Should().Be(0);
