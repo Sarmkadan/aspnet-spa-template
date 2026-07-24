@@ -16,9 +16,15 @@ public sealed class RateLimitingMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<RateLimitingMiddleware> _logger;
 
-    // Store request counts per client: key = "ip:timestamp", value = count
+    // Store request counts per client bucket: key = "clientId:window", value = count + window reset time
     private static readonly Dictionary<string, (int Count, DateTime ResetTime)> RequestLog = new();
     private static readonly object RequestLogLock = new();
+
+    // Expired-bucket cleanup is amortized: scanning the whole dictionary on
+    // every request under the lock is O(n) per request and serializes all
+    // traffic behind the slowest scan.
+    private static DateTime _nextCleanupAt = DateTime.MinValue;
+    private static readonly TimeSpan CleanupInterval = TimeSpan.FromSeconds(30);
 
     // Configuration
     private const int RequestsPerMinute = 60;
@@ -35,7 +41,7 @@ public sealed class RateLimitingMiddleware
     {
         var clientId = GetClientIdentifier(context);
 
-        if (!IsRateLimitExceeded(clientId))
+        if (!IsRateLimitExceeded(clientId, out var retryAfter))
         {
             // Add rate limit headers to response
             context.Response.OnStarting(() =>
@@ -53,7 +59,8 @@ public sealed class RateLimitingMiddleware
         {
             _logger.LogWarning("Rate limit exceeded for client {ClientId}", clientId);
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-            context.Response.Headers["Retry-After"] = "60";
+            var retryAfterSeconds = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds));
+            context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
             await context.Response.WriteAsync("Rate limit exceeded. Please try again later.");
         }
     }
@@ -81,37 +88,63 @@ public sealed class RateLimitingMiddleware
     /// Checks if client has exceeded rate limit.
     /// Returns true if limit exceeded (request should be rejected).
     /// </summary>
-    private static bool IsRateLimitExceeded(string clientId)
+    private static bool IsRateLimitExceeded(string clientId, out TimeSpan retryAfter)
     {
         lock (RequestLogLock)
         {
             var now = DateTime.UtcNow;
 
-            // Clean old entries
-            var keysToRemove = RequestLog
-                .Where(x => x.Value.ResetTime < now)
-                .Select(x => x.Key)
-                .ToList();
-
-            foreach (var key in keysToRemove)
-                RequestLog.Remove(key);
-
-            // Get or create entry for this client
-            var key1MinuteBucket = $"{clientId}:minute";
-            if (!RequestLog.TryGetValue(key1MinuteBucket, out var entry))
+            // Amortized cleanup of expired buckets (all clients)
+            if (now >= _nextCleanupAt)
             {
-                RequestLog[key1MinuteBucket] = (1, now.AddMinutes(1));
-                return false;
+                var keysToRemove = RequestLog
+                    .Where(x => x.Value.ResetTime < now)
+                    .Select(x => x.Key)
+                    .ToList();
+
+                foreach (var key in keysToRemove)
+                    RequestLog.Remove(key);
+
+                _nextCleanupAt = now.Add(CleanupInterval);
             }
 
-            // Check if exceeded
-            if (entry.Count >= RequestsPerMinute)
+            // Enforce all three declared windows: burst (1s), minute, hour.
+            // A request counts against every window; the first exceeded window
+            // rejects the request and reports when that window resets.
+            if (IsBucketExceeded($"{clientId}:second", BurstLimit, TimeSpan.FromSeconds(1), now, out retryAfter))
+                return true;
+            if (IsBucketExceeded($"{clientId}:minute", RequestsPerMinute, TimeSpan.FromMinutes(1), now, out retryAfter))
+                return true;
+            if (IsBucketExceeded($"{clientId}:hour", RequestsPerHour, TimeSpan.FromHours(1), now, out retryAfter))
                 return true;
 
-            // Update count
-            RequestLog[key1MinuteBucket] = (entry.Count + 1, entry.ResetTime);
+            retryAfter = TimeSpan.Zero;
             return false;
         }
+    }
+
+    /// <summary>
+    /// Counts a request against one fixed window bucket.
+    /// Must be called under <see cref="RequestLogLock"/>.
+    /// </summary>
+    private static bool IsBucketExceeded(string bucketKey, int limit, TimeSpan window, DateTime now, out TimeSpan retryAfter)
+    {
+        if (!RequestLog.TryGetValue(bucketKey, out var entry) || entry.ResetTime < now)
+        {
+            RequestLog[bucketKey] = (1, now.Add(window));
+            retryAfter = TimeSpan.Zero;
+            return false;
+        }
+
+        if (entry.Count >= limit)
+        {
+            retryAfter = entry.ResetTime - now;
+            return true;
+        }
+
+        RequestLog[bucketKey] = (entry.Count + 1, entry.ResetTime);
+        retryAfter = TimeSpan.Zero;
+        return false;
     }
 
     /// <summary>
@@ -122,7 +155,7 @@ public sealed class RateLimitingMiddleware
         lock (RequestLogLock)
         {
             var key = $"{clientId}:minute";
-            if (RequestLog.TryGetValue(key, out var entry))
+            if (RequestLog.TryGetValue(key, out var entry) && entry.ResetTime >= DateTime.UtcNow)
                 return Math.Max(0, RequestsPerMinute - entry.Count);
 
             return RequestsPerMinute;
@@ -137,7 +170,7 @@ public sealed class RateLimitingMiddleware
         lock (RequestLogLock)
         {
             var key = $"{clientId}:minute";
-            if (RequestLog.TryGetValue(key, out var entry))
+            if (RequestLog.TryGetValue(key, out var entry) && entry.ResetTime >= DateTime.UtcNow)
                 return entry.ResetTime;
 
             return DateTime.UtcNow.AddMinutes(1);
