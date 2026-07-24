@@ -341,4 +341,62 @@ public sealed class NotificationWorkerTests : IDisposable
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception, string>>()!), Times.Once);
     }
+
+
+    [Fact]
+    /// <summary>
+    /// Tests that ExecuteAsync handles cancellation token triggered mid-processing gracefully.
+    /// Verifies that cancellation is properly detected and handled without partial state corruption.
+    /// </summary>
+    public async Task ExecuteAsync_WhenCancellationTriggeredMidProcessing_StopsGracefully()
+    {
+        // Arrange - queue 10 notifications
+        for (int i = 0; i < 10; i++)
+        {
+            await _notificationService.SendEmailAsync($"user{i}@example.com", $"Test {i}", "Body");
+        }
+
+        var cts = new CancellationTokenSource();
+
+        // Act - trigger cancellation during execution
+        cts.CancelAfter(TimeSpan.FromMilliseconds(10));
+
+        Func<Task> act = () => _notificationWorker.ExecuteAsync(cts.Token);
+
+        // Assert - should throw OperationCanceledException
+        await act.Should().ThrowAsync<OperationCanceledException>();
+
+        // Assert - graceful shutdown message should be logged
+        _mockLogger.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("NotificationWorker cancelled gracefully")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()!),
+            Times.Once);
+    }
+
+    [Fact]
+    /// <summary>
+    /// Tests that ExecuteAsync handles empty notification batch gracefully.
+    /// Verifies that empty batches don't cause exceptions.
+    /// </summary>
+    public async Task ExecuteAsync_WithEmptyNotificationBatch_HandlesGracefully()
+    {
+        // Arrange - No notifications queued (empty batch)
+
+        // Act - should not throw
+        var act = () => _notificationWorker.ExecuteAsync(CancellationToken.None);
+        await act.Should().NotThrowAsync();
+
+        // Assert - should log that no notifications were sent
+        _mockLogger.Verify(l => l.Log(
+            LogLevel.Debug,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No pending notifications to send")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()!),
+            Times.Once);
+    }
+
 }
