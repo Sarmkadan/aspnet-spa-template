@@ -64,11 +64,9 @@ public sealed class ProductsControllerPagedResultTests
             .Setup(s => s.GetProductsByCategoryAsync(Constants.ProductCategory.Electronics, 1, 10))
             .ReturnsAsync(listResponse);
 
-        var pagination = new PaginationRequest { PageNumber = 1, PageSize = 10 };
-
         // Act
-        var allResult = await _controller.GetProducts(pagination) as ObjectResult;
-        var categoryResult = await _controller.GetProductsByCategory("electronics", pagination) as ObjectResult;
+        var allResult = await _controller.GetProducts(pageNumber: 1, pageSize: 10) as ObjectResult;
+        var categoryResult = await _controller.GetProductsByCategory("electronics", pageNumber: 1, pageSize: 10) as ObjectResult;
 
         // Assert
         allResult.Should().NotBeNull();
@@ -102,10 +100,8 @@ public sealed class ProductsControllerPagedResultTests
             .Setup(s => s.GetProductsByCategoryAsync(Constants.ProductCategory.Electronics, 1, 10))
             .ReturnsAsync(listResponse);
 
-        var pagination = new PaginationRequest { PageNumber = 1, PageSize = 10 };
-
         // Act
-        var result = await _controller.GetProductsByCategory("ELECTRONICS", pagination) as ObjectResult;
+        var result = await _controller.GetProductsByCategory("ELECTRONICS", pageNumber: 1, pageSize: 10) as ObjectResult;
 
         // Assert
         result.Should().NotBeNull();
@@ -125,10 +121,8 @@ public sealed class ProductsControllerPagedResultTests
     public async Task GetProductsByCategory_UnknownCategory_Returns200WithEmptyItems()
     {
         // Arrange
-        var pagination = new PaginationRequest { PageNumber = 2, PageSize = 5 };
-
         // Act
-        var result = await _controller.GetProductsByCategory("not-a-real-category", pagination) as ObjectResult;
+        var result = await _controller.GetProductsByCategory("not-a-real-category", pageNumber: 2, pageSize: 5) as ObjectResult;
 
         // Assert
         result.Should().NotBeNull();

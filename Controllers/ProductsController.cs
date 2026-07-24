@@ -34,16 +34,34 @@ public sealed class ProductsController : ApiControllerBase
     /// <summary>
     /// Gets all available products, paginated.
     /// </summary>
-    /// <param name="pagination">The pagination parameters.</param>
+    /// <param name="pageNumber">The page number (1-based).</param>
+    /// <param name="pageSize">The number of items per page.</param>
     /// <returns>A <see cref="PagedResult{T}"/> envelope of <see cref="ProductResponse"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="pagination"/> is null.</exception>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<ProductResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetProducts([FromQuery] PaginationRequest pagination)
+    public async Task<IActionResult> GetProducts(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
     {
-        ArgumentNullException.ThrowIfNull(pagination);
+        // Explicit validation for pagination bounds to reject invalid values with 400 responses
+        if (pageNumber <= 0)
+        {
+            return ApiError("Page number must be greater than 0.", "VALIDATION_ERROR", StatusCodes.Status400BadRequest);
+        }
 
-        var products = await _productService.GetAllProductsAsync(pagination.PageNumber, pagination.PageSize);
+        if (pageSize <= 0)
+        {
+            return ApiError("Page size must be greater than 0.", "VALIDATION_ERROR", StatusCodes.Status400BadRequest);
+        }
+
+        // Clamp pageSize to a reasonable maximum to prevent excessive database load
+        const int maxPageSize = 100;
+        if (pageSize > maxPageSize)
+        {
+            pageSize = maxPageSize;
+        }
+
+        var products = await _productService.GetAllProductsAsync(pageNumber, pageSize);
         var page = PagedResult<ProductResponse>.Create(products.Products, products.PageNumber, products.PageSize, products.TotalCount);
         return ApiSuccess(page);
     }
@@ -54,21 +72,43 @@ public sealed class ProductsController : ApiControllerBase
     /// empty <see cref="PagedResult{T}.Items"/> collection rather than a 404 or 400.
     /// </summary>
     /// <param name="category">The category name (case-insensitive).</param>
-    /// <param name="pagination">The pagination parameters.</param>
+    /// <param name="pageNumber">The page number (1-based).</param>
+    /// <param name="pageSize">The number of items per page.</param>
     /// <returns>A <see cref="PagedResult{T}"/> envelope of <see cref="ProductResponse"/>.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="category"/> is null or empty.</exception>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="pagination"/> is null.</exception>
     [HttpGet("category/{category}")]
     [ProducesResponseType(typeof(PagedResult<ProductResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetProductsByCategory(string category, [FromQuery] PaginationRequest pagination)
+    public async Task<IActionResult> GetProductsByCategory(
+        string category,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
     {
         ArgumentException.ThrowIfNullOrEmpty(category);
-        ArgumentNullException.ThrowIfNull(pagination);
+
+        // Explicit validation for pagination bounds to reject invalid values with 400 responses
+        if (pageNumber <= 0)
+        {
+            return ApiError("Page number must be greater than 0.", "VALIDATION_ERROR", StatusCodes.Status400BadRequest);
+        }
+
+        if (pageSize <= 0)
+        {
+            return ApiError("Page size must be greater than 0.", "VALIDATION_ERROR", StatusCodes.Status400BadRequest);
+        }
+
+        // Clamp pageSize to a reasonable maximum to prevent excessive database load
+        const int maxPageSize = 100;
+        if (pageSize > maxPageSize)
+        {
+            pageSize = maxPageSize;
+        }
 
         if (!Enum.TryParse<ProductCategory>(category, ignoreCase: true, out var parsedCategory))
-            return ApiSuccess(PagedResult<ProductResponse>.Empty(pagination.PageNumber, pagination.PageSize));
+        {
+            // Return empty result for unrecognized category with validated pagination parameters
+            return ApiSuccess(PagedResult<ProductResponse>.Empty(pageNumber, pageSize));
+        }
 
-        var products = await _productService.GetProductsByCategoryAsync(parsedCategory, pagination.PageNumber, pagination.PageSize);
+        var products = await _productService.GetProductsByCategoryAsync(parsedCategory, pageNumber, pageSize);
         var page = PagedResult<ProductResponse>.Create(products.Products, products.PageNumber, products.PageSize, products.TotalCount);
         return ApiSuccess(page);
     }
