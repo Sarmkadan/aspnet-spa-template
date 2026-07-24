@@ -22,6 +22,8 @@ public static class AppConstants
         public const int MinPasswordLength = 8;
         public const int MaxPasswordLength = 128;
         public const int MaxDescriptionLength = 5000;
+    public const int MaxSearchQueryLength = 100;
+    public const int MaxSearchTermLength = 50;
     }
 
     public static class Pagination
