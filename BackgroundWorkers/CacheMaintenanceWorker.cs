@@ -102,6 +102,15 @@ public sealed class CacheMaintenanceWorker : IBackgroundTask
     {
         try
         {
+            // Evict entries whose TTL has already elapsed. Without this sweep,
+            // expired entries in the in-memory cache linger until the next read
+            // of that exact key, which for write-once keys means forever.
+            var expiredRemoved = await _cacheService.RemoveExpiredAsync();
+            if (expiredRemoved > 0)
+            {
+                _logger.LogInformation($"Evicted {expiredRemoved} expired cache entries");
+            }
+
             // Clean up temporary cache entries (older than 1 hour)
             // Pattern: temp:*
             _logger.LogDebug("Cleaning up temporary cache entries");

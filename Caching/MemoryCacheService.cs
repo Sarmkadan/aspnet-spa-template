@@ -129,7 +129,44 @@ public sealed class MemoryCacheService : ICacheService
         finally
         {
             semaphore.Release();
+
+            // Drop the per-key semaphore once the guarded section completes so
+            // the dictionary does not grow without bound (one SemaphoreSlim per
+            // distinct key, forever). Waiters already queued on this instance
+            // still proceed normally; late arrivals just create a fresh one and
+            // hit the cached value via the double-check above.
+            if (semaphore.CurrentCount == 1)
+            {
+                _semaphores.TryRemove(new KeyValuePair<string, SemaphoreSlim>(key, semaphore));
+            }
         }
+    }
+
+    public Task<int> RemoveExpiredAsync()
+    {
+        var now = DateTime.UtcNow;
+        var removed = 0;
+
+        foreach (var pair in _cache)
+        {
+            if (pair.Value.ExpiresAt.HasValue && pair.Value.ExpiresAt < now)
+            {
+                // Remove only if the entry is still the one we inspected, so a
+                // concurrent SetAsync with a fresh value is not evicted.
+                if (((ICollection<KeyValuePair<string, CacheEntry>>)_cache)
+                        .Remove(new KeyValuePair<string, CacheEntry>(pair.Key, pair.Value)))
+                {
+                    removed++;
+                }
+            }
+        }
+
+        if (removed > 0)
+        {
+            _logger.LogDebug($"Cache sweep removed {removed} expired entries");
+        }
+
+        return Task.FromResult(removed);
     }
 
     public async Task<long> IncrementAsync(string key, long increment = 1)
@@ -151,8 +188,10 @@ public sealed class MemoryCacheService : ICacheService
         if (!_cache.TryGetValue(key, out var entry))
             return false;
 
-        entry.ExpiresAt = DateTime.UtcNow.Add(ttl);
-        return true;
+        // Replace the entry instead of mutating the shared instance so readers
+        // never observe a torn/intermediate ExpiresAt.
+        var updated = new CacheEntry { Value = entry.Value, ExpiresAt = DateTime.UtcNow.Add(ttl) };
+        return _cache.TryUpdate(key, updated, entry) || _cache.ContainsKey(key);
     }
 
     public async Task<IEnumerable<string>> GetKeysAsync(string pattern)

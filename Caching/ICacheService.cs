@@ -77,6 +77,12 @@ public interface ICacheService
     /// Gets cache statistics (hits, misses, size).
     /// </summary>
     Task<CacheStatistics> GetStatisticsAsync();
+
+    /// <summary>
+    /// Proactively removes entries whose TTL has elapsed and returns the count removed.
+    /// Default implementation is a no-op for backends (e.g. Redis) that expire keys natively.
+    /// </summary>
+    Task<int> RemoveExpiredAsync() => Task.FromResult(0);
 }
 
 /// <summary>

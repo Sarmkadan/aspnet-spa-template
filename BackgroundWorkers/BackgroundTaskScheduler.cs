@@ -14,7 +14,7 @@ namespace AspNetSpaTemplate.BackgroundWorkers;
 public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
 {
     private readonly List<IBackgroundTask> _tasks = new();
-    private readonly Dictionary<string, BackgroundTaskState> _taskStates = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, BackgroundTaskState> _taskStates = new();
     private readonly ILogger<BackgroundTaskScheduler> _logger;
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _schedulerTask;
@@ -154,11 +154,11 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     {
         var state = _taskStates[task.TaskName];
 
-        // Don't run if already executing
-        if (state.IsRunning)
+        // Atomic claim: the scheduler loop and TriggerTaskAsync can race here,
+        // so a plain bool check-then-set would allow double execution.
+        if (Interlocked.CompareExchange(ref state.RunningFlag, 1, 0) != 0)
             return;
 
-        state.IsRunning = true;
         var startTime = DateTime.UtcNow;
 
         try
@@ -173,12 +173,6 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
             state.LastError = null;
 
             _logger.LogInformation($"Background task completed: {task.TaskName} (duration: {duration.TotalSeconds:F1}s)");
-
-            // Schedule next execution
-            if (task.ExecutionInterval.HasValue)
-            {
-                state.NextExecutionAt = DateTime.UtcNow.Add(task.ExecutionInterval.Value);
-            }
         }
         catch (Exception ex)
         {
@@ -188,7 +182,15 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
         }
         finally
         {
-            state.IsRunning = false;
+            // Schedule the next run for successes AND failures. Previously the
+            // next execution time was only advanced on success, so a task that
+            // threw was retried by the 1s scheduler tick in a hot loop.
+            if (task.ExecutionInterval.HasValue)
+            {
+                state.NextExecutionAt = DateTime.UtcNow.Add(task.ExecutionInterval.Value);
+            }
+
+            Interlocked.Exchange(ref state.RunningFlag, 0);
         }
     }
 
@@ -205,8 +207,11 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     /// </summary>
     private class BackgroundTaskState
     {
+        /// <summary>1 while the task is executing; toggled via Interlocked.</summary>
+        public int RunningFlag;
+
         public string TaskName { get; set; } = "";
-        public bool IsRunning { get; set; }
+        public bool IsRunning => Volatile.Read(ref RunningFlag) == 1;
         public DateTime? LastExecutedAt { get; set; }
         public DateTime? NextExecutionAt { get; set; }
         public TimeSpan? LastExecutionDuration { get; set; }
