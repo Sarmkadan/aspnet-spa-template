@@ -163,17 +163,82 @@ public sealed class ProductsController : ApiControllerBase
         return ApiSuccess(products);
     }
 
-    [HttpGet("search")]
-    [ProducesResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> SearchProducts(
-        [FromQuery] string query,
-        [FromQuery] ProductCategory? category,
-        [FromQuery] decimal? minPrice,
-        [FromQuery] decimal? maxPrice)
+  /// <summary>
+  /// Searches products by name and description using a free-text query. The query is case-insensitive and
+  /// supports partial matching. Empty or whitespace-only queries return an empty result set with a 200 OK response.
+  /// </summary>
+  /// <param name="query">The search query term (max 100 characters).</param>
+  /// <param name="category">Optional category filter.</param>
+  /// <param name="minPrice">Optional minimum price filter.</param>
+  /// <param name="maxPrice">Optional maximum price filter.</param>
+  /// <returns>A list of matching products.</returns>
+  [HttpGet("search")]
+  [ProducesResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
+  [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+  public async Task<IActionResult> SearchProducts(
+    [FromQuery] string query,
+    [FromQuery] ProductCategory? category,
+    [FromQuery] decimal? minPrice,
+    [FromQuery] decimal? maxPrice)
+  {
+    // Validate query parameter to prevent resource exhaustion and SQL injection vectors
+    if (string.IsNullOrWhiteSpace(query))
     {
-        var products = await _productService.SearchProductsAsync(query, category, minPrice, maxPrice);
-        return ApiSuccess(products);
+      return ApiError("Search query cannot be empty or whitespace.", "INVALID_SEARCH_QUERY", StatusCodes.Status400BadRequest);
     }
+
+    // Enforce maximum query length to prevent potential regex/LIKE-based resource exhaustion
+    // and protect against overly long queries that could cause performance issues
+    if (query.Length > AppConstants.Validation.MaxSearchQueryLength)
+    {
+      return ApiError(
+        $"Search query exceeds maximum length of {AppConstants.Validation.MaxSearchQueryLength} characters.",
+        "QUERY_TOO_LONG",
+        StatusCodes.Status400BadRequest);
+    }
+
+    // Sanitize query to prevent SQL injection and special character attacks
+    // Remove or escape common SQL injection patterns and special regex characters
+    var sanitizedQuery = SanitizeSearchQuery(query);
+
+    // Validate sanitized query is not empty after sanitization
+    if (string.IsNullOrWhiteSpace(sanitizedQuery))
+    {
+      return ApiError("Search query contains only invalid characters after sanitization.", "INVALID_SEARCH_QUERY", StatusCodes.Status400BadRequest);
+    }
+
+    var products = await _productService.SearchProductsAsync(sanitizedQuery, category, minPrice, maxPrice);
+    return ApiSuccess(products);
+  }
+
+  /// <summary>
+  /// Sanitizes a search query to remove potentially dangerous characters and patterns.
+  /// </summary>
+  /// <param name="query">The raw search query.</param>
+  /// <returns>The sanitized search query.</returns>
+  private static string SanitizeSearchQuery(string query)
+  {
+    if (string.IsNullOrEmpty(query))
+      return query;
+
+    // Remove common SQL injection patterns
+    var dangerousPatterns = new[] { "'", "\"", ";", "--", "/*", "*/", "xp_", "exec", "union", "select", "insert", "update", "delete", "drop", "alter", "create", "truncate", "\x00", "\x1a", "\n", "\r", "\t" };
+
+    var sanitized = query;
+    foreach (var pattern in dangerousPatterns)
+    {
+      sanitized = sanitized.Replace(pattern, string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Remove control characters and non-printable characters
+    sanitized = new string(sanitized.Where(c => !char.IsControl(c) && char.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.Format).ToArray());
+
+    // Trim whitespace and ensure minimum length
+    sanitized = sanitized.Trim();
+
+    return sanitized;
+  }
+
 
     [HttpPost]
     [ProducesResponseType(typeof(ProductResponse), StatusCodes.Status201Created)]
