@@ -2,7 +2,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// ===================================
 
 using AspNetSpaTemplate.Constants;
 using AspNetSpaTemplate.DTOs;
@@ -71,18 +71,46 @@ public sealed class ProductsController : ApiControllerBase
     /// case-insensitively; an unrecognized category yields a 200 response with an
     /// empty <see cref="PagedResult{T}.Items"/> collection rather than a 404 or 400.
     /// </summary>
-    /// <param name="category">The category name (case-insensitive).</param>
+    /// <param name="category">The category name (case-insensitive). Must be a valid product category name.</param>
     /// <param name="pageNumber">The page number (1-based).</param>
     /// <param name="pageSize">The number of items per page.</param>
     /// <returns>A <see cref="PagedResult{T}"/> envelope of <see cref="ProductResponse"/>.</returns>
     [HttpGet("category/{category}")]
     [ProducesResponseType(typeof(PagedResult<ProductResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetProductsByCategory(
         string category,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
     {
         ArgumentException.ThrowIfNullOrEmpty(category);
+
+        // Validate category parameter for security and format issues
+        // Category must be a valid product category name (alphanumeric with spaces and hyphens)
+        // Reject path traversal sequences, SQL metacharacters, and overly long strings
+        if (category.Length > 100)
+        {
+            return ApiError("Category name is too long.", "INVALID_CATEGORY", StatusCodes.Status400BadRequest);
+        }
+
+        // Reject path traversal sequences
+        if (category.Contains("../") || category.Contains("..\\") || category.StartsWith("../") || category.StartsWith("..\\"))
+        {
+            return ApiError("Invalid category name.", "INVALID_CATEGORY", StatusCodes.Status400BadRequest);
+        }
+
+        // Reject common SQL injection patterns and special characters that aren't allowed in category names
+        var invalidChars = new[] { "'", "\"", ";", "--", "/*", "*/", "xp_", "exec", "union", "select", "insert", "update", "delete", "drop", "alter", "create", "truncate" };
+        if (invalidChars.Any(invalidChar => category.Contains(invalidChar, StringComparison.OrdinalIgnoreCase)))
+        {
+            return ApiError("Invalid category name.", "INVALID_CATEGORY", StatusCodes.Status400BadRequest);
+        }
+
+        // Reject control characters and non-printable characters
+        if (category.Any(c => char.IsControl(c) || char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.Format))
+        {
+            return ApiError("Invalid category name.", "INVALID_CATEGORY", StatusCodes.Status400BadRequest);
+        }
 
         // Explicit validation for pagination bounds to reject invalid values with 400 responses
         if (pageNumber <= 0)
