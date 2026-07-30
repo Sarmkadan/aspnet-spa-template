@@ -22,26 +22,38 @@ public static class CsvFormatter
     /// </summary>
     public static string ToCsv<T>(IEnumerable<T> items) where T : class
     {
-        var sb = new StringBuilder();
-
         if (!items.Any())
             return string.Empty;
 
         // Get properties from first item
         var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-        // Write header
-        var headers = properties.Select(p => EscapeCsvValue(p.Name));
-        sb.AppendLine(string.Join(",", headers));
+        // Build header line
+        var headerBuilder = new StringBuilder();
+        foreach (var property in properties)
+        {
+            if (headerBuilder.Length > 0)
+                headerBuilder.Append(",");
+            headerBuilder.Append(EscapeCsvValue(property.Name));
+        }
+        var header = headerBuilder.ToString();
 
-        // Write data rows
+        // Build CSV content
+        var csvBuilder = new StringBuilder();
+        csvBuilder.AppendLine(header);
         foreach (var item in items)
         {
-            var values = properties.Select(p => EscapeCsvValue(p.GetValue(item)));
-            sb.AppendLine(string.Join(",", values));
+            var rowBuilder = new StringBuilder();
+            foreach (var property in properties)
+            {
+                if (rowBuilder.Length > 0)
+                    rowBuilder.Append(",");
+                rowBuilder.Append(EscapeCsvValue(property.GetValue(item)));
+            }
+            csvBuilder.AppendLine(rowBuilder.ToString());
         }
 
-        return sb.ToString();
+        return csvBuilder.ToString();
     }
 
     /// <summary>
