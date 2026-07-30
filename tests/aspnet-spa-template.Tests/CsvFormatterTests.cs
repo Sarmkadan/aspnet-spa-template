@@ -7,11 +7,21 @@ using Xunit;
 
 namespace AspNetSpaTemplate.Tests
 {
+    /// <summary>
+    /// This class contains tests for CsvFormatter.
+    /// </summary>
     public class CsvFormatterTests
     {
         private sealed class TestItem
         {
+            /// <summary>
+            /// Gets or sets the name of the item.
+            /// </summary>
             public string Name { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Gets or sets the description of the item.
+            /// </summary>
             public string Description { get; set; } = string.Empty;
         }
 
