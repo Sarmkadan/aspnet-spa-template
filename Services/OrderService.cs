@@ -77,7 +77,7 @@ public sealed class OrderService
     /// <exception cref="ValidationException">Thrown when items list is empty.</exception>
     /// <exception cref="NotFoundException">Thrown when product is not found.</exception>
     /// <exception cref="BusinessException">Thrown when there's insufficient stock.</exception>
-    public async Task<OrderResponse> CreateOrderAsync(int userId, CreateOrderRequest request)
+    public async Task<OrderResponse> CreateOrderAsync(int userId, CreateOrderRequest request, CancellationToken cancellationToken = default)
     {
         if (request is null)
             throw new ArgumentNullException(nameof(request));
@@ -184,7 +184,7 @@ public sealed class OrderService
     /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
     /// <exception cref="NotFoundException">Thrown when order is not found.</exception>
     /// <exception cref="ValidationException">Thrown when status is invalid.</exception>
-    public async Task<OrderResponse> UpdateOrderStatusAsync(int id, UpdateOrderStatusRequest request)
+    public async Task<OrderResponse> UpdateOrderStatusAsync(int id, UpdateOrderStatusRequest request, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Updating order status: {OrderId} - Status={Status}", id, request?.Status ?? "Unknown");
 
@@ -262,7 +262,7 @@ public sealed class OrderService
     /// <returns>The updated order response.</returns>
     /// <exception cref="NotFoundException">Thrown when order is not found.</exception>
     /// <exception cref="BusinessException">Thrown when order is finalized.</exception>
-    public async Task<OrderResponse> ApplyDiscountAsync(int id, ApplyDiscountRequest request)
+    public async Task<OrderResponse> ApplyDiscountAsync(int id, ApplyDiscountRequest request, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Applying discount to order: {OrderId} - Discount: {DiscountAmount}", id, request?.DiscountAmount ?? 0);
 
@@ -302,7 +302,7 @@ public sealed class OrderService
     /// <exception cref="NotFoundException">Thrown when order is not found.</exception>
     /// <exception cref="BusinessException">Thrown when order cannot be cancelled.</exception>
     /// <exception cref="UnauthorizedAccessException">Thrown when user does not own the order.</exception>
-    public async Task<OrderResponse> CancelOrderAsync(int id, int userId)
+    public async Task<OrderResponse> CancelOrderAsync(int id, int userId, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Cancelling order: {OrderId} by user {UserId}", id, userId);
 

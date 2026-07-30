@@ -1,0 +1,1 @@
+Add CancellationToken parameters (default) to all async public methods in Services/OrderService.cs and Services/UserService.cs, propagate to repository calls, and pass HttpContext.RequestAborted from the corresponding controllers.
