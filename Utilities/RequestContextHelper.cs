@@ -184,7 +184,7 @@ public static class RequestContextHelper
 /// Request context information.
 /// Passed between services and middleware.
 /// </summary>
-public class RequestContext
+public class RequestContext : IEquatable<RequestContext>
 {
     public string CorrelationId { get; set; } = "";
     public int UserId { get; set; }
@@ -193,6 +193,39 @@ public class RequestContext
     public string Method { get; set; } = "";
     public string Path { get; set; } = "";
     public DateTime Timestamp { get; set; }
+
+    public bool Equals(RequestContext? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return CorrelationId == other.CorrelationId &&
+               UserId == other.UserId &&
+               ClientIp == other.ClientIp &&
+               UserAgent == other.UserAgent &&
+               Method == other.Method &&
+               Path == other.Path &&
+               Timestamp.Equals(other.Timestamp);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as RequestContext);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(CorrelationId, UserId, ClientIp, UserAgent, Method, Path, Timestamp);
+    }
+
+    public static bool operator ==(RequestContext? left, RequestContext? right)
+    {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(RequestContext? left, RequestContext? right)
+    {
+        return !Equals(left, right);
+    }
 
     public override string ToString()
     {
