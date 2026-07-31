@@ -42,6 +42,12 @@ public sealed class HotReloadMiddleware
     /// </summary>
     public async Task InvokeAsync(HttpContext context)
     {
+        if (!_environment.IsDevelopment())
+        {
+            await _next(context);
+            return;
+        }
+
         var path = context.Request.Path.Value ?? string.Empty;
 
         switch (path)
@@ -50,7 +56,7 @@ public sealed class HotReloadMiddleware
                 await ServeManifestAsync(context);
                 return;
 
-            case "/__hmr" when _environment.IsDevelopment():
+            case "/__hmr":
                 await ServeHmrStreamAsync(context);
                 return;
 

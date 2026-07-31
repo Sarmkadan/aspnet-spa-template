@@ -119,7 +119,10 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseOfflineSupport();
+if (app.Environment.IsDevelopment())
+{
+    app.UseOfflineSupport();
+}
 app.UseStaticFiles();
 
 app.UseMiddleware<RequestResponseLoggingMiddleware>();
