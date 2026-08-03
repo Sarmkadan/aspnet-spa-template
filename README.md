@@ -52,3 +52,23 @@ var request = new UpdateProductPriceRequest
     }
 };
 ```
+
+## StatusHistoryResponse
+
+The `StatusHistoryResponse` DTO is used to represent an entry in the status history of an entity. It captures the transition from one status to another, along with the timestamp and metadata about the change.
+
+Example usage:
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+
+var response = new StatusHistoryResponse
+{
+    Id = 1,
+    FromStatus = "Pending",
+    ToStatus = "Shipped",
+    ChangedAt = DateTime.UtcNow,
+    ChangedBy = "admin@example.com",
+    Notes = "Order processed successfully."
+};
+```
