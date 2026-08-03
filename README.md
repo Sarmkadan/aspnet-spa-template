@@ -1,36 +1,23 @@
-## ThemeServiceUnitTests
+## CollectionExtensionsUnitTests
 
-The ThemeServiceUnitTests class contains unit tests for the ThemeService class. These tests cover various scenarios, including:
-
-* Getting a scheme when nothing is stored
-* Getting a scheme after storing a dark or light scheme
-* Getting a scheme with a user ID of zero or a negative number
-* Getting a scheme with the maximum user ID
-* Setting a scheme with a valid or invalid user ID
-* Setting a scheme with the same scheme that is already stored
-* Clearing a scheme and verifying the result
-
-Example usage:
-
-```csharp
-public async Task GetSchemeAsync_WhenNothingStored_ReturnsSystem
-public async Task GetSchemeAsync_AfterStoringDark_ReturnsDark
-public async Task GetSchemeAsync_AfterStoringLight_ReturnsLight
-public async Task GetSchemeAsync_WithUserIdZero_ThrowsArgumentOutOfRangeException
-public async Task GetSchemeAsync_WithNegativeUserId_ThrowsArgumentOutOfRangeException
-public async Task GetSchemeAsync_WithMaxUserId_ReturnsSystem
-public async Task SetSchemeAsync_WithSystem_ClearsPreference
-public async Task SetSchemeAsync_OverwritesExistingPreference
-public async Task SetSchemeAsync_WithSameScheme_DoesNotWriteToCache
-public async Task SetSchemeAsync_WithUserIdZero_ThrowsArgumentOutOfRangeException
-public async Task SetSchemeAsync_WithNegativeUserId_ThrowsArgumentOutOfRangeException
-public async Task SetSchemeAsync_AcceptsAllColourSchemes
-public async Task SetSchemeAsync_WhenCacheFails_ThrowsBusinessException
-public async Task ClearSchemeAsync_ReturnsSystemAfterClear
-public async Task ClearSchemeAsync_WhenNoPreferenceExists_DoesNotThrow
-public async Task ClearSchemeAsync_WithUserIdZero_ThrowsArgumentOutOfRangeException
-public async Task ClearSchemeAsync_WithNegativeUserId_ThrowsArgumentOutOfRangeException
-public async Task ClearSchemeAsync_WithMaxUserId_DoesNotThrow
-public async Task ThemeChanged_EventIsRaised_WhenThemeIsSet
-public async Task ThemeChanged_EventIsRaised_WhenThemeIsCleared
-```
+The CollectionExtensionsUnitTests class contains unit tests for the CollectionExtensions class. These tests cover various scenarios, including:
+* Batch_WithCollection_ReturnsCorrectlySizedBatches: Tests that CollectionExtensions.Batch{T} correctly batches a collection.
+* Batch_WithNullSource_ThrowsArgumentNullException: Tests that CollectionExtensions.Batch{T} throws ArgumentNullException for null source.
+* Batch_WithNonPositiveBatchSize_ThrowsArgumentOutOfRangeException: Tests that CollectionExtensions.Batch{T} throws ArgumentOutOfRangeException for non-positive batch size.
+* Batch_WithEmptyCollection_ReturnsEmptyBatches: Tests that CollectionExtensions.Batch{T} handles empty collection correctly.
+* Batch_WithBatchSizeLargerThanCollection_ReturnsSingleBatch: Tests that CollectionExtensions.Batch{T} handles batch size larger than collection.
+* IsNullOrEmpty_WithNullSource_ReturnsTrue: Tests that CollectionExtensions.IsNullOrEmpty{T} returns true for null collection.
+* IsNullOrEmpty_WithEmptySource_ReturnsTrue: Tests that CollectionExtensions.IsNullOrEmpty{T} returns true for empty collection.
+* IsNullOrEmpty_WithNonEmptySource_ReturnsFalse: Tests that CollectionExtensions.IsNullOrEmpty{T} returns false for non-empty collection.
+* OrEmpty_WithNonNullSource_ReturnsOriginalCollection: Tests that CollectionExtensions.OrEmpty{T} returns original collection when not null.
+* OrEmpty_WithNullSource_ReturnsEmptyCollection: Tests that CollectionExtensions.OrEmpty{T} returns empty collection when source is null.
+* DistinctBy_WithKeySelector_ReturnsDistinctElements: Tests that CollectionExtensions.DistinctBy{T,TKey} returns distinct elements based on key selector.
+* DistinctBy_WithNullSource_ThrowsArgumentNullException: Tests that CollectionExtensions.DistinctBy{T,TKey} throws ArgumentNullException for null source.
+* DistinctBy_WithNullKeySelector_ThrowsArgumentNullException: Tests that CollectionExtensions.DistinctBy{T,TKey} throws ArgumentNullException for null key selector.
+* Paginate_WithCollection_ReturnsCorrectPageAndTotal: Tests that CollectionExtensions.Paginate{T} correctly paginates a collection.
+* Paginate_WithPageNumberLessThanOne_DefaultsToFirstPage: Tests that CollectionExtensions.Paginate{T} handles page number less than 1.
+* Paginate_WithPageSizeLessThanOne_DefaultsToTen: Tests that CollectionExtensions.Paginate{T} handles page size less than 1.
+* Paginate_WithNullSource_ThrowsArgumentNullException: Tests that CollectionExtensions.Paginate{T} throws ArgumentNullException for null source.
+* ForEach_WithCollection_AppliesActionToEachItem: Tests that CollectionExtensions.ForEach{T} applies action to each item.
+* ForEach_WithNullSource_ThrowsArgumentNullException: Tests that CollectionExtensions.ForEach{T} throws ArgumentNullException for null source.
+* ForEach_WithNullAction_ThrowsArgumentNullException: Tests that CollectionExtensions.ForEach{T} throws ArgumentNullException for null action.
