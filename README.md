@@ -29,4 +29,26 @@ public class MyOrderService
         _dbContext.SaveChanges();
     }
 }
+
+## UpdateProductPriceRequest
+
+The `UpdateProductPriceRequest` DTO is used to initiate a bulk price update operation for multiple products. It encapsulates a list of `ProductPriceUpdate` objects, allowing clients to efficiently update several product prices in a single API request.
+
+It contains the following properties:
+
+* PriceUpdates: A list of `ProductPriceUpdate` objects containing the `ProductId` and `NewPrice` for each update.
+
+Example usage:
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+
+var request = new UpdateProductPriceRequest
+{
+    PriceUpdates = new List<ProductPriceUpdate>
+    {
+        new ProductPriceUpdate { ProductId = 1, NewPrice = 19.99m },
+        new ProductPriceUpdate { ProductId = 2, NewPrice = 29.99m }
+    }
+};
 ```
