@@ -1,74 +1,36 @@
-## StatusHistory
+## ThemeServiceUnitTests
 
-The StatusHistory type represents a change in the status of an order. It contains the following properties:
+The ThemeServiceUnitTests class contains unit tests for the ThemeService class. These tests cover various scenarios, including:
 
-* Id: a unique identifier for the status history entry
-* OrderId: the identifier of the order that the status change belongs to
-* FromStatus and ToStatus: the previous and new status of the order
-* ChangedAt: the date and time that the status change occurred
-* ChangedBy: the user who made the status change (optional)
-* Notes: any additional notes or comments about the status change (optional)
-* Order: the order that the status change belongs to (optional)
-
-Example usage:
-
-```csharp
-public class MyOrderService
-{
-    public void UpdateOrderStatus(int orderId, OrderStatus newStatus)
-    {
-        var order = _dbContext.Orders.Find(orderId);
-        order.StatusHistory.Add(new StatusHistory
-        {
-            OrderId = orderId,
-            FromStatus = order.Status,
-            ToStatus = newStatus,
-            ChangedAt = DateTime.UtcNow,
-            ChangedBy = "MyOrderService"
-        });
-        _dbContext.SaveChanges();
-    }
-}
-
-## UpdateProductPriceRequest
-
-The `UpdateProductPriceRequest` DTO is used to initiate a bulk price update operation for multiple products. It encapsulates a list of `ProductPriceUpdate` objects, allowing clients to efficiently update several product prices in a single API request.
-
-It contains the following properties:
-
-* PriceUpdates: A list of `ProductPriceUpdate` objects containing the `ProductId` and `NewPrice` for each update.
+* Getting a scheme when nothing is stored
+* Getting a scheme after storing a dark or light scheme
+* Getting a scheme with a user ID of zero or a negative number
+* Getting a scheme with the maximum user ID
+* Setting a scheme with a valid or invalid user ID
+* Setting a scheme with the same scheme that is already stored
+* Clearing a scheme and verifying the result
 
 Example usage:
 
 ```csharp
-using AspNetSpaTemplate.DTOs;
-
-var request = new UpdateProductPriceRequest
-{
-    PriceUpdates = new List<ProductPriceUpdate>
-    {
-        new ProductPriceUpdate { ProductId = 1, NewPrice = 19.99m },
-        new ProductPriceUpdate { ProductId = 2, NewPrice = 29.99m }
-    }
-};
-```
-
-## StatusHistoryResponse
-
-The `StatusHistoryResponse` DTO is used to represent an entry in the status history of an entity. It captures the transition from one status to another, along with the timestamp and metadata about the change.
-
-Example usage:
-
-```csharp
-using AspNetSpaTemplate.DTOs;
-
-var response = new StatusHistoryResponse
-{
-    Id = 1,
-    FromStatus = "Pending",
-    ToStatus = "Shipped",
-    ChangedAt = DateTime.UtcNow,
-    ChangedBy = "admin@example.com",
-    Notes = "Order processed successfully."
-};
+public async Task GetSchemeAsync_WhenNothingStored_ReturnsSystem
+public async Task GetSchemeAsync_AfterStoringDark_ReturnsDark
+public async Task GetSchemeAsync_AfterStoringLight_ReturnsLight
+public async Task GetSchemeAsync_WithUserIdZero_ThrowsArgumentOutOfRangeException
+public async Task GetSchemeAsync_WithNegativeUserId_ThrowsArgumentOutOfRangeException
+public async Task GetSchemeAsync_WithMaxUserId_ReturnsSystem
+public async Task SetSchemeAsync_WithSystem_ClearsPreference
+public async Task SetSchemeAsync_OverwritesExistingPreference
+public async Task SetSchemeAsync_WithSameScheme_DoesNotWriteToCache
+public async Task SetSchemeAsync_WithUserIdZero_ThrowsArgumentOutOfRangeException
+public async Task SetSchemeAsync_WithNegativeUserId_ThrowsArgumentOutOfRangeException
+public async Task SetSchemeAsync_AcceptsAllColourSchemes
+public async Task SetSchemeAsync_WhenCacheFails_ThrowsBusinessException
+public async Task ClearSchemeAsync_ReturnsSystemAfterClear
+public async Task ClearSchemeAsync_WhenNoPreferenceExists_DoesNotThrow
+public async Task ClearSchemeAsync_WithUserIdZero_ThrowsArgumentOutOfRangeException
+public async Task ClearSchemeAsync_WithNegativeUserId_ThrowsArgumentOutOfRangeException
+public async Task ClearSchemeAsync_WithMaxUserId_DoesNotThrow
+public async Task ThemeChanged_EventIsRaised_WhenThemeIsSet
+public async Task ThemeChanged_EventIsRaised_WhenThemeIsCleared
 ```
