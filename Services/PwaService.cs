@@ -18,6 +18,7 @@ public sealed class PwaService : IPwaService
     /// <param name="userId">The ID of the user to check PWA status for.</param>
     /// <param name="ct">Cancellation token for the asynchronous operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the PWA status response.</returns>
+    /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task<PwaStatusResponse> GetStatusAsync(int userId, CancellationToken ct = default)
     {
         throw new NotImplementedException();
@@ -31,6 +32,7 @@ public sealed class PwaService : IPwaService
     /// <param name="userAgent">The user agent string identifying the client browser/device.</param>
     /// <param name="ct">Cancellation token for the asynchronous operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the registered push subscription.</returns>
+    /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task<PushSubscription> RegisterSubscriptionAsync(int userId, RegisterSubscriptionRequest request, string? userAgent, CancellationToken ct = default)
     {
         throw new NotImplementedException();
@@ -43,6 +45,7 @@ public sealed class PwaService : IPwaService
     /// <param name="endpoint">The push notification subscription endpoint URL to unsubscribe from.</param>
     /// <param name="ct">Cancellation token for the asynchronous operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task UnsubscribeAsync(int userId, string endpoint, CancellationToken ct = default)
     {
         throw new NotImplementedException();
@@ -55,6 +58,7 @@ public sealed class PwaService : IPwaService
     /// <param name="payload">The push notification payload containing title, body, and other notification data.</param>
     /// <param name="ct">Cancellation token for the asynchronous operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the push delivery result.</returns>
+    /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task<PushDeliveryResult> SendPushToUserAsync(int userId, PushNotificationPayload payload, CancellationToken ct = default)
     {
         throw new NotImplementedException();
@@ -67,6 +71,7 @@ public sealed class PwaService : IPwaService
     /// <param name="payload">The push notification payload containing title, body, and other notification data.</param>
     /// <param name="ct">Cancellation token for the asynchronous operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the batch push delivery result.</returns>
+    /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task<BatchPushDeliveryResult> BroadcastPushAsync(IReadOnlyList<int> userIds, PushNotificationPayload payload, CancellationToken ct = default)
     {
         throw new NotImplementedException();
@@ -79,6 +84,7 @@ public sealed class PwaService : IPwaService
     /// <param name="request">The sync queue entry request containing sync data and metadata.</param>
     /// <param name="ct">Cancellation token for the asynchronous operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the created sync queue entry response.</returns>
+    /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task<SyncQueueEntryResponse> QueueSyncEntryAsync(int userId, SyncQueueEntryRequest request, CancellationToken ct = default)
     {
         throw new NotImplementedException();
@@ -89,7 +95,8 @@ public sealed class PwaService : IPwaService
     /// </summary>
     /// <param name="userId">The ID of the user to get pending sync entries for.</param>
     /// <param name="ct">Cancellation token for the asynchronous operation.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a read-only list of pending sync queue entry responses.</returns>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a read‑only list of pending sync queue entry responses.</returns>
+    /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task<IReadOnlyList<SyncQueueEntryResponse>> GetPendingSyncEntriesAsync(int userId, CancellationToken ct = default)
     {
         throw new NotImplementedException();
@@ -102,6 +109,7 @@ public sealed class PwaService : IPwaService
     /// <param name="userId">The ID of the user whose sync queue should be replayed.</param>
     /// <param name="ct">Cancellation token for the asynchronous operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the sync replay result.</returns>
+    /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task<SyncReplayResult> ReplaySyncQueueAsync(int userId, CancellationToken ct = default)
     {
         throw new NotImplementedException();
