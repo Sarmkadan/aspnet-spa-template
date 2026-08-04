@@ -68,6 +68,7 @@ public static class CsvFormatter
 
     /// <summary>
     /// Escapes CSV value to prevent injection attacks and format errors.
+    /// Prefixes with single quote if starts with =, +, -, @.
     /// Wraps in quotes if contains comma, quote, or newline.
     /// </summary>
     private static string EscapeCsvValue(object? value)
@@ -76,6 +77,12 @@ public static class CsvFormatter
             return string.Empty;
 
         var strValue = value.ToString() ?? string.Empty;
+
+        // Prevent CSV formula injection: prefix with single quote if starts with =, +, -, @
+        if (strValue.StartsWith("=") || strValue.StartsWith("+") || strValue.StartsWith("-") || strValue.StartsWith("@"))
+        {
+            strValue = "'" + strValue;
+        }
 
         // If contains special characters, wrap in quotes and escape inner quotes
         if (strValue.Contains(",") || strValue.Contains("\"") || strValue.Contains("\n"))
