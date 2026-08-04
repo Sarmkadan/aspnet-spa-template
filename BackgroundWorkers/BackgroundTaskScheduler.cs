@@ -11,6 +11,11 @@ namespace AspNetSpaTemplate.BackgroundWorkers;
 /// Runs periodic tasks at specified intervals.
 /// Suitable for single-server deployments (use Hangfire/Quartz for distributed).
 /// </summary>
+/// <summary>
+/// Scheduler for managing background tasks.
+/// Runs periodic tasks at specified intervals.
+/// Suitable for single-server deployments (use Hangfire/Quartz for distributed).
+/// </summary>
 public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
 {
     private readonly List<IBackgroundTask> _tasks = new();
@@ -19,6 +24,10 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _schedulerTask;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BackgroundTaskScheduler"/> class.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
     /// <summary>
     /// Initializes a new instance of the <see cref="BackgroundTaskScheduler"/> class.
     /// </summary>
@@ -32,6 +41,11 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     /// Registers a background task to be managed by the scheduler.
     /// </summary>
     /// <param name="task">The background task to register.</param>
+    /// <summary>
+    /// Registers a background task to be managed by the scheduler.
+    /// </summary>
+    /// <param name="task">The background task to register.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="task"/> is null.</exception>
     public void RegisterTask(IBackgroundTask task)
     {
         if (task is null)
@@ -46,6 +60,12 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     /// Starts the background task scheduler.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
+    /// <summary>
+    /// Starts the background task scheduler.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <exception cref="InvalidOperationException">Thrown if the scheduler is already running.</exception>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         if (_schedulerTask is not null)
@@ -61,6 +81,10 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     /// <summary>
     /// Stops the background task scheduler.
     /// </summary>
+    /// <summary>
+    /// Stops the background task scheduler.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task StopAsync()
     {
         _logger.LogInformation("Stopping background task scheduler");
@@ -79,6 +103,10 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
         }
     }
 
+    /// <summary>
+    /// Gets the current status of all managed background tasks.
+    /// </summary>
+    /// <returns>A collection of <see cref="BackgroundTaskStatus"/> objects.</returns>
     /// <summary>
     /// Gets the current status of all managed background tasks.
     /// </summary>
@@ -102,6 +130,12 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     /// Manually triggers a specific background task to execute immediately.
     /// </summary>
     /// <param name="taskName">The name of the task to trigger.</param>
+    /// <summary>
+    /// Manually triggers a specific background task to execute immediately.
+    /// </summary>
+    /// <param name="taskName">The name of the task to trigger.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown if the task is not found.</exception>
     public async Task TriggerTaskAsync(string taskName)
     {
         var task = _tasks.FirstOrDefault(t => t.TaskName == taskName);
@@ -197,11 +231,17 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     /// <summary>
     /// Disposes of the resources used by the scheduler.
     /// </summary>
+    /// <summary>
+    /// Disposes of the resources used by the scheduler.
+    /// </summary>
     public void Dispose()
     {
         _cancellationTokenSource?.Dispose();
     }
 
+    /// <summary>
+    /// Internal state tracking for a background task.
+    /// </summary>
     /// <summary>
     /// Internal state tracking for a background task.
     /// </summary>
@@ -224,8 +264,16 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
 /// <summary>
 /// Extension methods for registering background tasks in DI container.
 /// </summary>
+/// <summary>
+/// Extension methods for registering background tasks in DI container.
+/// </summary>
 public static class BackgroundTaskExtensions
 {
+    /// <summary>
+    /// Adds the background task scheduler to the service collection.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The updated service collection.</returns>
     /// <summary>
     /// Adds the background task scheduler to the service collection.
     /// </summary>
@@ -243,12 +291,23 @@ public static class BackgroundTaskExtensions
     /// <typeparam name="T">The type of the background task.</typeparam>
     /// <param name="services">The service collection.</param>
     /// <returns>The updated service collection.</returns>
+    /// <summary>
+    /// Adds a background task type to the service collection.
+    /// </summary>
+    /// <typeparam name="T">The type of the background task.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddBackgroundTask<T>(this IServiceCollection services) where T : class, IBackgroundTask
     {
         services.AddSingleton<T>();
         return services;
     }
 
+    /// <summary>
+    /// Configures the application to use the background task scheduler.
+    /// </summary>
+    /// <param name="app">The application builder.</param>
+    /// <returns>The updated application builder.</returns>
     /// <summary>
     /// Configures the application to use the background task scheduler.
     /// </summary>
