@@ -64,7 +64,7 @@ public sealed class CorrelationIdMiddleware
         if (context.Request.Headers.TryGetValue(CorrelationIdHeader, out var correlationIdHeader))
         {
             var providedId = correlationIdHeader.ToString();
-            if (!string.IsNullOrWhiteSpace(providedId))
+            if (!string.IsNullOrWhiteSpace(providedId) && IsValidCorrelationId(providedId))
                 return providedId;
         }
 
@@ -72,6 +72,24 @@ public sealed class CorrelationIdMiddleware
         var timestamp = DateTime.UtcNow.Ticks.ToString("x");
         var random = EncryptionHelper.GenerateRandomString(8);
         return $"{timestamp}-{random}";
+    }
+
+    /// <summary>
+    /// Validates the correlation ID: length <= 64 and consists only of alphanumeric and hyphen characters.
+    /// </summary>
+    private static bool IsValidCorrelationId(string correlationId)
+    {
+        if (correlationId.Length > 64)
+            return false;
+
+        // Allow alphanumeric and hyphen characters
+        foreach (var c in correlationId)
+        {
+            if (!char.IsLetterOrDigit(c) && c != '-')
+                return false;
+        }
+
+        return true;
     }
 }
 
