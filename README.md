@@ -20,4 +20,27 @@ The CollectionExtensionsUnitTests class contains unit tests for the CollectionEx
 * Paginate_WithNullSource_ThrowsArgumentNullException: Tests that CollectionExtensions.Paginate{T} throws ArgumentNullException for null source.
 * ForEach_WithCollection_AppliesActionToEachItem: Tests that CollectionExtensions.ForEach{T} applies action to each item.
 * ForEach_WithNullSource_ThrowsArgumentNullException: Tests that CollectionExtensions.ForEach{T} throws ArgumentNullException for null source.
-* ForEach_WithNullAction_ThrowsArgumentNullException: Tests that CollectionExtensions.ForEach{T} throws ArgumentNullException for null action.
+
+## EventBusImplementationTests
+
+The EventBusImplementationTests class provides comprehensive unit tests for the EventBusImplementation class, ensuring robust event handling and subscription management. These tests verify core functionalities such as publishing events, managing subscribers, and ensuring that multiple handlers are executed in the correct order, even when exceptions occur.
+
+```csharp
+// Example usage snippet based on EventBusImplementationTests
+public async Task ExampleUsage()
+{
+    var eventBus = new EventBusImplementation(logger);
+
+    // Subscribe a handler
+    eventBus.Subscribe<MyEvent>(handler);
+
+    // Publish an event
+    await eventBus.PublishAsync(new MyEvent());
+
+    // Unsubscribe a handler
+    eventBus.Unsubscribe<MyEvent>(handler);
+
+    // Clear all subscribers
+    eventBus.Clear();
+}
+```
