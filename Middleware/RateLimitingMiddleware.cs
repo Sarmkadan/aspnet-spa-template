@@ -17,7 +17,7 @@ public sealed class RateLimitingMiddleware
     private readonly ILogger<RateLimitingMiddleware> _logger;
 
     // Store request counts per client bucket: key = "clientId:window", value = count + window reset time
-    private static readonly Dictionary<string, (int Count, DateTime ResetTime)> RequestLog = new();
+    private static readonly Dictionary<string, (int Count, DateTime ResetTime)> RequestLog = new Dictionary<string, (int Count, DateTime ResetTime)>(StringComparer.OrdinalIgnoreCase);
     private static readonly object RequestLogLock = new();
 
     // Expired-bucket cleanup is amortized: scanning the whole dictionary on
