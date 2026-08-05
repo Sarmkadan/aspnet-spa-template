@@ -1,4 +1,4 @@
-## ReviewServiceUnitTests
+// ## ReviewServiceUnitTests
 
 The ReviewServiceUnitTests class contains unit tests for the ReviewService class.
 
@@ -41,4 +41,44 @@ public async Task GetRatingSummaryAsync_WithApprovedReviews_ReturnsCorrectSummar
 public async Task GetRatingSummaryAsync_NoApprovedReviews_ReturnsZeroValues
 public async Task RecalculateAsync_WithProductsAndReviews_UpdatesAllProducts
 public async Task RecalculateAsync_NoProducts_ReturnsZero
+```
+
+## PaginationRequestUnitTests
+
+The `PaginationRequestUnitTests` class validates the behavior of the `PaginationRequest` DTO. It ensures that default values are set correctly and that paging, sorting, and search‑term properties enforce their minimum and maximum constraints.
+
+Example usage:
+
+```csharp
+// Create a request with default values
+var request = new PaginationRequest(); // Constructor_WithNoParameters_SetsDefaultValues
+
+// PageNumber tests
+request.PageNumber = 5;   // PageNumber_WithValidValue_SetsAndGetsCorrectly
+request.PageNumber = 0;   // PageNumber_WithZero_EnforcesMinimumValue
+request.PageNumber = -3;  // PageNumber_WithNegativeValue_EnforcesMinimumValue
+request.PageNumber = 1000; // PageNumber_WithLargeValue_AcceptsLargeValue
+
+// PageSize tests
+request.PageSize = 20;    // PageSize_WithValidValue_SetsAndGetsCorrectly
+request.PageSize = 0;     // PageSize_WithZero_EnforcesMinimumValue
+request.PageSize = -5;    // PageSize_WithNegativeValue_EnforcesMinimumValue
+request.PageSize = 150;   // PageSize_WithValueGreaterThan100_EnforcesMaximumValue
+request.PageSize = 100;   // PageSize_WithValueOf100_AcceptsBoundaryValue
+request.PageSize = 1;     // PageSize_WithValueOf1_AcceptsBoundaryValue
+
+// SortBy tests
+request.SortBy = "Name";          // SortBy_WithValidString_SetsCorrectly
+request.SortBy = null;           // SortBy_WithNull_SetsToNull
+request.SortBy = string.Empty;   // SortBy_WithEmptyString_SetsToEmptyString
+
+// SortDescending tests
+bool defaultSortDesc = request.SortDescending; // SortDescending_DefaultValue_IsFalse
+request.SortDescending = true;   // SortDescending_WithTrueValue_SetsToTrue
+request.SortDescending = false;  // SortDescending_WithFalseValue_SetsToFalse
+
+// SearchTerm tests
+request.SearchTerm = "apple";    // SearchTerm_WithValidString_SetsCorrectly
+request.SearchTerm = null;       // SearchTerm_WithNull_SetsToNull
+request.SearchTerm = string.Empty; // SearchTerm_WithEmptyString_SetsToEmptyString
 ```
