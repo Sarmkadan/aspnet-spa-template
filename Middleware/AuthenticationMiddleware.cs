@@ -5,6 +5,7 @@
 // =============================================================================
 
 using System.Text;
+using System.Security.Cryptography;
 using AspNetSpaTemplate.DTOs;
 
 namespace AspNetSpaTemplate.Middleware;
@@ -121,8 +122,14 @@ public sealed class AuthenticationMiddleware
     private static bool ValidateToken(string token)
     {
         // For development: simple API key validation
-        if (ValidApiKeys.Contains(token))
-            return true;
+        var tokenBytes = Encoding.UTF8.GetBytes(token);
+
+        foreach (var validKey in ValidApiKeys)
+        {
+            var validKeyBytes = Encoding.UTF8.GetBytes(validKey);
+            if (tokenBytes.Length == validKeyBytes.Length && CryptographicOperations.FixedTimeEquals(tokenBytes, validKeyBytes))
+                return true;
+        }
 
         // In production, implement JWT validation here:
         // - Verify signature using public key
