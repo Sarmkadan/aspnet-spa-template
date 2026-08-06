@@ -31,6 +31,9 @@ public sealed class NotificationService
     /// </summary>
     public async Task SendEmailAsync(string recipient, string subject, string htmlBody)
     {
+        ArgumentException.ThrowIfNullOrEmpty(recipient);
+        ArgumentException.ThrowIfNullOrEmpty(subject);
+        ArgumentException.ThrowIfNullOrEmpty(htmlBody);
         ValidateEmail(recipient);
 
         var notification = new NotificationMessage
@@ -51,6 +54,8 @@ public sealed class NotificationService
     /// </summary>
     public async Task SendSmsAsync(string phoneNumber, string message)
     {
+        ArgumentException.ThrowIfNullOrEmpty(phoneNumber);
+        ArgumentException.ThrowIfNullOrEmpty(message);
         ValidatePhoneNumber(phoneNumber);
 
         if (message.Length > 160)
@@ -73,6 +78,8 @@ public sealed class NotificationService
     /// </summary>
     public async Task SendPushAsync(int userId, string title, string message, string? deepLink = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(title);
+        ArgumentException.ThrowIfNullOrEmpty(message);
         var notification = new NotificationMessage
         {
             Type = NotificationType.Push,
