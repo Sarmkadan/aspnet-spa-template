@@ -53,6 +53,7 @@ public sealed class HealthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult Liveness()
     {
+        _logger.LogInformation("Liveness check called");
         return Ok(new { status = "alive", timestamp = DateTime.UtcNow });
     }
 
@@ -65,6 +66,8 @@ public sealed class HealthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Readiness()
     {
+        _logger.LogInformation("Readiness check called");
+        
         var report = new HealthCheckReport
         {
             Timestamp = DateTime.UtcNow,
@@ -76,7 +79,10 @@ public sealed class HealthController : ControllerBase
         report.Components["cache"] = cacheHealthy ? "healthy" : "unhealthy";
 
         if (!cacheHealthy)
+        {
+            _logger.LogWarning("Readiness check failed: Cache is unhealthy");
             report.Status = "degraded";
+        }
 
         // Check background workers
         var taskStates = _taskScheduler.GetStatus();
@@ -84,10 +90,14 @@ public sealed class HealthController : ControllerBase
         {
             report.Components[$"background-worker-{task.TaskName}"] = task.Status == "Failed" ? "unhealthy" : "healthy";
             if (task.Status == "Failed")
+            {
+                _logger.LogWarning("Readiness check degraded: Background worker {TaskName} failed", task.TaskName);
                 report.Status = "degraded";
+            }
         }
 
         var statusCode = report.Status == "healthy" ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable;
+        _logger.LogInformation("Readiness check finished with status {Status}", report.Status);
         return StatusCode(statusCode, report);
     }
 
@@ -99,6 +109,7 @@ public sealed class HealthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Diagnostics()
     {
+        _logger.LogInformation("Diagnostics report requested");
         var cacheReport = await _cacheHealthMonitor.GetHealthReportAsync();
         var taskStatuses = _taskScheduler.GetStatus();
 
@@ -129,6 +140,7 @@ public sealed class HealthController : ControllerBase
             }
         };
 
+        _logger.LogInformation("Diagnostics report generated");
         return Ok(diagnostics);
     }
 
@@ -139,11 +151,13 @@ public sealed class HealthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult GetMetrics()
     {
+        _logger.LogInformation("Metrics report requested");
         var metrics = _metricsRegistry.GetMetricsReport();
 
         // Increment request counter for this endpoint
         _metricsRegistry.IncrementRequestCount();
 
+        _logger.LogInformation("Metrics report generated");
         return Ok(metrics);
     }
 
@@ -154,6 +168,7 @@ public sealed class HealthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult GetConfig()
     {
+        _logger.LogInformation("Configuration snapshot requested");
         var config = new
         {
             AspnetSpaTemplate = new
@@ -195,6 +210,7 @@ public sealed class HealthController : ControllerBase
             Timestamp = DateTime.UtcNow
         };
 
+        _logger.LogInformation("Configuration snapshot generated");
         return Ok(config);
     }
 
@@ -207,14 +223,16 @@ public sealed class HealthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> TriggerTask(string taskName)
     {
+        _logger.LogInformation("Manual trigger requested for task: {TaskName}", taskName);
         try
         {
             await _taskScheduler.TriggerTaskAsync(taskName);
-            _logger.LogInformation($"Manually triggered task: {taskName}");
+            _logger.LogInformation("Manually triggered task: {TaskName}", taskName);
             return Ok(new { message = $"Task '{taskName}' triggered successfully" });
         }
-        catch (KeyNotFoundException)
+        catch (KeyNotFoundException ex)
         {
+            _logger.LogError(ex, "Failed to manually trigger task: {TaskName}", taskName);
             return NotFound(new { error = $"Task '{taskName}' not found" });
         }
     }
@@ -226,6 +244,7 @@ public sealed class HealthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult GetWorkerStatus()
     {
+        _logger.LogInformation("Background worker status requested");
         var workers = _taskScheduler.GetStatus().Select(s => new
         {
             s.TaskName,
@@ -238,6 +257,7 @@ public sealed class HealthController : ControllerBase
             LastDurationSeconds = s.LastExecutionDuration?.TotalSeconds
         });
 
+        _logger.LogInformation("Background worker status generated");
         return Ok(new { workers = workers.ToList() });
     }
 }
