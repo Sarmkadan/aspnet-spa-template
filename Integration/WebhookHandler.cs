@@ -23,6 +23,8 @@ public sealed class WebhookHandler
 
     public WebhookHandler(IEventBus eventBus, ILogger<WebhookHandler> logger)
     {
+        ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(logger);
         _eventBus = eventBus;
         _logger = logger;
     }
@@ -37,6 +39,9 @@ public sealed class WebhookHandler
     /// <returns>True if webhook was processed successfully, false otherwise.</returns>
     public async Task<bool> HandleWebhookAsync(string provider, string payload, string signature)
     {
+        ArgumentException.ThrowIfNullOrEmpty(provider);
+        ArgumentException.ThrowIfNullOrEmpty(payload);
+        ArgumentException.ThrowIfNullOrEmpty(signature);
         try
         {
             // Validate required parameters
