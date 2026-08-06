@@ -42,11 +42,13 @@ public class DefaultHttpClientFactory : IHttpClientFactory
 
     public HttpClient GetClient(string serviceName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(serviceName);
         return GetClient(serviceName, _ => { });
     }
 
     public HttpClient GetClient(string serviceName, Action<HttpClient> configure)
     {
+        ArgumentNullException.ThrowIfNull(serviceName);
         lock (_lock)
         {
             if (_clients.TryGetValue(serviceName, out var client))
