@@ -42,6 +42,7 @@ public sealed class DomainEventHandlers
     /// </summary>
     public async Task OnProductCreated(ProductCreatedEvent @event)
     {
+        ArgumentNullException.ThrowIfNull(@event);
         try
         {
             _logger.LogInformation($"Handling ProductCreatedEvent: {@event.ProductId} - {@event.ProductName}");
@@ -63,6 +64,7 @@ public sealed class DomainEventHandlers
     /// </summary>
     public async Task OnProductUpdated(ProductUpdatedEvent @event)
     {
+        ArgumentNullException.ThrowIfNull(@event);
         try
         {
             _logger.LogInformation($"Handling ProductUpdatedEvent: {@event.ProductId}");
@@ -83,6 +85,7 @@ public sealed class DomainEventHandlers
     /// </summary>
     public async Task OnProductDeleted(ProductDeletedEvent @event)
     {
+        ArgumentNullException.ThrowIfNull(@event);
         try
         {
             _logger.LogInformation($"Handling ProductDeletedEvent: {@event.ProductId}");
@@ -103,6 +106,7 @@ public sealed class DomainEventHandlers
     /// </summary>
     public async Task OnOrderPlaced(OrderPlacedEvent @event)
     {
+        ArgumentNullException.ThrowIfNull(@event);
         try
         {
             _logger.LogInformation($"Handling OrderPlacedEvent: {@event.OrderId} for user {@event.UserId}");
@@ -126,6 +130,7 @@ public sealed class DomainEventHandlers
     /// </summary>
     public async Task OnOrderCompleted(OrderCompletedEvent @event)
     {
+        ArgumentNullException.ThrowIfNull(@event);
         try
         {
             _logger.LogInformation($"Handling OrderCompletedEvent: {@event.OrderId}");
@@ -145,6 +150,7 @@ public sealed class DomainEventHandlers
     /// </summary>
     public async Task OnOrderCancelled(OrderCancelledEvent @event)
     {
+        ArgumentNullException.ThrowIfNull(@event);
         try
         {
             _logger.LogInformation($"Handling OrderCancelledEvent: {@event.OrderId}, reason: {@event.Reason}");
@@ -164,6 +170,7 @@ public sealed class DomainEventHandlers
     /// </summary>
     public async Task OnUserRegistered(UserRegisteredEvent @event)
     {
+        ArgumentNullException.ThrowIfNull(@event);
         try
         {
             _logger.LogInformation($"Handling UserRegisteredEvent: {@event.UserId} - {@event.Email}");
@@ -185,6 +192,7 @@ public sealed class DomainEventHandlers
     /// </summary>
     public async Task OnReviewSubmitted(ReviewSubmittedEvent @event)
     {
+        ArgumentNullException.ThrowIfNull(@event);
         try
         {
             _logger.LogInformation($"Handling ReviewSubmittedEvent: {@event.ReviewId} for product {@event.ProductId}");
