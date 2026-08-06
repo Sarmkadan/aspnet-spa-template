@@ -86,6 +86,8 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
         string relativePath,
         string? bodyJson = null)
     {
+        _logger.LogInformation("Enqueue called for user={UserId} path={RelativePath}", userId, relativePath);
+
         ArgumentNullException.ThrowIfNull(clientRequestId);
         ArgumentException.ThrowIfNullOrEmpty(method);
         ArgumentException.ThrowIfNullOrEmpty(relativePath);
@@ -128,15 +130,21 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
     }
 
     /// <inheritdoc/>
-    public IReadOnlyList<SyncQueueEntry> GetPending(int userId) =>
-        _store.Values
+    public IReadOnlyList<SyncQueueEntry> GetPending(int userId)
+    {
+        _logger.LogInformation("GetPending called for user={UserId}", userId);
+        var result = _store.Values
             .Where(e => e.UserId == userId && e.Status == SyncEntryStatus.Pending)
             .OrderBy(e => e.QueuedAt)
             .ToList();
+        _logger.LogInformation("GetPending returned {Count} entries for user={UserId}", result.Count, userId);
+        return result;
+    }
 
     /// <inheritdoc/>
     public bool Complete(int id)
     {
+        _logger.LogInformation("Complete called for entry={Id}", id);
         if (!_store.TryGetValue(id, out var entry))
             return false;
 
@@ -160,6 +168,7 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
     /// <inheritdoc/>
     public bool Fail(int id, string error)
     {
+        _logger.LogInformation("Fail called for entry={Id}", id);
         ArgumentException.ThrowIfNullOrEmpty(error);
 
         if (!_store.TryGetValue(id, out var entry))
@@ -181,8 +190,13 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
     }
 
     /// <inheritdoc/>
-    public int PendingCount(int userId) =>
-        _store.Values.Count(e => e.UserId == userId && e.Status == SyncEntryStatus.Pending);
+    public int PendingCount(int userId)
+    {
+        _logger.LogInformation("PendingCount called for user={UserId}", userId);
+        var count = _store.Values.Count(e => e.UserId == userId && e.Status == SyncEntryStatus.Pending);
+        _logger.LogInformation("PendingCount returned {Count} for user={UserId}", count, userId);
+        return count;
+    }
 
     /// <summary>Removes completed and failed entries older than <see cref="DefaultRetention"/>.</summary>
     private void Evict()
