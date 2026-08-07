@@ -82,3 +82,48 @@ request.SearchTerm = "apple";    // SearchTerm_WithValidString_SetsCorrectly
 request.SearchTerm = null;       // SearchTerm_WithNull_SetsToNull
 request.SearchTerm = string.Empty; // SearchTerm_WithEmptyString_SetsToEmptyString
 ```
+
+## ReviewsController
+
+The `ReviewsController` (defined in `Controllers/ReviewsController.cs`) exposes the HTTP API for product reviews. It lets clients retrieve a single review or the reviews belonging to a product, vote a review as helpful, and trigger a recalculation of product rating summaries. Reviews returned by these endpoints carry their rating, title, content, helpfulness count, and verification/approval status.
+
+Example usage:
+
+```csharp
+// ReviewsController is activated by the ASP.NET Core framework, which
+// resolves its constructor dependencies via dependency injection:
+//
+//     public ReviewsController(...)
+//
+// Once an instance exists (for example in a unit test), its actions can
+// be awaited directly.
+
+// A review as returned by GetReview / GetProductReviews exposes these
+// properties:
+var review = new Review
+{
+    Id = 1,
+    ProductId = 42,
+    UserId = 7,
+    Rating = 5,
+    Title = "Great product",
+    Content = "Works exactly as described.",
+    HelpfulCount = 3,
+    IsVerifiedPurchase = true,
+    IsApproved = true,
+    CreatedAt = DateTime.UtcNow,
+    UpdatedAt = null
+};
+
+// Fetch a single review by its id:
+IActionResult getResult = await reviewsController.GetReview(review.Id);
+
+// Fetch the reviews for a product:
+IActionResult listResult = await reviewsController.GetProductReviews(review.ProductId);
+
+// Register a "helpful" vote on a review:
+IActionResult voteResult = await reviewsController.VoteHelpful(review.Id);
+
+// Recalculate the product rating summaries:
+IActionResult recalcResult = await reviewsController.RecalculateRatings();
+```
