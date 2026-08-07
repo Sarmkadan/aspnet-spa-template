@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using AspNetSpaTemplate.Constants;
 
 namespace AspNetSpaTemplate.Models;
@@ -70,6 +71,9 @@ public sealed class Product
 
     public void UpdateDetails(string name, string description, decimal price, ProductCategory category, string? imageUrl)
     {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(description);
+
         Name = name;
         Description = description;
         Price = price;
