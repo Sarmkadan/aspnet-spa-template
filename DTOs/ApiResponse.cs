@@ -26,6 +26,8 @@ public sealed class ApiResponse<T>
     /// </summary>
     public static ApiResponse<T> Ok(T data, string? message = null)
     {
+        ArgumentNullException.ThrowIfNull(data);
+        ArgumentException.ThrowIfNullOrEmpty(message);
         return new ApiResponse<T>
         {
             Success = true,
@@ -39,6 +41,8 @@ public sealed class ApiResponse<T>
     /// </summary>
     public static ApiResponse<T> Error(string message, string errorCode, string? traceId = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(message);
+        ArgumentException.ThrowIfNullOrEmpty(errorCode);
         return new ApiResponse<T>
         {
             Success = false,
@@ -89,6 +93,7 @@ public sealed class ApiResponse
 
     public static ApiResponse Ok(string? message = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(message);
         return new ApiResponse
         {
             Success = true,
@@ -98,6 +103,8 @@ public sealed class ApiResponse
 
     public static ApiResponse Error(string message, string errorCode, string? traceId = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(message);
+        ArgumentException.ThrowIfNullOrEmpty(errorCode);
         return new ApiResponse
         {
             Success = false,
@@ -124,6 +131,8 @@ public sealed class ApiListResponse<T>
 
     public static ApiListResponse<T> Ok(List<T> items, int pageNumber, int pageSize, int totalCount, string? message = null)
     {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentException.ThrowIfNullOrEmpty(message);
         return new ApiListResponse<T>
         {
             Success = true,
