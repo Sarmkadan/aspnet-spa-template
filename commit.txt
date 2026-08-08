@@ -1,1 +1,32 @@
-Add CancellationToken parameters (default) to all async public methods in Services/OrderService.cs and Services/UserService.cs, propagate to repository calls, and pass HttpContext.RequestAborted from the corresponding controllers.
+Add argument null guards to public methods in PwaService.cs
+
+For every public method in PwaService that takes reference-type parameters, add guard clauses at the top:
+- ArgumentNullException.ThrowIfNull(paramName) for object parameters
+- ArgumentException.ThrowIfNullOrEmpty(paramName) for string parameters
+
+Place guards before any other code in the method body. Do NOT change any other behavior.
+
+HARD RULES (build check runs after you; violating any fails the task):
+- Do NOT touch .csproj/.sln/.slnx/Directory.Build.props or any other existing file except the one named above.
+- Do NOT write tests. Do NOT add NuGet packages. No mention of AI/assistant in code or commits.
+- The whole solution MUST still compile with `dotnet build`.
+- Commit message: conventional commits style.
+
+EXPLICIT STEPS:
+1. Open the file. Find every public method.
+2. For each parameter that is string type: add ArgumentException.ThrowIfNullOrEmpty(paramName) as first line.
+3. For each parameter that is a reference type (not string, not value type): add ArgumentNullException.ThrowIfNull(paramName).
+4. Skip parameters that are already guarded, or that have default value null.
+5. Run: dotnet build. Must compile. Commit.
+
+Recent commits in this repo (other automated tasks - avoid undoing or conflicting with this work, e.g. don't remove inheritance from a class another commit just derived from, don't re-add something already added):
+- chore: apply workspace updates
+- Add argument null guards to ApiResponse public methods
+- chore: maintenance updates
+- feat(models): add argument null guards to Product public methods
+- chore: maintenance updates
+- docs(tests): add XML documentation to EventBusImplementationTests
+- feat(integration): add argument null guards to IHttpClientFactory public methods
+- feat(integration): add argument null guards to NotificationService public methods
+- feat(integration): add argument null guards to WebhookHandler public methods
+- feat(services): add structured logging to SyncQueueService
