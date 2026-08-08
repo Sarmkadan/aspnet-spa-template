@@ -21,6 +21,8 @@ public sealed class CorrelationIdMiddleware
 
     public CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)
     {
+        ArgumentNullException.ThrowIfNull(next);
+        ArgumentNullException.ThrowIfNull(logger);
         _next = next;
         _logger = logger;
     }
