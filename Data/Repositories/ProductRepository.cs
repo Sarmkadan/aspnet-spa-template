@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using AspNetSpaTemplate.Constants;
 using AspNetSpaTemplate.Models;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,10 @@ namespace AspNetSpaTemplate.Data.Repositories;
 /// </summary>
 public class ProductRepository : RepositoryBase<Product>
 {
-    public ProductRepository(AppDbContext context) : base(context) { }
+    public ProductRepository(AppDbContext context) : base(context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+    }
 
     /// <summary>Parameterless constructor for test-time proxying.</summary>
     protected ProductRepository() { }
@@ -68,6 +72,8 @@ public class ProductRepository : RepositoryBase<Product>
         decimal? minPrice = null,
         decimal? maxPrice = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(searchTerm);
+
         var query = DbSet
             .Where(p => p.IsAvailable)
             .AsQueryable();
@@ -101,6 +107,7 @@ public class ProductRepository : RepositoryBase<Product>
 
     public virtual async Task<Product?> GetBySkuAsync(string sku)
     {
+        ArgumentException.ThrowIfNullOrEmpty(sku);
         return await DbSet.FirstOrDefaultAsync(p => p.Sku == sku);
     }
 
