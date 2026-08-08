@@ -86,11 +86,11 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
         string relativePath,
         string? bodyJson = null)
     {
-        _logger.LogInformation("Enqueue called for user={UserId} path={RelativePath}", userId, relativePath);
-
         ArgumentNullException.ThrowIfNull(clientRequestId);
         ArgumentException.ThrowIfNullOrEmpty(method);
         ArgumentException.ThrowIfNullOrEmpty(relativePath);
+
+        _logger.LogInformation("Enqueue called for user={UserId} path={RelativePath}", userId, relativePath);
 
         // Idempotency: return the existing id if we've already seen this client key.
         if (_idempotency.TryGetValue(clientRequestId, out var existingId))
