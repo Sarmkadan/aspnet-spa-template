@@ -46,7 +46,17 @@ public sealed class WebhooksController : ControllerBase
     [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandlePaymentWebhook([FromBody] WebhookRequest request)
     {
-        if (request is null || string.IsNullOrEmpty(request.Payload))
+        if (request is null)
+        {
+            _logger.LogWarning("Invalid webhook request: null");
+            return BadRequest(new WebhookResponse
+            {
+                Acknowledged = false,
+                ErrorCode = "INVALID_REQUEST",
+                Message = "Request cannot be null"
+            });
+        }
+        if (string.IsNullOrEmpty(request.Payload))
         {
             _logger.LogWarning("Invalid webhook request: empty payload");
             return BadRequest(new WebhookResponse
@@ -148,6 +158,27 @@ public sealed class WebhooksController : ControllerBase
     [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleEmailWebhook([FromBody] WebhookRequest request)
     {
+        if (request is null)
+        {
+            _logger.LogWarning("Invalid webhook request: null");
+            return BadRequest(new WebhookResponse
+            {
+                Acknowledged = false,
+                ErrorCode = "INVALID_REQUEST",
+                Message = "Request cannot be null"
+            });
+        }
+        if (string.IsNullOrEmpty(request.Payload))
+        {
+            _logger.LogWarning("Invalid webhook request: empty payload");
+            return BadRequest(new WebhookResponse
+            {
+                Acknowledged = false,
+                ErrorCode = "INVALID_PAYLOAD",
+                Message = "Payload cannot be empty"
+            });
+        }
+
         // Verify X-Signature header before processing
         if (!VerifySignature("email-service", request.Payload))
         {
@@ -186,6 +217,27 @@ public sealed class WebhooksController : ControllerBase
     [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleShippingWebhook([FromBody] WebhookRequest request)
     {
+        if (request is null)
+        {
+            _logger.LogWarning("Invalid webhook request: null");
+            return BadRequest(new WebhookResponse
+            {
+                Acknowledged = false,
+                ErrorCode = "INVALID_REQUEST",
+                Message = "Request cannot be null"
+            });
+        }
+        if (string.IsNullOrEmpty(request.Payload))
+        {
+            _logger.LogWarning("Invalid webhook request: empty payload");
+            return BadRequest(new WebhookResponse
+            {
+                Acknowledged = false,
+                ErrorCode = "INVALID_PAYLOAD",
+                Message = "Payload cannot be empty"
+            });
+        }
+
         // Verify X-Signature header before processing
         if (!VerifySignature("shipping-provider", request.Payload))
         {
