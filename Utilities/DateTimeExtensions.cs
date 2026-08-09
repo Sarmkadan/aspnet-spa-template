@@ -104,6 +104,7 @@ public static class DateTimeExtensions
     /// <exception cref="ArgumentException">Thrown when dateTime is not UTC.</exception>
     public static string ToIso8601(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         if (dateTime.Kind != DateTimeKind.Utc)
         {
             throw new ArgumentException("DateTime must be in UTC kind for ISO 8601 conversion.", nameof(dateTime));
@@ -122,6 +123,7 @@ public static class DateTimeExtensions
     /// <returns>Human-readable relative time string.</returns>
     public static string ToRelativeTime(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         var utcNow = DateTime.UtcNow;
         var timeSpan = utcNow - dateTime.ToUniversalTime();
 
