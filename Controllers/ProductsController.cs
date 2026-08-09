@@ -181,11 +181,7 @@ public sealed class ProductsController : ApiControllerBase
     [FromQuery] decimal? minPrice,
     [FromQuery] decimal? maxPrice)
   {
-    // Validate query parameter to prevent resource exhaustion and SQL injection vectors
-    if (string.IsNullOrWhiteSpace(query))
-    {
-      return ApiError("Search query cannot be empty or whitespace.", "INVALID_SEARCH_QUERY", StatusCodes.Status400BadRequest);
-    }
+    ArgumentException.ThrowIfNullOrEmpty(query);
 
     // Enforce maximum query length to prevent potential regex/LIKE-based resource exhaustion
     // and protect against overly long queries that could cause performance issues
@@ -244,6 +240,7 @@ public sealed class ProductsController : ApiControllerBase
     [ProducesResponseType(typeof(ProductResponse), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var product = await _productService.CreateProductAsync(request);
         return ApiSuccess(product, "Product created successfully", StatusCodes.Status201Created);
     }
@@ -252,6 +249,7 @@ public sealed class ProductsController : ApiControllerBase
     [ProducesResponseType(typeof(ProductResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var product = await _productService.UpdateProductAsync(id, request);
         return ApiSuccess(product, "Product updated successfully");
     }
@@ -260,6 +258,8 @@ public sealed class ProductsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SetAvailability(int id, [FromBody] Dictionary<string, bool> request)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         if (!request.TryGetValue("isAvailable", out var isAvailable))
             return ApiError("isAvailable field is required", "INVALID_REQUEST", StatusCodes.Status400BadRequest);
 
@@ -271,6 +271,8 @@ public sealed class ProductsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SetFeatured(int id, [FromBody] Dictionary<string, bool> request)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         if (!request.TryGetValue("isFeatured", out var isFeatured))
             return ApiError("isFeatured field is required", "INVALID_REQUEST", StatusCodes.Status400BadRequest);
 
@@ -290,6 +292,8 @@ public sealed class ProductsController : ApiControllerBase
     [ProducesResponseType(typeof(UpdateProductPriceResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePrices([FromBody] UpdateProductPriceRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         var response = await _productService.UpdatePricesAsync(request);
         return ApiSuccess(response, "Bulk price update completed");
     }
