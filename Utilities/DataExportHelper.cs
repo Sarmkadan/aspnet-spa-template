@@ -87,8 +87,7 @@ public static class DataExportHelper
     /// </summary>
     public static ExportFormat NegotiateFormat(string? acceptHeader)
     {
-        if (string.IsNullOrEmpty(acceptHeader))
-            return ExportFormat.Json;
+        ArgumentException.ThrowIfNullOrEmpty(acceptHeader);
 
         return acceptHeader.ToLowerInvariant() switch
         {
@@ -174,6 +173,8 @@ public static class ExportExtensions
         HttpContext context,
         string? fileName = null) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(context);
         var format = DataExportHelper.NegotiateFormat(context.Request.Headers["Accept"].ToString());
         var export = DataExportHelper.ExportData(items, format, fileName);
         return export.ToFileContent();
