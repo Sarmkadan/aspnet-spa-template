@@ -18,6 +18,7 @@ public static class RequestContextHelper
     /// </summary>
     public static string GetCorrelationId(this HttpContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
         const string key = "CorrelationId";
 
         if (!context.Items.TryGetValue(key, out var id) || id is null)
@@ -35,6 +36,7 @@ public static class RequestContextHelper
     /// </summary>
     public static int GetUserId(this HttpContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
         if (context.Items.TryGetValue("UserId", out var userId) && int.TryParse(userId?.ToString(), out var id))
             return id;
 
@@ -47,6 +49,7 @@ public static class RequestContextHelper
     /// </summary>
     public static string? GetApiToken(this HttpRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         // Check Authorization header
         var authHeader = request.Headers["Authorization"].ToString();
         if (!string.IsNullOrEmpty(authHeader))
@@ -69,6 +72,7 @@ public static class RequestContextHelper
     /// </summary>
     public static string GetClientIpAddress(this HttpContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
         var request = context.Request;
 
         // Check X-Forwarded-For header (for proxied requests)
@@ -89,9 +93,10 @@ public static class RequestContextHelper
 
     /// <summary>
     /// Gets request user agent.
-    /// </summary>
+    /// </>
     public static string GetUserAgent(this HttpRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         return request.Headers["User-Agent"].ToString() ?? "unknown";
     }
 
@@ -100,6 +105,7 @@ public static class RequestContextHelper
     /// </summary>
     public static string? GetReferer(this HttpRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var referer = request.Headers["Referer"].ToString();
         return string.IsNullOrEmpty(referer) ? null : referer;
     }
@@ -110,6 +116,7 @@ public static class RequestContextHelper
     /// </summary>
     public static RequestContext CreateContext(this HttpContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
         return new RequestContext
         {
             CorrelationId = context.GetCorrelationId(),
@@ -127,6 +134,7 @@ public static class RequestContextHelper
     /// </summary>
     public static bool IsAjaxRequest(this HttpRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         return request.Headers["X-Requested-With"].ToString().Equals("XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
     }
 
@@ -135,6 +143,7 @@ public static class RequestContextHelper
     /// </summary>
     public static bool IsMobileRequest(this HttpRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var userAgent = request.GetUserAgent().ToLowerInvariant();
         return userAgent.Contains("mobile") ||
                userAgent.Contains("android") ||
@@ -147,6 +156,7 @@ public static class RequestContextHelper
     /// </summary>
     public static string GetContentType(this HttpRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         return request.ContentType ?? "application/json";
     }
 
@@ -155,6 +165,7 @@ public static class RequestContextHelper
     /// </summary>
     public static bool WantsJson(this HttpRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var accept = request.Headers["Accept"].ToString().ToLowerInvariant();
         return accept.Contains("application/json") || accept.Contains("*/*");
     }
@@ -164,6 +175,8 @@ public static class RequestContextHelper
     /// </summary>
     public static string? GetQueryParameter(this HttpRequest request, string paramName)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentException.ThrowIfNullOrEmpty(paramName);
         if (request.Query.TryGetValue(paramName, out var value))
             return value.ToString();
         return null;
@@ -174,6 +187,8 @@ public static class RequestContextHelper
     /// </summary>
     public static string? GetHeaderValue(this HttpRequest request, string headerName)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentException.ThrowIfNullOrEmpty(headerName);
         if (request.Headers.TryGetValue(headerName, out var value))
             return value.ToString();
         return null;
