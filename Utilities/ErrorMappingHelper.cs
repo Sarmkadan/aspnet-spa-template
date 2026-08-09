@@ -20,6 +20,7 @@ public static class ErrorMappingHelper
     /// </summary>
     public static int MapToStatusCode(Exception exception)
     {
+        ArgumentNullException.ThrowIfNull(exception);
         return exception switch
         {
             ValidationException => StatusCodes.Status400BadRequest,
@@ -38,6 +39,7 @@ public static class ErrorMappingHelper
     /// </summary>
     public static string MapToErrorCode(Exception exception)
     {
+        ArgumentNullException.ThrowIfNull(exception);
         return exception switch
         {
             ValidationException ex => "VALIDATION_ERROR",
@@ -57,6 +59,7 @@ public static class ErrorMappingHelper
     /// </summary>
     public static string MapToUserMessage(Exception exception)
     {
+        ArgumentNullException.ThrowIfNull(exception);
         return exception switch
         {
             ValidationException ex => ex.Message,
@@ -76,6 +79,7 @@ public static class ErrorMappingHelper
     /// </summary>
     public static (bool Retryable, int? RetryAfterSeconds) GetRetryInfo(Exception exception, int attempt = 1)
     {
+        ArgumentNullException.ThrowIfNull(exception);
         var statusCode = MapToStatusCode(exception);
 
         // Determine if retryable
@@ -104,6 +108,7 @@ public static class ErrorMappingHelper
     /// </summary>
     public static LogLevel GetLogLevel(Exception exception)
     {
+        ArgumentNullException.ThrowIfNull(exception);
         return exception switch
         {
             ValidationException => LogLevel.Warning,
@@ -120,6 +125,7 @@ public static class ErrorMappingHelper
     /// </summary>
     public static ErrorDetails ExtractErrorDetails(Exception exception)
     {
+        ArgumentNullException.ThrowIfNull(exception);
         var details = new ErrorDetails
         {
             ExceptionType = exception.GetType().Name,
@@ -143,6 +149,7 @@ public static class ErrorMappingHelper
     /// </summary>
     public static bool IsTransientError(Exception exception)
     {
+        ArgumentNullException.ThrowIfNull(exception);
         return exception switch
         {
             TimeoutException => true,
