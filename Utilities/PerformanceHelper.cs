@@ -20,6 +20,8 @@ public static class PerformanceHelper
     /// </summary>
     public static (T Result, long ElapsedMs) MeasureTime<T>(Func<T> operation, string operationName = "Operation")
     {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentException.ThrowIfNullOrEmpty(operationName);
         var stopwatch = Stopwatch.StartNew();
         var result = operation();
         stopwatch.Stop();
@@ -45,6 +47,7 @@ public static class PerformanceHelper
     /// </summary>
     public static (T Result, long MemoryBytes) MeasureMemory<T>(Func<T> operation)
     {
+        ArgumentNullException.ThrowIfNull(operation);
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
