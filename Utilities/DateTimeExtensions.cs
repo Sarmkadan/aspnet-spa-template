@@ -20,6 +20,7 @@ public static class DateTimeExtensions
     /// </summary>
     public static DateTime StartOfDay(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         return dateTime.Date;
     }
 
@@ -28,6 +29,7 @@ public static class DateTimeExtensions
     /// </summary>
     public static DateTime EndOfDay(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         return dateTime.Date.AddDays(1).AddTicks(-1);
     }
 
@@ -36,6 +38,7 @@ public static class DateTimeExtensions
     /// </summary>
     public static DateTime StartOfWeek(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         int diff = (int)dateTime.DayOfWeek - (int)DayOfWeek.Monday;
         if (diff < 0) diff += 7;
         return dateTime.AddDays(-diff).StartOfDay();
@@ -46,6 +49,7 @@ public static class DateTimeExtensions
     /// </summary>
     public static DateTime EndOfWeek(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         return dateTime.StartOfWeek().AddDays(7).EndOfDay();
     }
 
@@ -54,6 +58,7 @@ public static class DateTimeExtensions
     /// </summary>
     public static DateTime StartOfMonth(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         return new DateTime(dateTime.Year, dateTime.Month, 1);
     }
 
@@ -62,6 +67,7 @@ public static class DateTimeExtensions
     /// </summary>
     public static DateTime EndOfMonth(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         return dateTime.StartOfMonth().AddMonths(1).AddTicks(-1);
     }
 
@@ -74,6 +80,7 @@ public static class DateTimeExtensions
     /// <exception cref="ArgumentOutOfRangeException">Thrown when birthDate is in the future.</exception>
     public static int GetAge(this DateTime birthDate)
     {
+        ArgumentNullException.ThrowIfNull(nameof(birthDate));
         var today = DateTime.Today;
         if (birthDate.Date > today)
         {
@@ -136,6 +143,7 @@ public static class DateTimeExtensions
     /// <returns>True if within business hours; otherwise false.</returns>
     public static bool IsBusinessHours(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         return dateTime.Hour >= 9 && dateTime.Hour < 17
             && dateTime.DayOfWeek != DayOfWeek.Saturday
             && dateTime.DayOfWeek != DayOfWeek.Sunday;
@@ -148,6 +156,7 @@ public static class DateTimeExtensions
     /// <returns>True if the DateTime is in the past; otherwise false.</returns>
     public static bool IsPast(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         return dateTime < DateTime.UtcNow;
     }
 
@@ -158,6 +167,7 @@ public static class DateTimeExtensions
     /// <returns>True if the DateTime is in the future; otherwise false.</returns>
     public static bool IsFuture(this DateTime dateTime)
     {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
         return dateTime > DateTime.UtcNow;
     }
 }
