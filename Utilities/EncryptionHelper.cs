@@ -54,8 +54,7 @@ public static class EncryptionHelper
     /// </summary>
     public static string ComputeSHA256Hash(string input)
     {
-        if (string.IsNullOrEmpty(input))
-            return string.Empty;
+        ArgumentException.ThrowIfNullOrEmpty(input);
 
         using (var sha256 = SHA256.Create())
         {
@@ -70,8 +69,8 @@ public static class EncryptionHelper
     /// </summary>
     public static string ComputeHmacSha256(string data, string key)
     {
-        if (string.IsNullOrEmpty(data) || string.IsNullOrEmpty(key))
-            return string.Empty;
+        ArgumentException.ThrowIfNullOrEmpty(data);
+        ArgumentException.ThrowIfNullOrEmpty(key);
 
         using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key)))
         {
@@ -86,8 +85,7 @@ public static class EncryptionHelper
     /// </summary>
     public static (string Hash, string Salt) GenerateSaltedHash(string input)
     {
-        if (string.IsNullOrEmpty(input))
-            return (string.Empty, string.Empty);
+        ArgumentException.ThrowIfNullOrEmpty(input);
 
         // Generate salt
         var salt = GenerateRandomBytes(16);
@@ -144,8 +142,7 @@ public static class EncryptionHelper
     /// </summary>
     public static string ToHex(string input)
     {
-        if (string.IsNullOrEmpty(input))
-            return string.Empty;
+        ArgumentException.ThrowIfNullOrEmpty(input);
 
         return Convert.ToHexString(Encoding.UTF8.GetBytes(input)).ToLower();
     }
