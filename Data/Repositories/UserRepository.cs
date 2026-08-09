@@ -21,6 +21,7 @@ public class UserRepository : RepositoryBase<User>
 
     public virtual async Task<User?> GetByEmailAsync(string email)
     {
+        ArgumentException.ThrowIfNullOrEmpty(email);
         return await DbSet.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
     }
 
@@ -45,6 +46,7 @@ public class UserRepository : RepositoryBase<User>
 
     public virtual async Task<IEnumerable<User>> GetUsersByCountryAsync(string country)
     {
+        ArgumentException.ThrowIfNullOrEmpty(country);
         return await DbSet
             .Where(u => u.Country == country && u.IsActive && !u.IsDeleted())
             .ToListAsync();
@@ -62,6 +64,7 @@ public class UserRepository : RepositoryBase<User>
 
     public virtual async Task<bool> EmailExistsAsync(string email)
     {
+        ArgumentException.ThrowIfNullOrEmpty(email);
         return await DbSet.AnyAsync(u => u.Email.ToLower() == email.ToLower() && !u.IsDeleted());
     }
 
@@ -82,12 +85,14 @@ public class UserRepository : RepositoryBase<User>
 
     public virtual void SoftDelete(User user)
     {
+        ArgumentNullException.ThrowIfNull(user);
         user.SoftDelete();
         Update(user);
     }
 
     public virtual void Restore(User user)
     {
+        ArgumentNullException.ThrowIfNull(user);
         user.Restore();
         Update(user);
     }
