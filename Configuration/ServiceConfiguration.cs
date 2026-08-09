@@ -23,6 +23,8 @@ public static class ServiceConfiguration
     /// </summary>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
         // Caching
         services.AddSingleton<ICacheService, MemoryCacheService>();
 
