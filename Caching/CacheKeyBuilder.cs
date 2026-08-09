@@ -27,26 +27,42 @@ public static class CacheKeyBuilder
     /// </summary>
     /// <param name="email">The user's email address.</param>
     /// <returns>A cache key string for the user by email.</returns>
-    public static string UserByEmail(string email) => $"user{Separator}email{Separator}{email.ToLowerInvariant()}";
+    public static string UserByEmail(string email)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(email);
+        return $"user{Separator}email{Separator}{email.ToLowerInvariant()}";
+    }
     /// <summary>
     /// Gets the cache key for a user session.
     /// </summary>
     /// <param name="sessionId">The session identifier.</param>
     /// <returns>A cache key string for the user session.</returns>
-    public static string UserSession(string sessionId) => $"user{Separator}session{Separator}{sessionId}";
+    public static string UserSession(string sessionId)
+    {
+        ArgumentNullException.ThrowIfNull(sessionId);
+        return $"user{Separator}session{Separator}{sessionId}";
+    }
 
     /// <summary>
     /// Gets the cache key for a product by its ID.
     /// </summary>
     /// <param name="productId">The product's ID.</param>
     /// <returns>A cache key string for the product.</returns>
-    public static string ProductById(int productId) => $"product{Separator}id{Separator}{productId}";
+    public static string ProductById(int productId)
+    {
+        ArgumentNullException.ThrowIfNull(productId);
+        return $"product{Separator}id{Separator}{productId}";
+    }
     /// <summary>
     /// Gets the cache key for products by category.
     /// </summary>
     /// <param name="category">The product category.</param>
     /// <returns>A cache key string for products by category.</returns>
-    public static string ProductCategory(string category) => $"product{Separator}category{Separator}{category}";
+    public static string ProductCategory(string category)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(category);
+        return $"product{Separator}category{Separator}{category}";
+    }
     /// <summary>
     /// Gets the cache key for featured products.
     /// </summary>
@@ -57,7 +73,11 @@ public static class CacheKeyBuilder
     /// </summary>
     /// <param name="term">The search term.</param>
     /// <returns>A cache key string for product search.</returns>
-    public static string ProductSearch(string term) => $"product{Separator}search{Separator}{term.ToLowerInvariant()}";
+    public static string ProductSearch(string term)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(term);
+        return $"product{Separator}search{Separator}{term.ToLowerInvariant()}";
+    }
 
     /// <summary>
     /// Gets the cache key for an order by its ID.
@@ -70,13 +90,21 @@ public static class CacheKeyBuilder
     /// </summary>
     /// <param name="userId">The user's ID.</param>
     /// <returns>A cache key string for orders by user.</returns>
-    public static string OrdersByUserId(int userId) => $"order{Separator}user{Separator}{userId}";
+    public static string OrdersByUserId(int userId)
+    {
+        ArgumentNullException.ThrowIfNull(userId);
+        return $"order{Separator}user{Separator}{userId}";
+    }
     /// <summary>
     /// Gets the cache key for orders by status.
     /// </summary>
     /// <param name="status">The order status.</param>
     /// <returns>A cache key string for orders by status.</returns>
-    public static string OrdersByStatus(string status) => $"order{Separator}status{Separator}{status}";
+    public static string OrdersByStatus(string status)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(status);
+        return $"order{Separator}status{Separator}{status}";
+    }
 
     /// <summary>
     /// Gets the cache key for reviews by product ID.
@@ -91,7 +119,11 @@ public static class CacheKeyBuilder
     /// <returns>A cache key string for reviews by user.</returns>
     public static string ReviewsByUserId(int userId) => $"review{Separator}user{Separator}{userId}";
 
-    public static string Config(string configKey) => $"config{Separator}{configKey}";
+    public static string Config(string configKey)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(configKey);
+        return $"config{Separator}{configKey}";
+    }
     /// <summary>
     /// Gets the cache key for application settings.
     /// </summary>
@@ -104,13 +136,21 @@ public static class CacheKeyBuilder
     /// </summary>
     /// <param name="clientId">The client identifier.</param>
     /// <returns>A cache key string for rate limiting.</returns>
-    public static string RateLimitKey(string clientId) => $"ratelimit{Separator}{clientId}";
+    public static string RateLimitKey(string clientId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(clientId);
+        return $"ratelimit{Separator}{clientId}";
+    }
     /// <summary>
     /// Gets the cache key for request count by endpoint.
     /// </summary>
     /// <param name="endpoint">The endpoint name.</param>
     /// <returns>A cache key string for request count.</returns>
-    public static string RequestCount(string endpoint) => $"requests{Separator}{endpoint}";
+    public static string RequestCount(string endpoint)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(endpoint);
+        return $"requests{Separator}{endpoint}";
+    }
 
     // Session data
     /// <summary>
@@ -119,7 +159,12 @@ public static class CacheKeyBuilder
     /// <param name="sessionId">The session identifier.</param>
     /// <param name="key">The session data key.</param>
     /// <returns>A cache key string for session data.</returns>
-    public static string SessionData(string sessionId, string key) => $"session{Separator}{sessionId}{Separator}{key}";
+    public static string SessionData(string sessionId, string key)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(sessionId);
+        ArgumentException.ThrowIfNullOrEmpty(key);
+        return $"session{Separator}{sessionId}{Separator}{key}";
+    }
 
     // Temporary locks (for distributed coordination)
     /// <summary>
@@ -127,7 +172,11 @@ public static class CacheKeyBuilder
     /// </summary>
     /// <param name="resource">The resource to lock.</param>
     /// <returns>A cache key string for the lock.</returns>
-    public static string LockKey(string resource) => $"lock{Separator}{resource}";
+    public static string LockKey(string resource)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(resource);
+        return $"lock{Separator}{resource}";
+    }
     /// <summary>
     /// Gets the cache key for a processing job.
     /// </summary>
