@@ -26,6 +26,7 @@ public sealed class UsersController : ApiControllerBase
     [ProducesResponseType(typeof(UserResponse), StatusCodes.Status201Created)]
     public async Task<IActionResult> Register([FromBody] CreateUserRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var user = await _userService.CreateUserAsync(request);
         return ApiSuccess(user, "User registered successfully", StatusCodes.Status201Created);
     }
@@ -34,6 +35,7 @@ public sealed class UsersController : ApiControllerBase
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var response = await _userService.AuthenticateAsync(request);
         return ApiSuccess(response, "Login successful");
     }
@@ -62,6 +64,7 @@ public sealed class UsersController : ApiControllerBase
     [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         if (!IsAuthenticated)
             return Unauthorized();
 
@@ -77,6 +80,7 @@ public sealed class UsersController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeactivateUser(int id)
     {
+        ArgumentNullException.ThrowIfNull(id);
         if (!IsAuthenticated)
             return Unauthorized();
 
