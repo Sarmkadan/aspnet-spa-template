@@ -23,6 +23,9 @@ public sealed class ReviewService
 
     public ReviewService(IRepository<Review> reviewRepository, ProductRepository productRepository, ILogger<ReviewService> logger)
     {
+        ArgumentNullException.ThrowIfNull(reviewRepository);
+        ArgumentNullException.ThrowIfNull(productRepository);
+        ArgumentNullException.ThrowIfNull(logger);
         _reviewRepository = reviewRepository;
         _productRepository = productRepository;
         _logger = logger;
