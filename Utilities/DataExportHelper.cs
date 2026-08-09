@@ -23,6 +23,7 @@ public static class DataExportHelper
         ExportFormat format,
         string? fileName = null) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
         fileName ??= typeof(T).Name.ToLowerInvariant();
 
         return format switch
