@@ -38,6 +38,7 @@ public sealed class OrdersController : ApiControllerBase
     [ProducesResponseType(typeof(CreateOrderIdempotencyResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         if (!IsAuthenticated)
             return Unauthorized();
 
