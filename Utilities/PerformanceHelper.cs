@@ -34,6 +34,8 @@ public static class PerformanceHelper
     /// </summary>
     public static async Task<(T Result, long ElapsedMs)> MeasureTimeAsync<T>(Func<Task<T>> operation, string operationName = "Operation")
     {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentException.ThrowIfNullOrEmpty(operationName);
         var stopwatch = Stopwatch.StartNew();
         var result = await operation();
         stopwatch.Stop();
@@ -65,6 +67,7 @@ public static class PerformanceHelper
     /// </summary>
     public static double GetMemoryUsageMb()
     {
+        ArgumentNullException.ThrowIfNull(Process.GetCurrentProcess());
         using (var process = Process.GetCurrentProcess())
         {
             return process.WorkingSet64 / (1024.0 * 1024.0);
@@ -76,6 +79,7 @@ public static class PerformanceHelper
     /// </summary>
     public static double GetPrivateMemoryMb()
     {
+        ArgumentNullException.ThrowIfNull(Process.GetCurrentProcess());
         using (var process = Process.GetCurrentProcess())
         {
             return process.PrivateMemorySize64 / (1024.0 * 1024.0);
@@ -88,6 +92,7 @@ public static class PerformanceHelper
     /// </summary>
     public static PerformanceStatistics BenchmarkOperation(Action operation, int iterations = 100)
     {
+        ArgumentNullException.ThrowIfNull(operation);
         var timings = new List<long>();
 
         // Warmup
@@ -123,6 +128,7 @@ public static class PerformanceHelper
     /// </summary>
     public static (List<T> Results, long ElapsedMs, int Count) MeasureQueryTime<T>(Func<List<T>> query)
     {
+        ArgumentNullException.ThrowIfNull(query);
         var stopwatch = Stopwatch.StartNew();
         var results = query();
         stopwatch.Stop();
@@ -187,6 +193,8 @@ public class Profiler : IDisposable
 
     public Profiler(string name, ILogger logger, long thresholdMs = 100)
     {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentNullException.ThrowIfNull(logger);
         _name = name;
         _logger = logger;
         _thresholdMs = thresholdMs;
@@ -214,6 +222,8 @@ public static class PerformanceExtensions
 {
     public static IDisposable Profile(this ILogger logger, string operationName, long thresholdMs = 100)
     {
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentException.ThrowIfNullOrEmpty(operationName);
         return new Profiler(operationName, logger, thresholdMs);
     }
 }
