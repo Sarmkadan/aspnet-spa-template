@@ -36,6 +36,7 @@ public sealed class MemoryCacheService : ICacheService
     public async Task<T?> GetAsync<T>(string key) where T : class
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
+        _logger.LogInformation("Getting value from cache for key: {Key}", key);
         Interlocked.Increment(ref _totalRequests);
 
         if (_cache.TryGetValue(key, out var entry))
@@ -60,25 +61,26 @@ public sealed class MemoryCacheService : ICacheService
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
         ArgumentNullException.ThrowIfNull(value);
+        _logger.LogInformation("Setting value in cache for key: {Key} (TTL: {Ttl}s)", key, ttl?.TotalSeconds);
         var expiresAt = ttl.HasValue ? DateTime.UtcNow.Add(ttl.Value) : (DateTime?)null;
         var entry = new CacheEntry { Value = value, ExpiresAt = expiresAt };
 
         _cache[key] = entry;
-        _logger.LogDebug($"Cache SET: {key} (TTL: {ttl?.TotalSeconds}s)");
     }
 
     public async Task RemoveAsync(string key)
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
+        _logger.LogInformation("Removing key from cache: {Key}", key);
         if (_cache.TryRemove(key, out _))
         {
-            _logger.LogDebug($"Cache REMOVE: {key}");
         }
     }
 
     public async Task RemoveByPatternAsync(string pattern)
     {
         ArgumentException.ThrowIfNullOrEmpty(pattern);
+        _logger.LogInformation("Removing keys from cache matching pattern: {Pattern}", pattern);
         var regex = new Regex("^" + Regex.Escape(pattern).Replace("\\*", ".*") + "$");
         var keysToRemove = _cache.Keys.Where(k => regex.IsMatch(k)).ToList();
 
@@ -87,12 +89,13 @@ public sealed class MemoryCacheService : ICacheService
             _cache.TryRemove(key, out _);
         }
 
-        _logger.LogDebug($"Cache REMOVE_PATTERN: {pattern} (removed {keysToRemove.Count} items)");
+        _logger.LogInformation("Removed {Count} items matching pattern: {Pattern}", keysToRemove.Count, pattern);
     }
 
     public async Task<bool> ExistsAsync(string key)
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
+        _logger.LogInformation("Checking if key exists in cache: {Key}", key);
         if (!_cache.TryGetValue(key, out var entry))
             return false;
 
@@ -110,6 +113,7 @@ public sealed class MemoryCacheService : ICacheService
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
         ArgumentNullException.ThrowIfNull(factory);
+        _logger.LogInformation("GetOrSetAsync called for key: {Key}", key);
         // Fast path: check if exists
         var existing = await GetAsync<T>(key);
         if (existing is not null)
@@ -152,6 +156,7 @@ public sealed class MemoryCacheService : ICacheService
 
     public Task<int> RemoveExpiredAsync()
     {
+        _logger.LogInformation("Removing expired cache entries");
         var now = DateTime.UtcNow;
         var removed = 0;
 
@@ -171,7 +176,7 @@ public sealed class MemoryCacheService : ICacheService
 
         if (removed > 0)
         {
-            _logger.LogDebug($"Cache sweep removed {removed} expired entries");
+            _logger.LogInformation("Cache sweep removed {Count} expired entries", removed);
         }
 
         return Task.FromResult(removed);
@@ -180,6 +185,7 @@ public sealed class MemoryCacheService : ICacheService
     public async Task<long> IncrementAsync(string key, long increment = 1)
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
+        _logger.LogInformation("Incrementing value for key: {Key} by: {Increment}", key, increment);
         // AddOrUpdate makes the read-modify-write atomic; the old TryGetValue/set
         // sequence could lose increments under concurrent callers.
         var entry = _cache.AddOrUpdate(
@@ -195,6 +201,7 @@ public sealed class MemoryCacheService : ICacheService
     public async Task<bool> ExpireAsync(string key, TimeSpan ttl)
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
+        _logger.LogInformation("Setting TTL for key: {Key} to: {Ttl}s", key, ttl.TotalSeconds);
         if (!_cache.TryGetValue(key, out var entry))
             return false;
 
@@ -207,12 +214,14 @@ public sealed class MemoryCacheService : ICacheService
     public async Task<IEnumerable<string>> GetKeysAsync(string pattern)
     {
         ArgumentException.ThrowIfNullOrEmpty(pattern);
+        _logger.LogInformation("Getting keys matching pattern: {Pattern}", pattern);
         var regex = new Regex("^" + Regex.Escape(pattern).Replace("\\*", ".*") + "$");
         return _cache.Keys.Where(k => regex.IsMatch(k)).ToList();
     }
 
     public async Task FlushAllAsync()
     {
+        _logger.LogInformation("Flushing all cache entries");
         _cache.Clear();
         _semaphores.Clear();
         _logger.LogWarning("Cache FLUSH_ALL executed");
@@ -220,6 +229,7 @@ public sealed class MemoryCacheService : ICacheService
 
     public async Task<CacheStatistics> GetStatisticsAsync()
     {
+        _logger.LogInformation("Getting cache statistics");
         return new CacheStatistics
         {
             TotalRequests = Interlocked.Read(ref _totalRequests),
