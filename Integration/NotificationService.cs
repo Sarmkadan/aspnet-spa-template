@@ -188,6 +188,8 @@ public sealed class NotificationMessage
     public DateTime QueuedAt { get; set; }
     public DateTime? SentAt { get; set; }
     public bool IsRetry { get; set; }
+
+    public override string ToString() => $"NotificationMessage {{ Type = {Type}, Recipient = {Recipient}, UserId = {UserId}, Subject = {Subject}, Body = {Body}, Data = {Data} }}";
 }
 
 public enum NotificationType
