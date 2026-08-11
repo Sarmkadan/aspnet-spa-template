@@ -40,6 +40,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task GetAsync_WithExistingKey_ReturnsValue()
 	{
+		_mockLogger.Object.LogInformation("GetAsync_WithExistingKey_ReturnsValue started with key: {Key}", "test:key");
 		// Arrange
 		var key = "test:key";
 		var value = new TestData { Id = 1, Name = "Test" };
@@ -59,6 +60,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task GetAsync_WithNonExistingKey_ReturnsNull()
 	{
+		_mockLogger.Object.LogInformation("GetAsync_WithNonExistingKey_ReturnsNull started with key: {Key}", "nonexistent");
 		// Act
 		var result = await _cacheService.GetAsync<TestData>("nonexistent");
 
@@ -72,6 +74,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task GetAsync_WithExpiredEntry_ReturnsNullAndRemovesEntry()
 	{
+		_mockLogger.Object.LogInformation("GetAsync_WithExpiredEntry_ReturnsNullAndRemovesEntry started with key: {Key}", "expired:key");
 		// Arrange
 		var key = "expired:key";
 		var value = new TestData { Id = 1, Name = "Test" };
@@ -94,6 +97,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task SetAsync_WithValue_StoresValue()
 	{
+		_mockLogger.Object.LogInformation("SetAsync_WithValue_StoresValue started with key: {Key}", "test:set");
 		// Arrange
 		var key = "test:set";
 		var value = new TestData { Id = 2, Name = "SetTest" };
@@ -113,6 +117,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task RemoveAsync_WithExistingKey_RemovesValue()
 	{
+		_mockLogger.Object.LogInformation("RemoveAsync_WithExistingKey_RemovesValue started with key: {Key}", "test:remove");
 		// Arrange
 		var key = "test:remove";
 		var value = new TestData { Id = 1, Name = "ToRemove" };
@@ -132,6 +137,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task RemoveByPatternAsync_WithMatchingPattern_RemovesMatchingKeys()
 	{
+		_mockLogger.Object.LogInformation("RemoveByPatternAsync_WithMatchingPattern_RemovesMatchingKeys started with pattern: {Pattern}", "product:*");
 		// Arrange
 		await _cacheService.SetAsync("product:1", new TestData { Id = 1 });
 		await _cacheService.SetAsync("product:2", new TestData { Id = 2 });
@@ -156,6 +162,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task ExistsAsync_WithExistingKey_ReturnsTrue()
 	{
+		_mockLogger.Object.LogInformation("ExistsAsync_WithExistingKey_ReturnsTrue started with key: {Key}", "exists:test");
 		// Arrange
 		var key = "exists:test";
 		await _cacheService.SetAsync(key, new TestData { Id = 1 });
@@ -173,6 +180,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task ExistsAsync_WithNonExistingKey_ReturnsFalse()
 	{
+		_mockLogger.Object.LogInformation("ExistsAsync_WithNonExistingKey_ReturnsFalse started with key: {Key}", "nonexistent:key");
 		// Act
 		var exists = await _cacheService.ExistsAsync("nonexistent:key");
 
@@ -186,6 +194,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task ExistsAsync_WithExpiredKey_ReturnsFalseAndRemovesEntry()
 	{
+		_mockLogger.Object.LogInformation("ExistsAsync_WithExpiredKey_ReturnsFalseAndRemovesEntry started with key: {Key}", "expired:exists");
 		// Arrange
 		var key = "expired:exists";
 		await _cacheService.SetAsync(key, new TestData { Id = 1 }, TimeSpan.FromMilliseconds(100));
@@ -206,6 +215,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task GetOrSetAsync_WithCachedValue_ReturnsCachedValue()
 	{
+		_mockLogger.Object.LogInformation("GetOrSetAsync_WithCachedValue_ReturnsCachedValue started with key: {Key}", "getorset:cached");
 		// Arrange
 		var key = "getorset:cached";
 		var cachedValue = new TestData { Id = 1, Name = "Cached" };
@@ -231,6 +241,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task GetOrSetAsync_WithMissingKey_CallsFactoryAndCachesValue()
 	{
+		_mockLogger.Object.LogInformation("GetOrSetAsync_WithMissingKey_CallsFactoryAndCachesValue started with key: {Key}", "getorset:missing");
 		// Arrange
 		var key = "getorset:missing";
 		var newValue = new TestData { Id = 2, Name = "New" };
@@ -258,6 +269,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task IncrementAsync_WithNewKey_InitializesToOneAndIncrements()
 	{
+		_mockLogger.Object.LogInformation("IncrementAsync_WithNewKey_InitializesToOneAndIncrements started with key: {Key}", "counter:new");
 		// Arrange
 		var key = "counter:new";
 
@@ -278,6 +290,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task ExpireAsync_WithExistingKey_SetsExpiration()
 	{
+		_mockLogger.Object.LogInformation("ExpireAsync_WithExistingKey_SetsExpiration started with key: {Key}", "expire:test");
 		// Arrange
 		var key = "expire:test";
 		await _cacheService.SetAsync(key, new TestData { Id = 1 });
@@ -299,6 +312,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task ExpireAsync_WithNonExistingKey_ReturnsFalse()
 	{
+		_mockLogger.Object.LogInformation("ExpireAsync_WithNonExistingKey_ReturnsFalse started with key: {Key}", "nonexistent");
 		// Act
 		var result = await _cacheService.ExpireAsync("nonexistent", TimeSpan.FromSeconds(10));
 
@@ -312,6 +326,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task GetKeysAsync_WithPattern_ReturnsMatchingKeys()
 	{
+		_mockLogger.Object.LogInformation("GetKeysAsync_WithPattern_ReturnsMatchingKeys started with pattern: {Pattern}", "user:*");
 		// Arrange
 		await _cacheService.SetAsync("user:1", new TestData { Id = 1 });
 		await _cacheService.SetAsync("user:2", new TestData { Id = 2 });
@@ -332,6 +347,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task FlushAllAsync_ClearsAllEntries()
 	{
+		_mockLogger.Object.LogInformation("FlushAllAsync_ClearsAllEntries started");
 		// Arrange
 		await _cacheService.SetAsync("key1", new TestData { Id = 1 });
 		await _cacheService.SetAsync("key2", new TestData { Id = 2 });
@@ -353,6 +369,7 @@ public sealed class MemoryCacheServiceTests
 	[Fact]
 	public async Task GetStatisticsAsync_ReturnsCorrectStats()
 	{
+		_mockLogger.Object.LogInformation("GetStatisticsAsync_ReturnsCorrectStats started");
 		// Arrange
 		await _cacheService.SetAsync("key1", new TestData { Id = 1 });
 		await _cacheService.GetAsync<TestData>("key1"); // hit
