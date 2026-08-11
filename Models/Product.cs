@@ -29,6 +29,8 @@ public sealed class Product
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
+    public override string ToString() => $"Product {{ Id = {Id}, Name = {Name}, Description = {Description}, Price = {Price}, StockQuantity = {StockQuantity}, Category = {Category} }}";
+
     // Navigation properties
     public ICollection<OrderItem>? OrderItems { get; set; }
     public ICollection<Review>? Reviews { get; set; }
