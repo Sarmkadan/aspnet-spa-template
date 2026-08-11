@@ -11,6 +11,7 @@ namespace AspNetSpaTemplate.Models;
 /// </summary>
 public sealed class User
 {
+    public override string ToString() => $"User {{ Id = {Id}, FirstName = {FirstName}, LastName = {LastName}, Email = {Email}, PasswordHash = {PasswordHash}, PhoneNumber = {PhoneNumber} }}";
     /// <summary>Gets or sets the user's unique identifier.</summary>
     public int Id { get; set; }
 
