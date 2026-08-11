@@ -18,6 +18,7 @@ namespace AspNetSpaTemplate.BackgroundWorkers;
 /// </summary>
 public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
 {
+    public override string ToString() => $"BackgroundTaskScheduler {{ TaskName = null, IsRunning = false, LastExecutedAt = null, NextExecutionAt = null, LastExecutionDuration = null, ExecutionCount = 0 }}";
     private readonly List<IBackgroundTask> _tasks = new();
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, BackgroundTaskState> _taskStates = new();
     private readonly ILogger<BackgroundTaskScheduler> _logger;
