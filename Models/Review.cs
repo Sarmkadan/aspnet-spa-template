@@ -27,6 +27,8 @@ public sealed class Review
     public Product? Product { get; set; }
     public User? User { get; set; }
 
+    public override string ToString() => $"Review {{ Id = {Id}, ProductId = {ProductId}, UserId = {UserId}, Rating = {Rating}, Title = {Title}, Content = {Content} }}";
+
     public bool IsValidRating() => Rating >= 1 && Rating <= 5;
 
     public bool IsRecent(int days = 30) => DateTime.UtcNow.Subtract(CreatedAt).TotalDays <= days;
