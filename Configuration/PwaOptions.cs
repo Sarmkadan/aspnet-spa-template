@@ -85,6 +85,8 @@ public sealed class PwaOptions
     public bool IsVapidConfigured =>
         !string.IsNullOrWhiteSpace(Vapid.PublicKey) &&
         !string.IsNullOrWhiteSpace(Vapid.PrivateKey);
+
+    public override string ToString() => $"PwaOptions {{ EnablePushNotifications = {EnablePushNotifications}, EnableOfflineSync = {EnableOfflineSync}, MaxNotificationsPerBatch = {MaxNotificationsPerBatch}, MaxSyncRetries = {MaxSyncRetries}, SyncRetryBaseDelaySeconds = {SyncRetryBaseDelaySeconds}, SyncQueueMaxAgeHours = {SyncQueueMaxAgeHours} }}";
 }
 
 /// <summary>
