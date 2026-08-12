@@ -42,4 +42,6 @@ public sealed class OrderStatsResponse
     /// Total number of refunded orders.
     /// </summary>
     public int RefundedOrders { get; set; }
+
+    public override string ToString() => $"OrderStatsResponse {{ StatusCounts = {StatusCounts}, TotalRevenue = {TotalRevenue}, DateRangeRevenue = {DateRangeRevenue}, TotalOrders = {TotalOrders}, CancelledOrders = {CancelledOrders}, RefundedOrders = {RefundedOrders} }}";
 }
