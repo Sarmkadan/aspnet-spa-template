@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace AspNetSpaTemplate.Configuration;
@@ -20,6 +21,11 @@ public class AspnetSpaTemplateOptions
 
     public RequestLoggingOptions RequestLogging { get; set; } = new();
     public WebhookOptions Webhooks { get; set; } = new();
+
+    public override string ToString()
+    {
+        return $"AspnetSpaTemplateOptions {{ JwtSecret = {JwtSecret}, JwtExpiration = {JwtExpiration}, Environment = {Environment}, RequestLogging = {RequestLogging}, Webhooks = {Webhooks}, Enabled = {RequestLogging?.Enabled} }}";
+    }
 }
 
 public class RequestLoggingOptions
