@@ -14,4 +14,6 @@ public sealed class IdempotencyResponse
     public string IdempotencyKey { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public string Message { get; set; } = "Idempotency key generated";
+
+    public override string ToString() => $"IdempotencyResponse {{ IdempotencyKey = {IdempotencyKey}, CreatedAt = {CreatedAt}, Message = {Message} }}";
 }
