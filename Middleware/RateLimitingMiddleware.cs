@@ -53,6 +53,7 @@ public sealed class RateLimitingMiddleware
                 return Task.CompletedTask;
             });
 
+            _logger.LogInformation("InvokeAsync forwarding to next middleware for {ClientId}", clientId);
             await _next(context);
         }
         else
