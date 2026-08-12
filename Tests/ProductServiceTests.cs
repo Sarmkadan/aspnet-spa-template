@@ -34,16 +34,19 @@ public sealed class ProductServiceTests
     [Fact]
     public async Task UpdatePricesAsync_WithNullRequest_ThrowsArgumentNullException()
     {
+        _mockLogger.Object.LogInformation("Starting test: UpdatePricesAsync_WithNullRequest_ThrowsArgumentNullException");
         // Arrange
         UpdateProductPriceRequest? nullRequest = null;
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() => _productService.UpdatePricesAsync(nullRequest!));
+        _mockLogger.Object.LogInformation("Finished test: UpdatePricesAsync_WithNullRequest_ThrowsArgumentNullException");
     }
 
     [Fact]
     public async Task UpdatePricesAsync_WithEmptyPriceUpdates_ThrowsValidationException()
     {
+        _mockLogger.Object.LogInformation("Starting test: UpdatePricesAsync_WithEmptyPriceUpdates_ThrowsValidationException");
         // Arrange
         var request = new UpdateProductPriceRequest
         {
@@ -53,11 +56,13 @@ public sealed class ProductServiceTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() => _productService.UpdatePricesAsync(request));
         Assert.Equal("PriceUpdates", exception.Field);
+        _mockLogger.Object.LogInformation("Finished test: UpdatePricesAsync_WithEmptyPriceUpdates_ThrowsValidationException");
     }
 
     [Fact]
     public async Task UpdatePricesAsync_WithTooManyProducts_ThrowsValidationException()
     {
+        _mockLogger.Object.LogInformation("Starting test: UpdatePricesAsync_WithTooManyProducts_ThrowsValidationException");
         // Arrange
         var request = new UpdateProductPriceRequest
         {
@@ -69,11 +74,13 @@ public sealed class ProductServiceTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() => _productService.UpdatePricesAsync(request));
         Assert.Equal("PriceUpdates", exception.Field);
+        _mockLogger.Object.LogInformation("Finished test: UpdatePricesAsync_WithTooManyProducts_ThrowsValidationException");
     }
 
     [Fact]
     public async Task UpdatePricesAsync_WithInvalidPriceRange_UpdatesNoneAndReportsErrors()
     {
+        _mockLogger.Object.LogInformation("Starting test: UpdatePricesAsync_WithInvalidPriceRange_UpdatesNoneAndReportsErrors");
         // Arrange
         var product1 = new Product { Id = 1, Name = "Product 1", Price = 10.00m, Description = "Test", Category = ProductCategory.Electronics };
         var product2 = new Product { Id = 2, Name = "Product 2", Price = 20.00m, Description = "Test", Category = ProductCategory.Clothing };
@@ -100,11 +107,13 @@ public sealed class ProductServiceTests
         Assert.Equal(2, response.Results.Count);
         Assert.All(response.Results, r => Assert.False(r.Success));
         Assert.Contains(response.Results, r => r.ErrorCode == "INVALID_PRICE_RANGE");
+        _mockLogger.Object.LogInformation("Finished test: UpdatePricesAsync_WithInvalidPriceRange_UpdatesNoneAndReportsErrors");
     }
 
     [Fact]
     public async Task UpdatePricesAsync_WithNonExistentProduct_ReportsError()
     {
+        _mockLogger.Object.LogInformation("Starting test: UpdatePricesAsync_WithNonExistentProduct_ReportsError");
         // Arrange
         _mockProductRepository.Setup(x => x.GetByIdAsync(999)).ReturnsAsync((Product?)null);
 
@@ -126,11 +135,13 @@ public sealed class ProductServiceTests
         Assert.Single(response.Results);
         Assert.False(response.Results[0].Success);
         Assert.Equal("PRODUCT_NOT_FOUND", response.Results[0].ErrorCode);
+        _mockLogger.Object.LogInformation("Finished test: UpdatePricesAsync_WithNonExistentProduct_ReportsError");
     }
 
     [Fact]
     public async Task UpdatePricesAsync_WithValidData_UpdatesPricesAndReturnsSuccess()
     {
+        _mockLogger.Object.LogInformation("Starting test: UpdatePricesAsync_WithValidData_UpdatesPricesAndReturnsSuccess");
         // Arrange
         var product1 = new Product { Id = 1, Name = "Product 1", Price = 10.00m, Description = "Test", Category = ProductCategory.Electronics };
         var product2 = new Product { Id = 2, Name = "Product 2", Price = 20.00m, Description = "Test", Category = ProductCategory.Clothing };
@@ -170,11 +181,13 @@ public sealed class ProductServiceTests
         // Verify repository was called
         _mockProductRepository.Verify(x => x.Update(It.IsAny<Product>()), Times.Exactly(2));
         _mockProductRepository.Verify(x => x.SaveChangesAsync(), Times.Exactly(1));
+        _mockLogger.Object.LogInformation("Finished test: UpdatePricesAsync_WithValidData_UpdatesPricesAndReturnsSuccess");
     }
 
     [Fact]
     public async Task UpdatePricesAsync_WithDatabaseError_ReportsErrorForFailedUpdate()
     {
+        _mockLogger.Object.LogInformation("Starting test: UpdatePricesAsync_WithDatabaseError_ReportsErrorForFailedUpdate");
         // Arrange
         var product1 = new Product { Id = 1, Name = "Product 1", Price = 10.00m, Description = "Test", Category = ProductCategory.Electronics };
 
@@ -199,5 +212,6 @@ public sealed class ProductServiceTests
         Assert.Single(response.Results);
         Assert.False(response.Results[0].Success);
         Assert.Equal("PRICE_UPDATE_FAILED", response.Results[0].ErrorCode);
+        _mockLogger.Object.LogInformation("Finished test: UpdatePricesAsync_WithDatabaseError_ReportsErrorForFailedUpdate");
     }
 }
