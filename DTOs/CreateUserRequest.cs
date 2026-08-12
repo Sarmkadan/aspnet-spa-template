@@ -20,6 +20,8 @@ public sealed class CreateUserRequest
     public string? City { get; set; }
     public string? PostalCode { get; set; }
     public string? Country { get; set; }
+
+    public override string ToString() => $"CreateUserRequest {{ FirstName = {FirstName}, LastName = {LastName}, Email = {Email}, Password = {Password}, PhoneNumber = {PhoneNumber}, Address = {Address} }}";
 }
 
 /// <summary>
