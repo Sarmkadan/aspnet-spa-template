@@ -96,4 +96,9 @@ public sealed class ReviewResponse
     public bool IsApproved { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+
+    public override string ToString()
+    {
+        return $"ReviewResponse {{ Id = {Id}, ProductId = {ProductId}, UserId = {UserId}, Rating = {Rating}, Title = {Title}, Content = {Content} }}";
+    }
 }
