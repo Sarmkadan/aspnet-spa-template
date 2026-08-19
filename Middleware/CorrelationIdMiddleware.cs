@@ -29,8 +29,11 @@ public sealed class CorrelationIdMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        _logger.LogInformation("InvokeAsync called for {Method} {Path}", context.Request.Method, context.Request.Path);
+
         // Try to extract correlation ID from request header
         var correlationId = ExtractOrCreateCorrelationId(context);
+        _logger.LogInformation("Correlation ID: {CorrelationId}", correlationId);
 
         // Store in HttpContext for access throughout the request
         context.Items["CorrelationId"] = correlationId;
@@ -73,7 +76,8 @@ public sealed class CorrelationIdMiddleware
         // Generate new correlation ID: timestamp-random
         var timestamp = DateTime.UtcNow.Ticks.ToString("x");
         var random = EncryptionHelper.GenerateRandomString(8);
-        return $"{timestamp}-{random}";
+        var correlationId = $"{timestamp}-{random}";
+        return correlationId;
     }
 
     /// <summary>
