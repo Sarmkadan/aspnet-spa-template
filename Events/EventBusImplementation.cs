@@ -83,7 +83,7 @@ public class EventBusImplementation : IEventBus
                 _subscribers[eventType] = new List<Delegate>();
 
             _subscribers[eventType].Add(handler);
-            _logger.LogInformation($"Subscribed handler to {eventType.Name}");
+            _logger.LogInformation("Subscribed handler to {EventType}", eventType.Name);
         }
     }
 
@@ -107,7 +107,7 @@ public class EventBusImplementation : IEventBus
             throw new ArgumentNullException(nameof(@event));
 
         var eventType = typeof(TEvent);
-        _logger.LogInformation($"Publishing event: {eventType.Name} (ID: {@event.EventId})");
+        _logger.LogInformation("Publishing event: {EventType} (ID: {EventId})", eventType.Name, @event.EventId);
 
         List<Delegate>? handlers;
         lock (_subscriberLock)
@@ -129,7 +129,7 @@ public class EventBusImplementation : IEventBus
             }
         }
 
-        _logger.LogInformation($"Event published: {eventType.Name} (handled by {handlers.Count} subscribers)");
+        _logger.LogInformation("Event published: {EventType} (handled by {SubscriberCount} subscribers)", eventType.Name, handlers.Count);
     }
 
     /// <summary>
@@ -162,7 +162,11 @@ public class EventBusImplementation : IEventBus
 
                 _logger.LogWarning(
                     ex,
-                    $"Handler attempt {attempt}/{MaxAttempts} failed for {eventType.Name} (ID: {@event.EventId}); retrying");
+                    "Handler attempt {Attempt}/{MaxAttempts} failed for {EventType} (ID: {EventId}); retrying",
+                    attempt,
+                    MaxAttempts,
+                    eventType.Name,
+                    @event.EventId);
 
                 await Task.Delay(ComputeBackoffDelay(attempt));
             }
@@ -172,7 +176,7 @@ public class EventBusImplementation : IEventBus
             $"Handler for {eventType.Name} failed after {MaxAttempts} attempts",
             attemptExceptions);
 
-        _logger.LogError(aggregate, $"Error in event handler for {eventType.Name}");
+        _logger.LogError(aggregate, "Error in event handler for {EventType}", eventType.Name);
 
         await _deadLetterSink.SendAsync(@event, aggregate);
     }
