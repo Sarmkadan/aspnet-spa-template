@@ -25,6 +25,8 @@ public sealed class MemoryCacheServiceTests
 	/// </summary>
 	public string? Name { get; set; }
 
+	public override string ToString() => $"MemoryCacheServiceTests {{ Id = {Id}, Name = {Name} }}";
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="MemoryCacheServiceTests"/> class.
 	/// </summary>
