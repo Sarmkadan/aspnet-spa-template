@@ -74,6 +74,7 @@ public sealed class SuccessResponse<T>
         Data = data;
         Message = message;
     }
+}
 
 
 /// <summary>
@@ -92,5 +93,5 @@ public sealed class PaginatedResponse<T>
     public int TotalPages => (TotalCount + PageSize - 1) / PageSize;
     public bool HasNextPage => PageNumber < TotalPages;
     public bool HasPreviousPage => PageNumber > 1;
-public override string ToString() => $"ErrorResponse {{ Message = {Message}, ErrorCode = {ErrorCode}, Errors = {Errors}, TraceId = {TraceId}, StatusCode = {StatusCode}, Timestamp = {Timestamp} }}";
+}
 
