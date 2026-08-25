@@ -48,6 +48,7 @@ public sealed class ErrorResponse
     }
 
     public override string ToString() => $"ErrorResponse {{ Message = {Message}, ErrorCode = {ErrorCode}, Errors = {Errors}, TraceId = {TraceId}, StatusCode = {StatusCode}, Timestamp = {Timestamp} }}";
+}
 
 
 /// <summary>
