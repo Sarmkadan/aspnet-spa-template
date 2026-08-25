@@ -63,6 +63,8 @@ public sealed class PaginationRequest
         }
         return 0;
     }
+
+    public override string ToString() => $"PaginationRequest {{ SortBy = {SortBy}, SortDescending = {SortDescending}, SearchTerm = {SearchTerm}, Filters = {Filters}, PageNumber = {PageNumber} }}";
 }
 
 /// <summary>
