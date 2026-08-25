@@ -52,4 +52,6 @@ public sealed class OrderItem
     public decimal GetAveragePricePerUnit() => GetSubtotal() / Quantity;
 
     public bool IsValid() => Quantity > 0 && UnitPrice > 0 && ProductId > 0 && OrderId > 0;
+
+    public override string ToString() => $"OrderItem {{ Id = {Id}, OrderId = {OrderId}, ProductId = {ProductId}, Quantity = {Quantity}, UnitPrice = {UnitPrice}, TaxAmount = {TaxAmount} }}";
 }
