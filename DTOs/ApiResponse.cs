@@ -113,6 +113,8 @@ public sealed class ApiResponse
             TraceId = traceId
         };
     }
+
+    public override string ToString() => $"ApiResponse {{ Success = {Success}, Message = {Message}, ErrorCode = {ErrorCode}, TraceId = {TraceId}, Timestamp = {Timestamp} }}";
 }
 
 /// <summary>
