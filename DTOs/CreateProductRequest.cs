@@ -20,4 +20,6 @@ public sealed class CreateProductRequest
     public ProductCategory Category { get; set; }
     public string? ImageUrl { get; set; }
     public string? Sku { get; set; }
+
+    public override string ToString() => $"CreateProductRequest {{ Name = {Name}, Description = {Description}, Price = {Price}, StockQuantity = {StockQuantity}, Category = {Category}, ImageUrl = {ImageUrl} }}";
 }
