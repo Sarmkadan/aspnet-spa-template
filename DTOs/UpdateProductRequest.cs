@@ -39,7 +39,7 @@ public sealed class UpdateProductRequest
         if (StockQuantity < 0)
             throw new ArgumentException("Stock quantity cannot be negative");
     }
-}
+    }
 
 /// <summary>
 /// Response DTO for product details.
@@ -101,7 +101,7 @@ public sealed class ProductSearchRequest
         if (MinPrice.HasValue && MaxPrice.HasValue && MinPrice > MaxPrice)
             throw new ArgumentException("MinPrice cannot be greater than MaxPrice");
     }
-}
+    }
 
 /// <summary>
 /// Request DTO for bulk product operations.
@@ -120,7 +120,7 @@ public sealed class BulkProductRequest
         if (ProductIds.Count > 1000)
             throw new ArgumentException("Cannot process more than 1000 products in one request");
     }
-}
+    }
 
 public enum BulkOperation
 {
