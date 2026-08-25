@@ -16,6 +16,8 @@ public sealed class UpdateProductPriceRequest
     /// List of product price updates.
     /// </summary>
     public required List<ProductPriceUpdate> PriceUpdates { get; set; }
+
+    public override string ToString() => $"UpdateProductPriceRequest {{ PriceUpdates = {PriceUpdates} }}";
 }
 
 /// <summary>
