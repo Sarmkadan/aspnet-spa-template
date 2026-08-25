@@ -93,4 +93,6 @@ public sealed class Order
     }
 
     public bool IsRecent(int days = 30) => DateTime.UtcNow.Subtract(OrderedAt).TotalDays <= days;
+
+    public override string ToString() => $"Order {{ Id = {Id}, UserId = {UserId}, OrderNumber = {OrderNumber}, Status = {Status}, SubTotal = {SubTotal}, TaxAmount = {TaxAmount} }}";
 }
