@@ -29,4 +29,9 @@ public sealed class StatusHistory
 
     // Navigation property
     public Order? Order { get; set; }
+
+    public override string ToString()
+    {
+        return $"StatusHistory {{ Id = {Id}, OrderId = {OrderId}, FromStatus = {FromStatus}, ToStatus = {ToStatus}, ChangedAt = {ChangedAt}, ChangedBy = {ChangedBy} }}";
+    }
 }
