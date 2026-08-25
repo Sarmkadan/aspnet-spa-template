@@ -92,6 +92,10 @@ public sealed class PushSubscription
         IsActive = false;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    /// <summary>Returns a concise, informative string representation of this subscription.</summary>
+    public override string ToString() =>
+        $"PushSubscription {{ Id = {Id}, UserId = {UserId}, Endpoint = {Endpoint}, P256dhKey = {P256dhKey}, AuthKey = {AuthKey}, DeviceLabel = {DeviceLabel} }}";
 }
 
 /// <summary>
