@@ -1,9 +1,3 @@
-#nullable enable
-// =============================================================================
-// Author: Vladyslav Zaiets | https://sarmkadan.com
-// CTO & Software Architect
-// =============================================================================
-
 using System.Collections.Generic;
 
 namespace AspNetSpaTemplate.Models;
@@ -28,4 +22,6 @@ public sealed class RatingSummary
     /// Dictionary where the key is the star rating (1‑5) and the value is the count of reviews with that rating.
     /// </summary>
     public Dictionary<int, int> StarCounts { get; set; } = new Dictionary<int, int>();
+
+    public override string ToString() => $"RatingSummary {{ AverageRating = {AverageRating}, ReviewCount = {ReviewCount}, StarCounts = {StarCounts} }}";
 }
