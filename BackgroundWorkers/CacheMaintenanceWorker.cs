@@ -155,6 +155,8 @@ public sealed class CacheHealthReport
     public int? WarningCount { get; set; }
     public List<string> Warnings { get; set; } = new();
     public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+
+    public override string ToString() => $"CacheHealthReport {{ IsHealthy = {IsHealthy}, HitRate = {HitRate}, ItemCount = {ItemCount}, MemoryUsageBytes = {MemoryUsageBytes}, WarningCount = {WarningCount}, Warnings = {Warnings} }}";
 }
 
 /// <summary>
