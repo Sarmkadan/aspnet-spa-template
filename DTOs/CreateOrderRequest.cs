@@ -13,6 +13,8 @@ public sealed class OrderItemRequest
 {
     public int ProductId { get; set; }
     public int Quantity { get; set; }
+
+    public override string ToString() => $"OrderItemRequest {{ ProductId = {ProductId}, Quantity = {Quantity} }}";
 }
 
 /// <summary>
