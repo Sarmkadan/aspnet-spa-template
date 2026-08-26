@@ -260,6 +260,18 @@ public sealed class HealthController : ControllerBase
         _logger.LogInformation("Background worker status generated");
         return Ok(new { workers = workers.ToList() });
     }
+
+    /// <summary>
+    /// Returns a concise, informative representation of the controller state,
+    /// including the current timestamp, overall background-worker status, and per-component statuses.
+    /// </summary>
+    public override string ToString()
+    {
+        var workers = _taskScheduler.GetStatus();
+        var status = workers.Any(w => w.Status == "Failed") ? "degraded" : "healthy";
+        var components = string.Join(", ", workers.Select(w => $"{w.TaskName} = {w.Status}"));
+        return $"HealthController {{ Timestamp = {DateTime.UtcNow:O}, Status = {status}, Components = [{components}] }}";
+    }
 }
 
 /// <summary>
