@@ -127,3 +127,42 @@ IActionResult voteResult = await reviewsController.VoteHelpful(review.Id);
 // Recalculate the product rating summaries:
 IActionResult recalcResult = await reviewsController.RecalculateRatings();
 ```
+
+## OrderStatsResponse
+
+The `OrderStatsResponse` DTO (defined in `DTOs/OrderStatsResponse.cs`) aggregates order statistics for reporting and dashboard scenarios. It exposes the total number of orders along with how many were cancelled or refunded, the overall revenue, an optional revenue figure limited to a specific date range, and a per-status breakdown of order counts. Services populate this response so clients can display summary metrics without querying individual orders.
+
+Example usage:
+
+```csharp
+using AspNetSpaTemplate.DTOs;
+
+var stats = new OrderStatsResponse
+{
+    TotalOrders = 150,
+    CancelledOrders = 12,
+    RefundedOrders = 5,
+    TotalRevenue = 24_980.75m,
+    DateRangeRevenue = 3_450.20m,
+    StatusCounts = new Dictionary<string, int>
+    {
+        ["Pending"] = 30,
+        ["Shipped"] = 95,
+        ["Delivered"] = 13,
+        ["Cancelled"] = 12
+    }
+};
+
+Console.WriteLine($"Orders: {stats.TotalOrders}, Revenue: {stats.TotalRevenue}");
+Console.WriteLine($"Cancelled: {stats.CancelledOrders}, Refunded: {stats.RefundedOrders}");
+
+if (stats.DateRangeRevenue.HasValue)
+{
+    Console.WriteLine($"Revenue in selected range: {stats.DateRangeRevenue.Value}");
+}
+
+foreach (var (status, count) in stats.StatusCounts)
+{
+    Console.WriteLine($"{status}: {count}");
+}
+```
