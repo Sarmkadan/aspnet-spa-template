@@ -270,4 +270,9 @@ public sealed class HealthCheckReport
     public DateTime Timestamp { get; set; }
     public string Status { get; set; } = "unknown";
     public Dictionary<string, string> Components { get; set; } = new();
+
+    public override string ToString()
+    {
+        return $"HealthCheckReport {{ Timestamp = {Timestamp}, Status = {Status}, Components = {Components} }}";
+    }
 }
