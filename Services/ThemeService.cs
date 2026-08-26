@@ -32,6 +32,8 @@ public sealed class ThemeService : IThemeService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    public override string ToString() => $"ThemeService {{ Scheme = {Scheme}, UpdatedAt = {UpdatedAt} }}";
+
     /// <inheritdoc/>
     public event EventHandler<ThemeChangedEventArgs> ThemeChanged;
 
