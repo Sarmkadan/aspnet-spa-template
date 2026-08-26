@@ -239,6 +239,19 @@ public sealed class MemoryCacheService : ICacheService
         };
     }
 
+    public override string ToString()
+    {
+        var firstEntry = _cache.FirstOrDefault();
+        object? value = null;
+        DateTime? expiresAt = null;
+        if (firstEntry.Value != null)
+        {
+            value = firstEntry.Value.Value;
+            expiresAt = firstEntry.Value.ExpiresAt;
+        }
+        return $"MemoryCacheService {{ Value = {value}, ExpiresAt = {expiresAt} }}";
+    }
+
     /// <summary>
     /// Internal cache entry wrapper with expiration metadata.
     /// </summary>
