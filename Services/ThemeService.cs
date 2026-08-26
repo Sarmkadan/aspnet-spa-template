@@ -22,6 +22,12 @@ public sealed class ThemeService : IThemeService
     private readonly ICacheService _cache;
     private readonly ILogger<ThemeService> _logger;
 
+    /// <summary>Gets the scheme of the last theme processed by this service instance.</summary>
+    public ColourScheme Scheme { get; private set; } = ColourScheme.System;
+
+    /// <summary>Gets the updated at timestamp of the last theme processed by this service instance.</summary>
+    public DateTime UpdatedAt { get; private set; } = DateTime.MinValue;
+
     /// <summary>Initialises the service with the required dependencies.</summary>
     /// <param name="cache">The cache service.</param>
     /// <param name="logger">The logger.</param>
