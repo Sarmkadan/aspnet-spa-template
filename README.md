@@ -166,3 +166,44 @@ foreach (var (status, count) in stats.StatusCounts)
     Console.WriteLine($"{status}: {count}");
 }
 ```
+
+## NotificationWorkerTests
+
+The `NotificationWorkerTests` class (defined in `tests/aspnet-spa-template.Tests/BackgroundWorkers/NotificationWorkerTests.cs`) contains unit tests for the notification background worker. It verifies batched processing of queued notifications, resilience against individual failures and exceptions, cancellation support, metrics/status reporting, and cleanup of stale push subscriptions. Like other xUnit fixtures it receives its dependencies via constructor injection and implements `IDisposable` so resources are released after each test.
+
+Example usage:
+
+```csharp
+// Dependencies (e.g. mocked services) are resolved through the constructor,
+// mirroring how the test host activates the class:
+var tests = new NotificationWorkerTests(/* mocked dependencies */);
+
+try
+{
+    // Batched execution:
+    await tests.ExecuteAsync_WithMoreThan100Notifications_ProcessesInBatchesOf100();
+
+    // Resilience and cancellation:
+    await tests.ExecuteAsync_WhenOneNotificationFails_ContinuesProcessingRemaining();
+    await tests.ExecuteAsync_WithCancellationToken_StopsProcessing();
+    await tests.ExecuteAsync_WhenExceptionThrown_HandlesGracefully();
+
+    // Status and metrics:
+    await tests.GetStatus_ReturnsCorrectTaskNameAndMetrics();
+    await tests.ExecuteAsync_TracksMetricsCorrectly();
+
+    // Queue and cleanup behavior:
+    await tests.ExecuteAsync_WithEmptyQueue_LogsDebugMessage();
+    await tests.CleanupStalePushSubscriptionsAsync_WithPurgeDaysZero_DoesNothing();
+    await tests.CleanupStalePushSubscriptionsAsync_WithEmptyDatabase_HandlesGracefully();
+
+    // Mixed workloads:
+    await tests.ExecuteAsync_WithMixedNotificationTypes_ProcessesAllTypes();
+    await tests.ExecuteAsync_CleansUpStalePushSubscriptions();
+}
+finally
+{
+    // Release any resources held by the test fixture:
+    tests.Dispose();
+}
+```
