@@ -207,3 +207,27 @@ finally
     tests.Dispose();
 }
 ```
+
+## OrderControllerIdempotencyTests
+
+The `OrderControllerIdempotencyTests` class (defined in `tests/aspnet-spa-template.Tests/OrderControllerIdempotencyTests.cs`) contains unit tests for the idempotency functionality in the OrdersController. It verifies that orders created with a valid idempotency key return cached responses when available, store responses in cache, and work normally when no or empty idempotency key is provided.
+
+Example usage:
+
+```csharp
+// Dependencies (e.g. mocked services) are resolved through the constructor,
+// mirroring how the test host activates the class:
+var tests = new OrderControllerIdempotencyTests();
+
+// Test idempotent order creation with cached response:
+await tests.CreateOrder_WithValidIdempotencyKey_WhenResponseCached_ReturnsCachedResponse();
+
+// Test storing response in cache for idempotent order creation:
+await tests.CreateOrder_WithValidIdempotencyKey_StoresResponseInCache();
+
+// Test normal order creation without idempotency key:
+await tests.CreateOrder_WithoutIdempotencyKey_WorksNormally();
+
+// Test normal order creation with empty idempotency key:
+await tests.CreateOrder_WithEmptyIdempotencyKey_WorksNormally();
+```
