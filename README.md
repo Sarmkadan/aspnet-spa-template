@@ -304,3 +304,35 @@ var tests = new AssetVersioningServiceTests();
 await tests.GetAssetManifestAsync_WithNullWebRoot_ReturnsEmptyDictionary();
 await tests.GetAssetManifestAsync_ReturnsDeterministicVersionStrings();
 ```
+
+## DataExportHelperUnitTests
+
+The `DataExportHelperUnitTests` class contains unit tests for the `DataExportHelper` class.
+It verifies the correct exporting of data in CSV, JSON, and XML formats, content negotiation based on the Accept header,
+and graceful handling of edge cases such as empty collections and null values.
+
+Example usage:
+
+```csharp
+public DataExportHelperUnitTests
+public void ExportData_WithCsvFormat_ReturnsCorrectFormat
+public void ExportData_WithJsonFormat_ReturnsCorrectFormat
+public void ExportData_WithCustomFileName_UsesCustomName
+public void ExportData_WithUnsupportedFormat_ThrowsArgumentException
+public void ExportData_WithEmptyCollection_HandlesGracefully
+public void ExportData_WithNullValues_HandlesGracefully
+public void NegotiateFormat_WithNullAcceptHeader_ReturnsJson
+public void NegotiateFormat_WithEmptyAcceptHeader_ReturnsJson
+public void NegotiateFormat_WithCsvAcceptHeader_ReturnsCsv
+public void NegotiateFormat_WithApplicationCsvAcceptHeader_ReturnsCsv
+public void NegotiateFormat_WithXmlAcceptHeader_ReturnsXml
+public void NegotiateFormat_WithTextXmlAcceptHeader_ReturnsXml
+public void NegotiateFormat_WithJsonAcceptHeader_ReturnsJson
+public void NegotiateFormat_WithUnsupportedAcceptHeader_ReturnsJson
+public void GetFileExtension_WithCsvFormat_ReturnsCsvExtension
+public void GetFileExtension_WithJsonFormat_ReturnsJsonExtension
+public void GetFileExtension_WithXmlFormat_ReturnsXmlExtension
+public void GetFileExtension_WithUnknownFormat_ReturnsDefaultExtension
+public void GetContentType_WithCsvFormat_ReturnsCsvContentType
+public void GetContentType_WithJsonFormat_ReturnsJsonContentType
+```
