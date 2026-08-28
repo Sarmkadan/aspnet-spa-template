@@ -231,3 +231,39 @@ await tests.CreateOrder_WithoutIdempotencyKey_WorksNormally();
 // Test normal order creation with empty idempotency key:
 await tests.CreateOrder_WithEmptyIdempotencyKey_WorksNormally();
 ```
+
+## MetricsRegistry
+
+The `MetricsRegistry` (defined in `Services/MetricsRegistry.cs`) is a singleton service that collects and provides system and application metrics. It tracks request counts, memory usage, thread statistics, and process information, exposing them via properties and methods for monitoring and reporting.
+
+Example usage:
+
+```csharp
+// Access the singleton instance
+var registry = MetricsRegistry.Instance;
+
+// Increment the request count (e.g., in a middleware or controller)
+registry.IncrementRequestCount();
+
+// Get total memory in MB
+long totalMemory = registry.TotalMemoryMB;
+Console.WriteLine($"Total Memory: {totalMemory} MB");
+
+// Get working set memory
+long workingSet = registry.WorkingSetMB;
+Console.WriteLine($"Working Set: {workingSet} MB");
+
+// Get active thread count
+int activeThreads = registry.ActiveThreadCount;
+Console.WriteLine($"Active Threads: {activeThreads}");
+
+// Get thread pool completed work item count
+long completedWorkItems = registry.ThreadPoolCompletedWorkItemCount;
+Console.WriteLine($"Completed Work Items: {completedWorkItems}");
+
+// Reset the request counter (if needed)
+registry.ResetRequestCounter();
+
+// Note: The registry implements IDisposable, so dispose when no longer needed (if not using the singleton for the app's lifetime)
+// registry.Dispose();
+```
