@@ -267,3 +267,28 @@ registry.ResetRequestCounter();
 // Note: The registry implements IDisposable, so dispose when no longer needed (if not using the singleton for the app's lifetime)
 // registry.Dispose();
 ```
+
+## OrderServiceUnitTests
+
+The OrderServiceUnitTests class contains unit tests for the OrderService class. It uses an in-memory database to test repository interactions and verifies order creation, retrieval, validation, and calculation logic.
+
+Example usage:
+
+```csharp
+public OrderServiceUnitTests
+public async Task InitializeAsync
+public async Task DisposeAsync
+public async Task CreateOrder_HappyPath_OrderCreatedSuccessfully
+public async Task CreateOrder_NullRequest_ThrowsArgumentNullException
+public async Task CreateOrder_InvalidUserId_ThrowsArgumentOutOfRangeException
+public async Task CreateOrder_EmptyItemsList_ThrowsValidationException
+public async Task CreateOrder_ProductNotFound_ThrowsNotFoundException
+public async Task CreateOrder_InsufficientStock_ThrowsBusinessException
+public async Task CreateOrder_TotalsCalculation_CalculatesCorrectly
+public async Task GetOrderById_OrderExists_ReturnsOrderResponse
+public async Task GetOrderById_OrderNotFound_ThrowsNotFoundException
+public async Task GetOrderById_InvalidOrderId_ThrowsArgumentOutOfRangeException
+public async Task CreateOrder_InvalidItemQuantity_ThrowsBusinessException
+public async Task CreateOrder_SingleItem_OrderCreatedSuccessfully
+public async Task CreateOrder_ItemDetailsMappedCorrectly
+```
