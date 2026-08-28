@@ -292,3 +292,15 @@ public async Task CreateOrder_InvalidItemQuantity_ThrowsBusinessException
 public async Task CreateOrder_SingleItem_OrderCreatedSuccessfully
 public async Task CreateOrder_ItemDetailsMappedCorrectly
 ```
+
+## AssetVersioningServiceTests
+
+The `AssetVersioningServiceTests` class contains unit tests for the `AssetVersioningService` class. It verifies the behavior of the asset manifest generation and file watching functionality under various conditions, such as missing web roots, different file contents, and path normalization.
+
+Example usage:
+
+```csharp
+var tests = new AssetVersioningServiceTests();
+await tests.GetAssetManifestAsync_WithNullWebRoot_ReturnsEmptyDictionary();
+await tests.GetAssetManifestAsync_ReturnsDeterministicVersionStrings();
+```
