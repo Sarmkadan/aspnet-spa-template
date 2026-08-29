@@ -25,6 +25,7 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
     private readonly ILogger<SyncQueueService> _logger;
     private readonly Channel<int> _completionChannel;
     private readonly CancellationTokenSource _cts = new();
+    private int _completionQueueDepth;
     private int _sequence;
     private volatile bool _disposed;
 
@@ -56,6 +57,7 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
     {
         await foreach (var id in _completionChannel.Reader.ReadAllAsync(cancellationToken))
         {
+            var queueDepth = Interlocked.Decrement(ref _completionQueueDepth);
             try
             {
                 if (_store.TryGetValue(id, out var entry))
@@ -68,12 +70,15 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
                             entry.ResolvedAt = DateTime.UtcNow;
                         }
                     }
-                    _logger.LogDebug("Sync entry {Id} completed", id);
+                    _logger.LogInformation(
+                        "Background consumer completed sync entry {EntryId}; completion queue depth is {QueueDepth}",
+                        id,
+                        queueDepth);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error consuming sync entry {Id}", id);
+                _logger.LogError(ex, "Error consuming sync entry {EntryId}", id);
             }
         }
     }
@@ -95,7 +100,11 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
         // Idempotency: return the existing id if we've already seen this client key.
         if (_idempotency.TryGetValue(clientRequestId, out var existingId))
         {
-            _logger.LogDebug("Duplicate sync entry ignored for clientRequestId={ClientRequestId}", clientRequestId);
+            _logger.LogInformation(
+                "Idempotent sync enqueue hit for {IdempotencyKey}; returning existing entry {EntryId}; queue depth is {QueueDepth}",
+                clientRequestId,
+                existingId,
+                _store.Count);
             return existingId;
         }
 
@@ -122,8 +131,11 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
         }
 
         _logger.LogInformation(
-            "Offline sync entry queued: id={Id} user={UserId} {Method} {Path}",
-            id, userId, method, relativePath);
+            "Sync entry {EntryId} enqueued for user {UserId} with idempotency key {IdempotencyKey}; queue depth is {QueueDepth}",
+            id,
+            userId,
+            clientRequestId,
+            _store.Count);
 
         Evict();
         return id;
@@ -159,7 +171,26 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
         }
 
         // Signal completion to background consumer
-        _completionChannel.Writer.TryWrite(id);
+        var queueDepth = Volatile.Read(ref _completionQueueDepth);
+        if (queueDepth >= DefaultCapacity * 9 / 10)
+        {
+            _logger.LogWarning(
+                "Completion queue is near capacity for entry {EntryId}; queue depth is {QueueDepth} of {QueueCapacity}",
+                id,
+                queueDepth,
+                DefaultCapacity);
+        }
+
+        Interlocked.Increment(ref _completionQueueDepth);
+        if (!_completionChannel.Writer.TryWrite(id))
+        {
+            queueDepth = Interlocked.Decrement(ref _completionQueueDepth);
+            _logger.LogWarning(
+                "Completion queue write could not proceed for entry {EntryId}; queue depth is {QueueDepth} of {QueueCapacity}",
+                id,
+                queueDepth,
+                DefaultCapacity);
+        }
 
         _logger.LogDebug("Sync entry {Id} completed", id);
         return true;
@@ -209,10 +240,22 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
 
         lock (_store)
         {
+            var evictedCount = 0;
             foreach (var id in stale)
             {
                 if (_store.TryRemove(id, out var removed))
+                {
                     _idempotency.TryRemove(removed.ClientRequestId, out _);
+                    evictedCount++;
+                }
+            }
+
+            if (evictedCount > 0)
+            {
+                _logger.LogInformation(
+                    "Evicted {EvictedCount} sync entries older than retention window {RetentionWindow}",
+                    evictedCount,
+                    DefaultRetention);
             }
         }
     }
@@ -228,6 +271,10 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
 
         if (disposing)
         {
+            _logger.LogInformation(
+                "Disposing sync queue service with {QueueDepth} stored entries and {CompletionQueueDepth} queued completions",
+                _store.Count,
+                Volatile.Read(ref _completionQueueDepth));
             _cts.Cancel();
             _completionChannel.Writer.Complete();
             _cts.Dispose();
