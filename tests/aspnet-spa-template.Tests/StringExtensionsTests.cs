@@ -1,9 +1,4 @@
 #nullable enable
-// =============================================================================
-// Author: Vladyslav Zaiets | https://sarmkadan.com
-// CTO & Software Architect
-// =============================================================================
-
 using AspNetSpaTemplate.Utilities;
 using FluentAssertions;
 using Xunit;
@@ -11,136 +6,209 @@ using Xunit;
 namespace AspNetSpaTemplate.Tests;
 
 /// <summary>
-/// Tests for string extension methods.
+/// Contains unit tests for the <see cref="StringExtensions"/> class.
 /// </summary>
 public sealed class StringExtensionsTests
 {
-    /// <summary>
-    /// Tests the Sanitize method when the input is null or whitespace.
-    /// </summary>
-    /// <param name="input">The input string to test.</param>
-    /// <param name="expected">The expected result of the Sanitize method.</param>
+    [Fact]
+    public void Sanitize_WithControlCharacters_RemovesControlCharacters()
+    {
+        "hello\u0000\u0007world".Sanitize().Should().Be("hello world");
+    }
+
+    [Fact]
+    public void Sanitize_WithExcessiveWhitespace_CollapsesWhitespace()
+    {
+        "  hello   world  ".Sanitize().Should().Be("hello world");
+    }
+
+    [Fact]
+    public void Sanitize_WithWhitespaceOnly_ReturnsEmptyString()
+    {
+        " \t\r\n ".Sanitize().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Sanitize_WithEmptyInput_ReturnsEmptyString()
+    {
+        string.Empty.Sanitize().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Sanitize_WithNullInput_ThrowsArgumentNullException()
+    {
+        string? input = null;
+
+        var act = () => input.Sanitize();
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void ToSlug_WithMixedSpacing_UsesSingleHyphens()
+    {
+        "  hello   world  ".ToSlug().Should().Be("hello-world");
+    }
+
+    [Fact]
+    public void ToSlug_WithUppercaseInput_UsesLowercase()
+    {
+        "HelloWORLD".ToSlug().Should().Be("helloworld");
+    }
+
+    [Fact]
+    public void ToSlug_WithNonAlphanumericCharacters_StripsCharacters()
+    {
+        "hello, world! -- test".ToSlug().Should().Be("hello-world-test");
+    }
+
+    [Fact]
+    public void ToSlug_WithUnicodeInput_StripsUnicodeCharacters()
+    {
+        "Café 東京".ToSlug().Should().Be("caf");
+    }
+
     [Theory]
-    [InlineData(null, "")]
-    [InlineData("", "")]
-    [InlineData("   ", "")]
-    public void Sanitize_WhenInputIsNullOrWhiteSpace_ReturnsEmptyString(string? input, string expected)
+    [InlineData("")]
+    [InlineData("   ")]
+    public void ToSlug_WithEmptyOrWhitespaceInput_ReturnsEmptyString(string input)
     {
-        input.Sanitize().Should().Be(expected);
+        input.ToSlug().Should().BeEmpty();
     }
 
-    /// <summary>
-    /// Tests the Sanitize method when the input has excessive whitespace.
-    /// </summary>
     [Fact]
-    public void Sanitize_WhenInputHasExcessiveWhitespace_CollapsesToSingleSpaces()
+    public void ToSlug_WithNullInput_ThrowsArgumentNullException()
     {
-        var input = "  hello   world  ";
-        input.Sanitize().Should().Be("hello world");
+        string input = null!;
+
+        var act = () => input.ToSlug();
+
+        act.Should().Throw<ArgumentNullException>();
     }
 
-    /// <summary>
-    /// Tests the ToSlug method with uppercase and special characters.
-    /// </summary>
     [Fact]
-    public void ToSlug_WithUppercaseAndSpecialChars_ReturnsLowercaseHyphenated()
+    public void Truncate_WithInputExceedingMaximumLength_AppendsDefaultSuffix()
     {
-        var input = "Hello World!";
-        input.ToSlug().Should().Be("hello-world");
+        "Hello World".Truncate(8).Should().Be("Hello...");
     }
 
-    /// <summary>
-    /// Tests the ToSlug method with an empty input.
-    /// </summary>
     [Fact]
-    public void ToSlug_WithEmptyInput_ReturnsEmptyString()
+    public void Truncate_WithInputAtMaximumLength_ReturnsOriginalInput()
     {
-        string.Empty.ToSlug().Should().Be("");
+        "Hello".Truncate(5).Should().Be("Hello");
     }
 
-    /// <summary>
-    /// Tests the Truncate method when the input exceeds the maximum length.
-    /// </summary>
     [Fact]
-    public void Truncate_WhenInputExceedsMaxLength_AppendsEllipsis()
+    public void Truncate_WithCustomSuffix_AppendsCustomSuffix()
     {
-        var input = "Hello World";
-        input.Truncate(8).Should().Be("Hello...");
+        "Hello World".Truncate(7, "~").Should().Be("Hello ~");
     }
 
-    /// <summary>
-    /// Tests the Truncate method when the input is within the maximum length.
-    /// </summary>
     [Fact]
-    public void Truncate_WhenInputIsWithinMaxLength_ReturnsOriginalString()
+    public void Truncate_WithMaximumLengthShorterThanSuffix_ThrowsArgumentOutOfRangeException()
     {
-        var input = "Hello";
-        input.Truncate(10).Should().Be("Hello");
+        var act = () => "Hello".Truncate(2);
+
+        act.Should().Throw<ArgumentOutOfRangeException>();
     }
 
-    /// <summary>
-    /// Tests the ToDisplayName method with a PascalCase string.
-    /// </summary>
     [Fact]
-    public void ToDisplayName_ConvertsPascalCaseToWords()
+    public void ToDisplayName_WithPascalCaseInput_SeparatesWords()
     {
         "ProductName".ToDisplayName().Should().Be("Product Name");
     }
 
-    /// <summary>
-    /// Tests the IsValidEmail method with various email addresses.
-    /// </summary>
-    /// <param name="email">The email address to test.</param>
-    /// <param name="expected">The expected result of the IsValidEmail method.</param>
+    [Fact]
+    public void ToDisplayName_WithConsecutiveUppercaseCharacters_SeparatesEveryUppercaseCharacter()
+    {
+        "HTMLParser".ToDisplayName().Should().Be("H T M L Parser");
+    }
+
+    [Fact]
+    public void ToDisplayName_WithEmptyInput_ReturnsEmptyString()
+    {
+        string.Empty.ToDisplayName().Should().BeEmpty();
+    }
+
     [Theory]
     [InlineData("test@example.com", true)]
     [InlineData("invalid-email", false)]
     [InlineData("", false)]
+    [InlineData("   ", false)]
     [InlineData(null, false)]
-    public void IsValidEmail_ReturnsExpectedResult(string? email, bool expected)
+    public void IsValidEmail_WithVariousInputs_ReturnsExpectedResult(string? email, bool expected)
     {
-        (email ?? "").IsValidEmail().Should().Be(expected);
+        email!.IsValidEmail().Should().Be(expected);
     }
 
-    /// <summary>
-    /// Tests the IsAlphaNumeric method with various strings.
-    /// </summary>
-    /// <param name="input">The string to test.</param>
-    /// <param name="expected">The expected result of the IsAlphaNumeric method.</param>
-    [Theory]
-    [InlineData("abc123", true)]
-    [InlineData("abc 123", false)]
-    [InlineData("abc!", false)]
-    public void IsAlphaNumeric_ReturnsExpectedResult(string input, bool expected)
-    {
-        input.IsAlphaNumeric().Should().Be(expected);
-    }
-
-    /// <summary>
-    /// Tests the OrIfEmpty method when the input is not null or empty.
-    /// </summary>
     [Fact]
-    public void OrIfEmpty_ReturnsInputIfNotNullOrEmpty()
+    public void IsAlphaNumeric_WithLettersAndNumbers_ReturnsTrue()
+    {
+        "abc123XYZ".IsAlphaNumeric().Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("abc 123")]
+    [InlineData("abc!")]
+    public void IsAlphaNumeric_WithNonAlphanumericInput_ReturnsFalse(string input)
+    {
+        input.IsAlphaNumeric().Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsAlphaNumeric_WithNullInput_ThrowsArgumentNullException()
+    {
+        string input = null!;
+
+        var act = () => input.IsAlphaNumeric();
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void OrIfEmpty_WithNonEmptyInput_ReturnsInput()
     {
         "hello".OrIfEmpty("fallback").Should().Be("hello");
     }
 
-    /// <summary>
-    /// Tests the OrIfEmpty method when the input is null or empty.
-    /// </summary>
-    [Fact]
-    public void OrIfEmpty_ReturnsFallbackIfInputIsNullOrEmpty()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void OrIfEmpty_WithNullEmptyOrWhitespaceInput_ReturnsFallback(string? input)
     {
-        "".OrIfEmpty("fallback").Should().Be("fallback");
-        ((string?)null).OrIfEmpty("fallback").Should().Be("fallback");
+        input.OrIfEmpty("fallback").Should().Be("fallback");
     }
 
-    /// <summary>
-    /// Tests the HtmlEncode method with a string containing special characters.
-    /// </summary>
     [Fact]
-    public void HtmlEncode_EncodesSpecialCharacters()
+    public void OrIfEmpty_WithNullFallback_ThrowsArgumentNullException()
     {
-        "<script>alert('xss')</script>".HtmlEncode().Should().Contain("&lt;script&gt;");
+        var act = () => string.Empty.OrIfEmpty(null!);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void HtmlEncode_WithMarkupCharacters_EncodesMarkupCharacters()
+    {
+        "<div class=\"test\">&</div>".HtmlEncode()
+            .Should().Be("&lt;div class=&quot;test&quot;&gt;&amp;&lt;/div&gt;");
+    }
+
+    [Fact]
+    public void HtmlEncode_WithEmptyInput_ReturnsEmptyString()
+    {
+        string.Empty.HtmlEncode().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void HtmlEncode_WithNullInput_ThrowsArgumentNullException()
+    {
+        string input = null!;
+
+        var act = () => input.HtmlEncode();
+
+        act.Should().Throw<ArgumentNullException>();
     }
 }
