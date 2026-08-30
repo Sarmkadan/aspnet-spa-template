@@ -15,6 +15,11 @@ namespace AspNetSpaTemplate.Utilities;
 /// </summary>
 public static class DataExportHelper
 {
+    private const string TimestampFormat = "yyyyMMdd-HHmmss";
+    private const string CsvContentType = "text/csv";
+    private const string JsonContentType = "application/json";
+    private const string XmlContentType = "application/xml";
+
     /// <summary>
     /// Exports data to requested format.
     /// </summary>
@@ -44,10 +49,9 @@ public static class DataExportHelper
     {
         var csv = CsvFormatter.ToCsv(items);
         var data = System.Text.Encoding.UTF8.GetBytes(csv);
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
-        var fullFileName = $"{fileName}-{timestamp}.csv";
+        var fullFileName = BuildFileName(fileName, "csv");
 
-        return (data, "text/csv", fullFileName);
+        return (data, CsvContentType, fullFileName);
     }
 
     /// <summary>
@@ -59,10 +63,9 @@ public static class DataExportHelper
     {
         var json = JsonSerializationHelper.SerializePretty(items.ToList());
         var data = System.Text.Encoding.UTF8.GetBytes(json);
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
-        var fullFileName = $"{fileName}-{timestamp}.json";
+        var fullFileName = BuildFileName(fileName, "json");
 
-        return (data, "application/json", fullFileName);
+        return (data, JsonContentType, fullFileName);
     }
 
     /// <summary>
@@ -75,10 +78,15 @@ public static class DataExportHelper
         var wrapper = new { Items = items.ToList() };
         var xml = XmlFormatter.ToXml(wrapper);
         var data = System.Text.Encoding.UTF8.GetBytes(xml);
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
-        var fullFileName = $"{fileName}-{timestamp}.xml";
+        var fullFileName = BuildFileName(fileName, "xml");
 
-        return (data, "application/xml", fullFileName);
+        return (data, XmlContentType, fullFileName);
+    }
+
+    private static string BuildFileName(string baseName, string extension)
+    {
+        var timestamp = DateTime.UtcNow.ToString(TimestampFormat, System.Globalization.CultureInfo.InvariantCulture);
+        return $"{baseName}-{timestamp}.{extension}";
     }
 
     /// <summary>
@@ -91,9 +99,9 @@ public static class DataExportHelper
 
         return acceptHeader.ToLowerInvariant() switch
         {
-            "text/csv" or "application/csv" => ExportFormat.Csv,
-            "application/xml" or "text/xml" => ExportFormat.Xml,
-            "application/json" => ExportFormat.Json,
+            CsvContentType or "application/csv" => ExportFormat.Csv,
+            XmlContentType or "text/xml" => ExportFormat.Xml,
+            JsonContentType => ExportFormat.Json,
             _ => ExportFormat.Json
         };
     }
@@ -119,9 +127,9 @@ public static class DataExportHelper
     {
         return format switch
         {
-            ExportFormat.Csv => "text/csv",
-            ExportFormat.Json => "application/json",
-            ExportFormat.Xml => "application/xml",
+            ExportFormat.Csv => CsvContentType,
+            ExportFormat.Json => JsonContentType,
+            ExportFormat.Xml => XmlContentType,
             _ => "application/octet-stream"
         };
     }
