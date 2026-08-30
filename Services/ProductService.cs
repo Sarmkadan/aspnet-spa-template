@@ -37,7 +37,8 @@ public sealed class ProductService : IProductService
     /// Gets a product by its ID.
     /// </summary>
     /// <param name="id">The product ID.</param>
-    /// <returns>The product response, or throws NotFoundException.</returns>
+    /// <returns>The product response.</returns>
+    /// <exception cref="NotFoundException">Thrown when product with specified ID is not found.</exception>
     public async Task<ProductResponse?> GetProductByIdAsync(int id)
     {
         _logger.LogDebug("Getting product by ID: {ProductId}", id);
@@ -49,7 +50,6 @@ public sealed class ProductService : IProductService
             throw new NotFoundException("Product", id);
         }
 
-        _logger.LogInformation("Retrieved product: {ProductId} - {ProductName}", product.Id, product.Name);
         return MapToResponse(product);
     }
 
@@ -68,15 +68,7 @@ public sealed class ProductService : IProductService
         var totalCount = await _productRepository.CountAsync(p => p.IsAvailable);
         var products = await _productRepository.GetPagedAsync(pageNumber, pageSize, p => p.IsAvailable);
 
-        _logger.LogInformation("Retrieved {ProductCount} products (total: {TotalCount})", products.Count(), totalCount);
-
-        return new ProductListResponse
-        {
-            Products = products.Select(MapToResponse).ToList(),
-            TotalCount = totalCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize
-        };
+        return BuildListResponse(products, totalCount, pageNumber, pageSize);
     }
 
     /// <summary>
@@ -88,18 +80,18 @@ public sealed class ProductService : IProductService
     /// <returns>A paginated list response.</returns>
     public async Task<ProductListResponse> GetProductsByCategoryAsync(ProductCategory category, int pageNumber = 1, int pageSize = 10)
     {
+        _logger.LogDebug(
+            "Getting available products by category: category={Category}, page={PageNumber}, pageSize={PageSize}",
+            category,
+            pageNumber,
+            pageSize);
+
         // PageSize is already normalized by PaginationRequest setter (1-100)
         // PageNumber is already normalized by PaginationRequest setter (>= 1)
         var products = await _productRepository.GetPagedByCategoryAsync(category, pageNumber, pageSize);
         var totalCount = await _productRepository.CountAsync(p => p.Category == category && p.IsAvailable);
 
-        return new ProductListResponse
-        {
-            Products = products.Select(MapToResponse).ToList(),
-            TotalCount = totalCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize
-        };
+        return BuildListResponse(products, totalCount, pageNumber, pageSize);
     }
 
     /// <summary>
@@ -109,6 +101,8 @@ public sealed class ProductService : IProductService
     /// <returns>A list of featured products.</returns>
     public async Task<List<ProductResponse>> GetFeaturedProductsAsync(int limit = 10)
     {
+        _logger.LogDebug("Getting featured products: limit={Limit}", limit);
+
         var products = await _productRepository.GetFeaturedProductsAsync(limit);
         return products.Select(MapToResponse).ToList();
     }
@@ -120,6 +114,8 @@ public sealed class ProductService : IProductService
     /// <returns>A list of top-rated products.</returns>
     public async Task<List<ProductResponse>> GetTopRatedProductsAsync(int limit = 10)
     {
+        _logger.LogDebug("Getting top-rated products: limit={Limit}", limit);
+
         var products = await _productRepository.GetTopRatedAsync(limit);
         return products.Select(MapToResponse).ToList();
     }
@@ -138,6 +134,13 @@ public sealed class ProductService : IProductService
         decimal? minPrice = null,
         decimal? maxPrice = null)
     {
+        _logger.LogDebug(
+            "Searching products: query={Query}, category={Category}, minPrice={MinPrice}, maxPrice={MaxPrice}",
+            query,
+            category,
+            minPrice,
+            maxPrice);
+
         if (string.IsNullOrWhiteSpace(query))
             return new List<ProductResponse>();
 
@@ -153,7 +156,7 @@ public sealed class ProductService : IProductService
     /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
     public async Task<ProductResponse> CreateProductAsync(CreateProductRequest request)
     {
-        _logger.LogInformation("Creating new product: {ProductName}", request?.Name ?? "Unknown");
+        _logger.LogDebug("Creating product: productName={ProductName}", request?.Name);
 
         if (request is null)
         {
@@ -177,7 +180,7 @@ public sealed class ProductService : IProductService
     /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
     public async Task<ProductResponse> UpdateProductAsync(int id, UpdateProductRequest request)
     {
-        _logger.LogInformation("Updating product: {ProductId}", id);
+        _logger.LogDebug("Updating product: productId={ProductId}", id);
 
         if (request is null)
         {
@@ -216,7 +219,7 @@ public sealed class ProductService : IProductService
     /// <exception cref="NotFoundException">Thrown when product with specified ID is not found.</exception>
     public async Task SetProductAvailabilityAsync(int id, bool isAvailable)
     {
-        _logger.LogInformation("Setting product availability: {ProductId} - Available={IsAvailable}", id, isAvailable);
+        _logger.LogDebug("Setting product availability: productId={ProductId}, isAvailable={IsAvailable}", id, isAvailable);
 
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
@@ -248,7 +251,7 @@ public sealed class ProductService : IProductService
     /// <exception cref="NotFoundException">Thrown when product with specified ID is not found.</exception>
     public async Task SetProductFeaturedAsync(int id, bool isFeatured)
     {
-        _logger.LogInformation("Setting product featured status: {ProductId} - Featured={IsFeatured}", id, isFeatured);
+        _logger.LogDebug("Setting product featured status: productId={ProductId}, isFeatured={IsFeatured}", id, isFeatured);
 
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
@@ -279,7 +282,7 @@ public sealed class ProductService : IProductService
     /// <exception cref="NotFoundException">Thrown when product with specified ID is not found.</exception>
     public async Task DeleteProductAsync(int id)
     {
-        _logger.LogInformation("Deleting product: {ProductId}", id);
+        _logger.LogDebug("Deleting product: productId={ProductId}", id);
 
         var product = await _productRepository.GetByIdAsync(id);
         if (product is null)
@@ -290,7 +293,6 @@ public sealed class ProductService : IProductService
 
         try
         {
-            _logger.LogDebug("Removing product from repository: {ProductId} - {ProductName}", product.Id, product.Name);
             _productRepository.Remove(product);
             await _productRepository.SaveChangesAsync();
 
@@ -334,6 +336,19 @@ public sealed class ProductService : IProductService
             CreatedAt = product.CreatedAt
         };
     }
+
+    private ProductListResponse BuildListResponse(
+        IEnumerable<Product> products,
+        int totalCount,
+        int pageNumber,
+        int pageSize) =>
+        new()
+        {
+            Products = products.Select(MapToResponse).ToList(),
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
 
     private Product BuildProductEntity(CreateProductRequest request) =>
         new Product
@@ -380,7 +395,7 @@ public sealed class ProductService : IProductService
     /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
     public async Task<UpdateProductPriceResponse> UpdatePricesAsync(UpdateProductPriceRequest request)
     {
-        _logger.LogInformation("Starting bulk price update for {ProductCount} products", request?.PriceUpdates?.Count ?? 0);
+        _logger.LogDebug("Updating product prices: productCount={ProductCount}", request?.PriceUpdates?.Count ?? 0);
 
         if (request is null)
         {
