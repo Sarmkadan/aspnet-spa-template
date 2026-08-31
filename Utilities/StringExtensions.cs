@@ -13,25 +13,37 @@ namespace AspNetSpaTemplate.Utilities;
 /// <summary>
 /// Extension methods for string manipulation and validation.
 /// </summary>
-public static class StringExtensions
+public static partial class StringExtensions
 {
+    [GeneratedRegex(@"[\p{Cc}]+")]
+    private static partial Regex ControlCharactersRegex();
+
+    [GeneratedRegex(@"\s+")]
+    private static partial Regex WhitespaceRegex();
+
+    [GeneratedRegex(@"[^a-z0-9\s-]")]
+    private static partial Regex InvalidSlugCharactersRegex();
+
+    [GeneratedRegex(@"-+")]
+    private static partial Regex RepeatedHyphensRegex();
+
+    [GeneratedRegex(@"^[a-zA-Z0-9]+$")]
+    private static partial Regex AlphaNumericRegex();
+
     /// <summary>
     /// Sanitizes input string by removing potentially harmful characters.
     /// Used at API boundaries to prevent XSS attacks and SQL injection.
     /// </summary>
     /// <param name="input">The string to sanitize.</param>
     /// <returns>The sanitized string, or empty string if input is null or whitespace.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
     public static string Sanitize(this string? input)
     {
-        ArgumentNullException.ThrowIfNull(input);
-
         if (string.IsNullOrWhiteSpace(input))
             return string.Empty;
 
         // Remove control characters and excessive whitespace
-        var sanitized = Regex.Replace(input, @"[\p{Cc}]+", " ");
-        sanitized = Regex.Replace(sanitized, @"\s+", " ").Trim();
+        var sanitized = ControlCharactersRegex().Replace(input, " ");
+        sanitized = WhitespaceRegex().Replace(sanitized, " ").Trim();
         return sanitized;
     }
 
@@ -41,18 +53,15 @@ public static class StringExtensions
     /// </summary>
     /// <param name="input">The string to convert to slug format.</param>
     /// <returns>The slugified string, or empty string if input is null or whitespace.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
-    public static string ToSlug(this string input)
+    public static string ToSlug(this string? input)
     {
-        ArgumentNullException.ThrowIfNull(input);
-
         if (string.IsNullOrWhiteSpace(input))
             return string.Empty;
 
         var slug = input.ToLowerInvariant();
-        slug = Regex.Replace(slug, @"[^a-z0-9\s-]", "");
-        slug = Regex.Replace(slug, @"\s+", "-");
-        slug = Regex.Replace(slug, @"-+", "-").Trim('-');
+        slug = InvalidSlugCharactersRegex().Replace(slug, "");
+        slug = WhitespaceRegex().Replace(slug, "-");
+        slug = RepeatedHyphensRegex().Replace(slug, "-").Trim('-');
         return slug;
     }
 
@@ -65,10 +74,12 @@ public static class StringExtensions
     /// <param name="suffix">Suffix to append when truncating (default: "...").</param>
     /// <returns>The truncated string with suffix if needed.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="suffix"/> is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="maxLength"/> is less than suffix length.</exception>
     public static string Truncate(this string input, int maxLength, string suffix = "...")
     {
         ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(suffix);
         ArgumentOutOfRangeException.ThrowIfLessThan(maxLength, suffix.Length);
 
         if (input.Length <= maxLength)
@@ -106,7 +117,7 @@ public static class StringExtensions
     /// </summary>
     /// <param name="email">The email address to validate.</param>
     /// <returns>True if the email is valid; otherwise, false.</returns>
-    public static bool IsValidEmail(this string email)
+    public static bool IsValidEmail(this string? email)
     {
         if (string.IsNullOrWhiteSpace(email))
             return false;
@@ -127,10 +138,9 @@ public static class StringExtensions
     /// </summary>
     /// <param name="input">The string to check.</param>
     /// <returns>True if the string contains only alphanumeric characters; otherwise, false.</returns>
-    public static bool IsAlphaNumeric(this string input)
+    public static bool IsAlphaNumeric(this string? input)
     {
-        ArgumentNullException.ThrowIfNull(input);
-        return Regex.IsMatch(input, @"^[a-zA-Z0-9]+$");
+        return !string.IsNullOrEmpty(input) && AlphaNumericRegex().IsMatch(input);
     }
 
     /// <summary>
@@ -139,6 +149,7 @@ public static class StringExtensions
     /// <param name="input">The input string.</param>
     /// <param name="fallback">The fallback value to return if input is null or empty.</param>
     /// <returns>The input string if not null/empty; otherwise, the fallback value.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="fallback"/> is null.</exception>
     public static string OrIfEmpty(this string? input, string fallback)
     {
         ArgumentNullException.ThrowIfNull(fallback);
@@ -150,6 +161,7 @@ public static class StringExtensions
     /// </summary>
     /// <param name="input">The string to HTML encode.</param>
     /// <returns>The HTML-encoded string.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
     public static string HtmlEncode(this string input)
     {
         ArgumentNullException.ThrowIfNull(input);
