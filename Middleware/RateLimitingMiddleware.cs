@@ -53,7 +53,7 @@ public sealed class RateLimitingMiddleware
                 return Task.CompletedTask;
             });
 
-            _logger.LogInformation("InvokeAsync forwarding to next middleware for {ClientId}", clientId);
+            _logger.LogDebug("InvokeAsync forwarding to next middleware for {ClientId}", clientId);
             await _next(context);
         }
         else
@@ -75,9 +75,16 @@ public sealed class RateLimitingMiddleware
         // Prefer API key as identifier
         if (context.Request.Headers.TryGetValue("Authorization", out var auth))
         {
-            var token = auth.ToString().Replace("Bearer ", "");
+            var token = auth.ToString().Trim();
+            const string bearerPrefix = "Bearer ";
+            if (token.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
+                token = token[bearerPrefix.Length..].Trim();
+
             if (!string.IsNullOrEmpty(token))
-                return $"key:{token}";
+            {
+                var tokenHash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(token));
+                return $"key:{Convert.ToHexString(tokenHash)[..16]}";
+            }
         }
 
         // Fall back to client IP
@@ -109,15 +116,22 @@ public sealed class RateLimitingMiddleware
                 _nextCleanupAt = now.Add(CleanupInterval);
             }
 
-            // Enforce all three declared windows: burst (1s), minute, hour.
-            // A request counts against every window; the first exceeded window
-            // rejects the request and reports when that window resets.
-            if (IsBucketExceeded($"{clientId}:second", BurstLimit, TimeSpan.FromSeconds(1), now, out retryAfter))
+            var secondKey = $"{clientId}:second";
+            var minuteKey = $"{clientId}:minute";
+            var hourKey = $"{clientId}:hour";
+
+            // Check every window before recording the request so a rejection in
+            // one window does not consume quota in any of the other windows.
+            if (IsBucketExceeded(secondKey, BurstLimit, now, out retryAfter))
                 return true;
-            if (IsBucketExceeded($"{clientId}:minute", RequestsPerMinute, TimeSpan.FromMinutes(1), now, out retryAfter))
+            if (IsBucketExceeded(minuteKey, RequestsPerMinute, now, out retryAfter))
                 return true;
-            if (IsBucketExceeded($"{clientId}:hour", RequestsPerHour, TimeSpan.FromHours(1), now, out retryAfter))
+            if (IsBucketExceeded(hourKey, RequestsPerHour, now, out retryAfter))
                 return true;
+
+            IncrementBucket(secondKey, TimeSpan.FromSeconds(1), now);
+            IncrementBucket(minuteKey, TimeSpan.FromMinutes(1), now);
+            IncrementBucket(hourKey, TimeSpan.FromHours(1), now);
 
             retryAfter = TimeSpan.Zero;
             return false;
@@ -125,14 +139,13 @@ public sealed class RateLimitingMiddleware
     }
 
     /// <summary>
-    /// Counts a request against one fixed window bucket.
+    /// Checks one fixed window bucket without consuming a request.
     /// Must be called under <see cref="RequestLogLock"/>.
     /// </summary>
-    private static bool IsBucketExceeded(string bucketKey, int limit, TimeSpan window, DateTime now, out TimeSpan retryAfter)
+    private static bool IsBucketExceeded(string bucketKey, int limit, DateTime now, out TimeSpan retryAfter)
     {
         if (!RequestLog.TryGetValue(bucketKey, out var entry) || entry.ResetTime < now)
         {
-            RequestLog[bucketKey] = (1, now.Add(window));
             retryAfter = TimeSpan.Zero;
             return false;
         }
@@ -143,9 +156,20 @@ public sealed class RateLimitingMiddleware
             return true;
         }
 
-        RequestLog[bucketKey] = (entry.Count + 1, entry.ResetTime);
         retryAfter = TimeSpan.Zero;
         return false;
+    }
+
+    /// <summary>
+    /// Counts a request against one fixed window bucket.
+    /// Must be called under <see cref="RequestLogLock"/>.
+    /// </summary>
+    private static void IncrementBucket(string bucketKey, TimeSpan window, DateTime now)
+    {
+        if (!RequestLog.TryGetValue(bucketKey, out var entry) || entry.ResetTime < now)
+            RequestLog[bucketKey] = (1, now.Add(window));
+        else
+            RequestLog[bucketKey] = (entry.Count + 1, entry.ResetTime);
     }
 
     /// <summary>
