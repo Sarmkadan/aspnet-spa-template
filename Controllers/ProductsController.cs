@@ -17,10 +17,14 @@ namespace AspNetSpaTemplate.Controllers;
 public sealed class ProductsController : ApiControllerBase
 {
     private readonly IProductService _productService;
+    private readonly ILogger<ProductsController> _logger;
 
-    public ProductsController(IProductService productService)
+    public ProductsController(
+        IProductService productService,
+        ILogger<ProductsController>? logger = null)
     {
         _productService = productService;
+        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<ProductsController>.Instance;
     }
 
     [HttpGet("{id:int}")]
@@ -163,77 +167,91 @@ public sealed class ProductsController : ApiControllerBase
         return ApiSuccess(products);
     }
 
-  /// <summary>
-  /// Searches products by name and description using a free-text query. The query is case-insensitive and
-  /// supports partial matching. Empty or whitespace-only queries return an empty result set with a 200 OK response.
-  /// </summary>
-  /// <param name="query">The search query term (max 100 characters).</param>
-  /// <param name="category">Optional category filter.</param>
-  /// <param name="minPrice">Optional minimum price filter.</param>
-  /// <param name="maxPrice">Optional maximum price filter.</param>
-  /// <returns>A list of matching products.</returns>
-  [HttpGet("search")]
-  [ProducesResponseType(typeof(List<ProductResponse>), StatusCodes.Status200OK)]
-  [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-  public async Task<IActionResult> SearchProducts(
-    [FromQuery] string query,
-    [FromQuery] ProductCategory? category,
-    [FromQuery] decimal? minPrice,
-    [FromQuery] decimal? maxPrice)
-  {
-    ArgumentException.ThrowIfNullOrEmpty(query);
-
-    // Enforce maximum query length to prevent potential regex/LIKE-based resource exhaustion
-    // and protect against overly long queries that could cause performance issues
-    if (query.Length > AppConstants.Validation.MaxSearchQueryLength)
+    /// <summary>
+    /// Searches available products by a case-insensitive name or description substring, paginated.
+    /// </summary>
+    /// <param name="q">The search query. Must contain non-whitespace characters and be no longer than 200 characters.</param>
+    /// <param name="pageNumber">The page number (1-based).</param>
+    /// <param name="pageSize">The number of items per page.</param>
+    /// <returns>A paginated <see cref="ProductListResponse"/> containing matching products.</returns>
+    [HttpGet("search")]
+    [ProducesResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SearchProducts(
+        [FromQuery(Name = "q")] string? q,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
     {
-      return ApiError(
-        $"Search query exceeds maximum length of {AppConstants.Validation.MaxSearchQueryLength} characters.",
-        "QUERY_TOO_LONG",
-        StatusCodes.Status400BadRequest);
+        if (string.IsNullOrWhiteSpace(q))
+        {
+            return ApiError("Search query is required.", "VALIDATION_ERROR", StatusCodes.Status400BadRequest);
+        }
+
+        if (q.Length > 200)
+        {
+            return ApiError("Search query cannot exceed 200 characters.", "VALIDATION_ERROR", StatusCodes.Status400BadRequest);
+        }
+
+        if (pageNumber <= 0)
+        {
+            return ApiError("Page number must be greater than 0.", "VALIDATION_ERROR", StatusCodes.Status400BadRequest);
+        }
+
+        if (pageSize <= 0)
+        {
+            return ApiError("Page size must be greater than 0.", "VALIDATION_ERROR", StatusCodes.Status400BadRequest);
+        }
+
+        const int maxPageSize = 100;
+        if (pageSize > maxPageSize)
+        {
+            pageSize = maxPageSize;
+        }
+
+        var normalizedQuery = q.Trim();
+        _logger.LogInformation(
+            "Searching available products for {Query} with page {PageNumber} and page size {PageSize}",
+            normalizedQuery,
+            pageNumber,
+            pageSize);
+
+        var firstPage = await _productService.GetAllProductsAsync(1, maxPageSize);
+        var availableProducts = new List<ProductResponse>(firstPage.TotalCount);
+        availableProducts.AddRange(firstPage.Products);
+
+        var pageCount = (firstPage.TotalCount + maxPageSize - 1) / maxPageSize;
+        for (var currentPage = 2; currentPage <= pageCount; currentPage++)
+        {
+            var productPage = await _productService.GetAllProductsAsync(currentPage, maxPageSize);
+            availableProducts.AddRange(productPage.Products);
+        }
+
+        var matches = availableProducts
+            .Where(product =>
+                product.Name.Contains(normalizedQuery, StringComparison.OrdinalIgnoreCase) ||
+                product.Description.Contains(normalizedQuery, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var products = matches
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        _logger.LogInformation(
+            "Product search for {Query} returned {TotalCount} matches; returning {ResultCount} products on page {PageNumber}",
+            normalizedQuery,
+            matches.Count,
+            products.Count,
+            pageNumber);
+
+        return ApiSuccess(new ProductListResponse
+        {
+            Products = products,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = matches.Count
+        });
     }
-
-    // Sanitize query to prevent SQL injection and special character attacks
-    // Remove or escape common SQL injection patterns and special regex characters
-    var sanitizedQuery = SanitizeSearchQuery(query);
-
-    // Validate sanitized query is not empty after sanitization
-    if (string.IsNullOrWhiteSpace(sanitizedQuery))
-    {
-      return ApiError("Search query contains only invalid characters after sanitization.", "INVALID_SEARCH_QUERY", StatusCodes.Status400BadRequest);
-    }
-
-    var products = await _productService.SearchProductsAsync(sanitizedQuery, category, minPrice, maxPrice);
-    return ApiSuccess(products);
-  }
-
-  /// <summary>
-  /// Sanitizes a search query to remove potentially dangerous characters and patterns.
-  /// </summary>
-  /// <param name="query">The raw search query.</param>
-  /// <returns>The sanitized search query.</returns>
-  private static string SanitizeSearchQuery(string query)
-  {
-    if (string.IsNullOrEmpty(query))
-      return query;
-
-    // Remove common SQL injection patterns
-    var dangerousPatterns = new[] { "'", "\"", ";", "--", "/*", "*/", "xp_", "exec", "union", "select", "insert", "update", "delete", "drop", "alter", "create", "truncate", "\x00", "\x1a", "\n", "\r", "\t" };
-
-    var sanitized = query;
-    foreach (var pattern in dangerousPatterns)
-    {
-      sanitized = sanitized.Replace(pattern, string.Empty, StringComparison.OrdinalIgnoreCase);
-    }
-
-    // Remove control characters and non-printable characters
-    sanitized = new string(sanitized.Where(c => !char.IsControl(c) && char.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.Format).ToArray());
-
-    // Trim whitespace and ensure minimum length
-    sanitized = sanitized.Trim();
-
-    return sanitized;
-  }
 
 
     [HttpPost]
