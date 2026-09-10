@@ -39,6 +39,8 @@ public static class AppConstants
         public const decimal MaxPrice = 999_999.99m;
         public const int MinStock = 0;
         public const int MaxStock = 1_000_000;
+        public const int MaxProductUpdateNameLength = 200;
+        public const decimal MaxProductUpdatePrice = 1_000_000m;
     }
 
     public static class Order
