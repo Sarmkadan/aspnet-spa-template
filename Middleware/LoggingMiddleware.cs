@@ -18,6 +18,8 @@ public sealed class LoggingMiddleware
 
     public LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> logger)
     {
+        ArgumentNullException.ThrowIfNull(next);
+        ArgumentNullException.ThrowIfNull(logger);
         _next = next;
         _logger = logger;
     }
