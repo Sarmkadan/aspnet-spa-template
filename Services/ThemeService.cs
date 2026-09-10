@@ -34,8 +34,10 @@ public sealed class ThemeService : IThemeService
     /// <exception cref="ArgumentNullException">Thrown when cache or logger is null.</exception>
     public ThemeService(ICacheService cache, ILogger<ThemeService> logger)
     {
-        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(cache);
+        ArgumentNullException.ThrowIfNull(logger);
+        _cache = cache;
+        _logger = logger;
     }
 
     public override string ToString() => $"ThemeService {{ Scheme = {Scheme}, UpdatedAt = {UpdatedAt} }}";
