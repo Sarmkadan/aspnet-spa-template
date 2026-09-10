@@ -36,6 +36,8 @@ public sealed class ManifestService : IManifestService
     /// <summary>Initialises the service with configuration and a logger.</summary>
     public ManifestService(IConfiguration config, ILogger<ManifestService> logger)
     {
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(logger);
         _config = config;
         _logger = logger;
     }
