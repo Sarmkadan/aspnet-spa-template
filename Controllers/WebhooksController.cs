@@ -278,7 +278,7 @@ public sealed class WebhooksController : ControllerBase
     [ProducesResponseType(typeof(WebhookResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleGenericWebhook(string provider, [FromBody] WebhookRequest request)
     {
-        if (string.IsNullOrEmpty(provider))
+        if (string.IsNullOrWhiteSpace(provider))
         {
             return BadRequest(new WebhookResponse
             {
