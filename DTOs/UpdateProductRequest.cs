@@ -27,13 +27,13 @@ public sealed class UpdateProductRequest
         if (string.IsNullOrWhiteSpace(Name))
             throw new ArgumentException("Product name is required");
 
-        if (Name.Length > 200)
+        if (Name.Length > AppConstants.Product.MaxProductUpdateNameLength)
             throw new ArgumentException("Product name cannot exceed 200 characters");
 
         if (Price < 0)
             throw new ArgumentException("Price cannot be negative");
 
-        if (Price > 1_000_000)
+        if (Price > AppConstants.Product.MaxProductUpdatePrice)
             throw new ArgumentException("Price exceeds maximum allowed value");
 
         if (StockQuantity < 0)
