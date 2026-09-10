@@ -7,6 +7,7 @@
 using System.Text;
 using AspNetSpaTemplate.Utilities;
 using Microsoft.Extensions.Options;
+using System;
 
 namespace AspNetSpaTemplate.Middleware;
 
@@ -66,6 +67,9 @@ public sealed class RequestResponseLoggingMiddleware
         ILogger<RequestResponseLoggingMiddleware> logger,
         IOptions<LoggingMiddlewareOptions> options)
     {
+        ArgumentNullException.ThrowIfNull(next);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(options);
         _next = next;
         _logger = logger;
         _options = options.Value;
