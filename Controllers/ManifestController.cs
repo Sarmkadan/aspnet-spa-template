@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System;
 
 namespace AspNetSpaTemplate.Controllers;
 
@@ -29,6 +30,7 @@ public sealed class ManifestController : ControllerBase
     /// <summary>Initialises the controller with the required manifest service.</summary>
     public ManifestController(IManifestService manifestService)
     {
+        ArgumentNullException.ThrowIfNull(manifestService);
         _manifestService = manifestService;
     }
 
