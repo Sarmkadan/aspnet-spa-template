@@ -45,6 +45,7 @@ public sealed class ManifestService : IManifestService
     /// <inheritdoc/>
     public WebAppManifest BuildManifest(string requestScheme, string? requestHost = null)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(requestScheme);
         var baseUrl = BuildBaseUrl(requestScheme, requestHost);
 
         var manifest = new WebAppManifest
