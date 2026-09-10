@@ -31,6 +31,9 @@ public sealed class WebhooksController : ControllerBase
         ILogger<WebhooksController> logger,
         AspnetSpaTemplateOptions options)
     {
+        ArgumentNullException.ThrowIfNull(webhookHandler);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(options);
         _webhookHandler = webhookHandler;
         _logger = logger;
         _options = options;
