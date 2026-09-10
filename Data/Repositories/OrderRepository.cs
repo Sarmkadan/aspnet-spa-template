@@ -7,6 +7,7 @@
 using AspNetSpaTemplate.Constants;
 using AspNetSpaTemplate.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace AspNetSpaTemplate.Data.Repositories;
 
@@ -22,6 +23,7 @@ public class OrderRepository : RepositoryBase<Order>
 
     public virtual async Task<Order?> GetByOrderNumberAsync(string orderNumber)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(orderNumber);
         return await DbSet
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
