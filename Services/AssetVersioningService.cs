@@ -40,6 +40,8 @@ public sealed class AssetVersioningService : IAssetVersioningService, IHostedSer
     /// <summary>Initializes the service with the web hosting environment and a logger.</summary>
     public AssetVersioningService(IWebHostEnvironment environment, ILogger<AssetVersioningService> logger)
     {
+        System.ArgumentNullException.ThrowIfNull(environment);
+        System.ArgumentNullException.ThrowIfNull(logger);
         _environment = environment;
         _logger = logger;
     }
