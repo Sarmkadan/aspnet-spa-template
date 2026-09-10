@@ -35,6 +35,7 @@ public sealed class PwaService : IPwaService
     /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task<PushSubscription> RegisterSubscriptionAsync(int userId, RegisterSubscriptionRequest request, string? userAgent, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
         throw new NotImplementedException();
     }
 
@@ -48,6 +49,7 @@ public sealed class PwaService : IPwaService
     /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task UnsubscribeAsync(int userId, string endpoint, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(endpoint);
         throw new NotImplementedException();
     }
 
@@ -61,6 +63,7 @@ public sealed class PwaService : IPwaService
     /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task<PushDeliveryResult> SendPushToUserAsync(int userId, PushNotificationPayload payload, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(payload);
         throw new NotImplementedException();
     }
 
@@ -74,6 +77,8 @@ public sealed class PwaService : IPwaService
     /// <exception cref="NotImplementedException">Thrown when the method is not implemented.</exception>
     public Task<BatchPushDeliveryResult> BroadcastPushAsync(IReadOnlyList<int> userIds, PushNotificationPayload payload, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(userIds);
+        ArgumentNullException.ThrowIfNull(payload);
         throw new NotImplementedException();
     }
 
