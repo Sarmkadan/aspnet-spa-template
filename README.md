@@ -444,3 +444,48 @@ IActionResult manifestResult = await manifestController.GetManifest();
 // Fetch the theme color (useful for server-side HTML rendering):
 IActionResult themeColorResult = await manifestController.GetThemeColor();
 ```
+
+## PwaService
+
+The `PwaService` (defined in `Services/PwaService.cs`) implements the `IPwaService` interface and provides Progressive Web App (PWA) functionality including push notification subscription management, encrypted notification delivery, and offline sync queue operations. The service is registered as a scoped service in the ASP.NET Core dependency injection container.
+
+Public methods:
+- `GetStatusAsync`: Retrieves the current PWA status for a specific user
+- `RegisterSubscriptionAsync`: Registers a push notification subscription for a specific user
+- `UnsubscribeAsync`: Unsubscribes a user from push notifications using their subscription endpoint
+- `SendPushToUserAsync`: Sends a push notification to a specific user
+- `BroadcastPushAsync`: Broadcasts a push notification to multiple users simultaneously
+
+Example usage:
+
+```csharp
+// PwaService is activated by the ASP.NET Core framework, which
+// resolves its constructor dependencies via dependency injection:
+//
+//     public PwaService(IPwaService pwaService)
+//
+// Once an instance exists (for example in a unit test), its methods can
+// be awaited directly.
+
+// Get PWA status for a user:
+PwaStatusResponse status = await pwaService.GetStatusAsync(userId);
+
+// Register a push subscription:
+PushSubscription subscription = await pwaService.RegisterSubscriptionAsync(
+    userId, 
+    registerSubscriptionRequest, 
+    userAgent);
+
+// Unsubscribe from push notifications:
+await pwaService.UnsubscribeAsync(userId, endpoint);
+
+// Send a push notification to a user:
+PushDeliveryResult result = await pwaService.SendPushToUserAsync(
+    userId, 
+    pushNotificationPayload);
+
+// Broadcast a push notification to multiple users:
+BatchPushDeliveryResult batchResult = await pwaService.BroadcastPushAsync(
+    userIds, 
+    pushNotificationPayload);
+```
