@@ -29,6 +29,9 @@ public sealed class AuthenticationMiddleware
 
     public AuthenticationMiddleware(RequestDelegate next, ILogger<AuthenticationMiddleware> logger)
     {
+        ArgumentNullException.ThrowIfNull(next);
+        ArgumentNullException.ThrowIfNull(logger);
+
         _next = next;
         _logger = logger;
     }
