@@ -366,3 +366,16 @@ public void IsCriticalError_WithRegularException_ReturnsFalse
 public void MapToStatusCode_WithNullException_ReturnsInternalServerError
 public void MapToErrorCode_WithNullException_ReturnsInternalServerError
 ```
+
+## CacheKeyBuilder
+
+The `CacheKeyBuilder` class (defined in `Services/Caching/CacheKeyBuilder.cs`) is a helper for building cache keys. It exposes a single `GetCacheKeys` method that returns a dictionary of cache keys. The method is currently a stub: it initializes an empty dictionary and returns it without populating any entries.
+
+Example usage:
+
+```csharp
+var builder = new CacheKeyBuilder();
+
+// GetCacheKeys currently returns an empty dictionary (stub implementation)
+var cacheKeys = builder.GetCacheKeys();
+```
