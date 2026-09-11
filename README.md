@@ -379,3 +379,46 @@ var builder = new CacheKeyBuilder();
 // GetCacheKeys currently returns an empty dictionary (stub implementation)
 var cacheKeys = builder.GetCacheKeys();
 ```
+
+## WebhooksController
+
+The `WebhooksController` (defined in `Controllers/WebhooksController.cs`) exposes HTTP endpoints for receiving webhooks from external services such as payment providers, email services, and shipping providers. It validates HMAC-SHA256 signatures, queues webhook processing asynchronously, and returns immediate responses to prevent timeout issues.
+
+Example usage:
+
+```csharp
+// WebhooksController is activated by the ASP.NET Core framework, which
+// resolves its constructor dependencies via dependency injection:
+//
+//     public WebhooksController(...)
+//
+// Once an instance exists (for example in a unit test), its actions can
+// be awaited directly.
+
+// Handle a payment webhook:
+var paymentRequest = new WebhookRequest
+{
+    Payload = "{ \"orderId\": 123, \"amount\": 99.99 }",
+    Signature = "computed-hmac-signature"
+};
+IActionResult paymentResult = await webhooksController.HandlePaymentWebhook(paymentRequest);
+
+// Handle an email webhook:
+var emailRequest = new WebhookRequest
+{
+    Payload = "{ \"event\": \"delivery\", \"email\": \"user@example.com\" }",
+    Signature = "computed-hmac-signature"
+};
+IActionResult emailResult = await webhooksController.HandleEmailWebhook(emailRequest);
+
+// Handle a shipping webhook:
+var shippingRequest = new WebhookRequest
+{
+    Payload = "{ \"trackingNumber\": \"TRACK123\", \"status\": \"delivered\" }",
+    Signature = "computed-hmac-signature"
+};
+IActionResult shippingResult = await webhooksController.HandleShippingWebhook(shippingRequest);
+
+// Handle a generic webhook for custom providers:
+IActionResult genericResult = await webhooksController.HandleGenericWebhook("custom-provider", customRequest);
+```
