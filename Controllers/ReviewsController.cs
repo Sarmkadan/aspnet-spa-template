@@ -19,6 +19,7 @@ public sealed class ReviewsController : ApiControllerBase
 
     public ReviewsController(ReviewService reviewService)
     {
+        ArgumentNullException.ThrowIfNull(reviewService);
         _reviewService = reviewService;
     }
 
