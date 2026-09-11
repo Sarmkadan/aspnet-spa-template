@@ -422,3 +422,25 @@ IActionResult shippingResult = await webhooksController.HandleShippingWebhook(sh
 // Handle a generic webhook for custom providers:
 IActionResult genericResult = await webhooksController.HandleGenericWebhook("custom-provider", customRequest);
 ```
+
+## ManifestController
+
+The `ManifestController` (defined in `Controllers/ManifestController.cs`) serves the Web App Manifest (`/manifest.json`) and provides the theme color for progressive web app (PWA) functionality. The manifest is generated dynamically to support deployments behind a reverse proxy at a sub-path.
+
+Example usage:
+
+```csharp
+// ManifestController is activated by the ASP.NET Core framework, which
+// resolves its constructor dependencies via dependency injection:
+//
+//     public ManifestController(IManifestService manifestService)
+//
+// Once an instance exists (for example in a unit test), its actions can
+// be awaited directly.
+
+// Fetch the Web App Manifest:
+IActionResult manifestResult = await manifestController.GetManifest();
+
+// Fetch the theme color (useful for server-side HTML rendering):
+IActionResult themeColorResult = await manifestController.GetThemeColor();
+```
