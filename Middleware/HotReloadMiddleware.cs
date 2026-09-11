@@ -30,6 +30,11 @@ public sealed class HotReloadMiddleware
         IWebHostEnvironment environment,
         ILogger<HotReloadMiddleware> logger)
     {
+        ArgumentNullException.ThrowIfNull(next);
+        ArgumentNullException.ThrowIfNull(versioning);
+        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(logger);
+
         _next = next;
         _versioning = versioning;
         _environment = environment;
