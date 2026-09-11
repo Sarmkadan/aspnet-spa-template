@@ -37,6 +37,13 @@ public sealed class HealthController : ControllerBase
         IOptions<AspnetSpaTemplateOptions> aspnetSpaTemplateOptions,
         IOptions<PwaOptions> pwaOptions)
     {
+        ArgumentNullException.ThrowIfNull(cacheHealthMonitor);
+        ArgumentNullException.ThrowIfNull(taskScheduler);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(metricsRegistry);
+        ArgumentNullException.ThrowIfNull(aspnetSpaTemplateOptions);
+        ArgumentNullException.ThrowIfNull(pwaOptions);
+
         _cacheHealthMonitor = cacheHealthMonitor;
         _taskScheduler = taskScheduler;
         _logger = logger;
