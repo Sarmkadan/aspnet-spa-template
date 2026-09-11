@@ -19,16 +19,20 @@ public abstract class ApiControllerBase : ControllerBase
 {
     protected IActionResult ApiSuccess<T>(T data, string message = "Success", int statusCode = 200)
     {
+        ArgumentNullException.ThrowIfNull(data);
         return StatusCode(statusCode, new SuccessResponse<T>(data, message));
     }
 
     protected IActionResult ApiError(string message, string errorCode = "ERROR", int statusCode = 400)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
         return StatusCode(statusCode, new ErrorResponse(message, errorCode, statusCode));
     }
 
     protected IActionResult ApiError(string message, Dictionary<string, List<string>> errors, int statusCode = 400)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
+        ArgumentNullException.ThrowIfNull(errors);
         return StatusCode(statusCode, new ErrorResponse(message, errors, statusCode));
     }
 
