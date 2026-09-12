@@ -162,6 +162,7 @@ public static class ErrorMappingHelper
     /// </summary>
     public static bool IsCriticalError(Exception exception)
     {
+        ArgumentNullException.ThrowIfNull(exception);
         return exception switch
         {
             OutOfMemoryException => true,
