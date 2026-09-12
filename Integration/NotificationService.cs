@@ -99,6 +99,8 @@ public sealed class NotificationService
     /// </summary>
     public async Task SendOrderConfirmationAsync(string email, int orderId, decimal total)
     {
+        ArgumentNullException.ThrowIfNull(email);
+
         var htmlBody = $@"
             <h1>Order Confirmation</h1>
             <p>Thank you for your order!</p>
@@ -115,6 +117,9 @@ public sealed class NotificationService
     /// </summary>
     public async Task SendPasswordResetAsync(string email, string resetToken)
     {
+        ArgumentNullException.ThrowIfNull(email);
+        ArgumentNullException.ThrowIfNull(resetToken);
+
         var resetLink = $"https://yourapp.com/reset-password?token={resetToken}";
         var htmlBody = $@"
             <h1>Password Reset</h1>
