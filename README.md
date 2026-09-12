@@ -506,3 +506,38 @@ BatchPushDeliveryResult batchResult = await pwaService.BroadcastPushAsync(
     userIds, 
     pushNotificationPayload);
 ```
+## JsonSerializationHelper
+
+The `JsonSerializationHelper` class (defined in `Utilities/JsonSerializationHelper.cs`) provides consistent JSON serialization and deserialization for the application. It centralizes JSON configuration (camelCase property naming, null-ignoring, and enum conversion) to ensure uniformity across the API.
+
+Example usage:
+
+```csharp
+// Serialize an object to JSON string (camelCase, no indentation)
+var json = JsonSerializationHelper.Serialize(myObject);
+
+// Serialize with pretty formatting (for logging/debugging)
+var prettyJson = JsonSerializationHelper.SerializePretty(myObject);
+
+// Deserialize from JSON string to a typed object
+var myObject = JsonSerializationHelper.Deserialize<MyType>(json);
+
+// Safely deserialize (returns null on failure)
+var myObject = JsonSerializationHelper.DeserializeSafe<MyType>(json);
+
+// Deserialize from a stream (e.g., request body)
+using var stream = GetRequestStream();
+var myObject = await JsonSerializationHelper.DeserializeAsync<MyType>(stream);
+
+// Convert an object to another type (deep clone or type conversion)
+var clonedObject = JsonSerializationHelper.ConvertObject<MyType>(myObject);
+
+// Parse JSON to a JsonElement for flexible querying
+var jsonElement = JsonSerializationHelper.ParseJsonElement(json);
+
+// Get the default or pretty serializer options
+var options = JsonSerializationHelper.GetDefaultOptions();
+
+// Check if a string is valid JSON
+bool isValid = JsonSerializationHelper.IsValidJson(json);
+```
