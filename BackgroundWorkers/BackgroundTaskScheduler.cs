@@ -139,6 +139,8 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler, IDisposable
     /// <exception cref="KeyNotFoundException">Thrown if the task is not found.</exception>
     public async Task TriggerTaskAsync(string taskName)
     {
+        ArgumentNullException.ThrowIfNull(taskName);
+
         var task = _tasks.FirstOrDefault(t => t.TaskName == taskName);
         if (task is null)
             throw new KeyNotFoundException($"Task not found: {taskName}");
@@ -282,6 +284,8 @@ public static class BackgroundTaskExtensions
     /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddBackgroundTaskScheduler(this IServiceCollection services)
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddSingleton<IBackgroundTaskScheduler, BackgroundTaskScheduler>();
         return services;
     }
@@ -300,6 +304,8 @@ public static class BackgroundTaskExtensions
     /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddBackgroundTask<T>(this IServiceCollection services) where T : class, IBackgroundTask
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddSingleton<T>();
         return services;
     }
@@ -316,6 +322,8 @@ public static class BackgroundTaskExtensions
     /// <returns>The updated application builder.</returns>
     public static async Task<IApplicationBuilder> UseBackgroundTaskScheduler(this IApplicationBuilder app)
     {
+        ArgumentNullException.ThrowIfNull(app);
+
         var scheduler = app.ApplicationServices.GetRequiredService<IBackgroundTaskScheduler>();
 
         // Register all IBackgroundTask implementations
