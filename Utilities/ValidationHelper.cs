@@ -21,6 +21,8 @@ public static class ValidationHelper
     /// </summary>
     public static void NotNull(object? value, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         if (value is null)
             throw new ValidationException(fieldName, $"{fieldName} cannot be null");
     }
@@ -30,6 +32,8 @@ public static class ValidationHelper
     /// </summary>
     public static void NotNullOrEmpty(string? value, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         if (string.IsNullOrWhiteSpace(value))
             throw new ValidationException(fieldName, $"{fieldName} cannot be empty");
     }
@@ -39,6 +43,8 @@ public static class ValidationHelper
     /// </summary>
     public static void InRange(decimal value, decimal min, decimal max, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         if (value < min || value > max)
             throw new ValidationException(fieldName, $"{fieldName} must be between {min} and {max}");
     }
@@ -48,6 +54,8 @@ public static class ValidationHelper
     /// </summary>
     public static void InRange(int value, int min, int max, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         if (value < min || value > max)
             throw new ValidationException(fieldName, $"{fieldName} must be between {min} and {max}");
     }
@@ -57,6 +65,9 @@ public static class ValidationHelper
     /// </summary>
     public static void LengthBetween(string value, int minLength, int maxLength, string fieldName)
     {
+        ArgumentNullException.ThrowIfNull(value);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         NotNullOrEmpty(value, fieldName);
         if (value.Length < minLength || value.Length > maxLength)
             throw new ValidationException(fieldName, $"{fieldName} must be between {minLength} and {maxLength} characters");
@@ -68,6 +79,10 @@ public static class ValidationHelper
     /// </summary>
     public static void MatchesPattern(string value, string pattern, string fieldName, string? customMessage = null)
     {
+        ArgumentNullException.ThrowIfNull(value);
+        ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         NotNullOrEmpty(value, fieldName);
         if (!Regex.IsMatch(value, pattern))
             throw new ValidationException(fieldName, customMessage ?? $"{fieldName} format is invalid");
@@ -78,6 +93,9 @@ public static class ValidationHelper
     /// </summary>
     public static void ValidEmail(string email, string fieldName = "Email")
     {
+        ArgumentNullException.ThrowIfNull(email);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         NotNullOrEmpty(email, fieldName);
         if (!email.IsValidEmail())
             throw new ValidationException(fieldName, "Invalid email address format");
@@ -88,6 +106,8 @@ public static class ValidationHelper
     /// </summary>
     public static void ValidPhoneNumber(string? phoneNumber, string fieldName = "PhoneNumber")
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         if (string.IsNullOrWhiteSpace(phoneNumber))
             return; // Phone number is optional
 
@@ -101,6 +121,8 @@ public static class ValidationHelper
     /// </summary>
     public static void NotEmpty<T>(IEnumerable<T>? collection, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         if (collection is null || !collection.Any())
             throw new ValidationException(fieldName, $"{fieldName} cannot be empty");
     }
@@ -111,6 +133,8 @@ public static class ValidationHelper
     /// </summary>
     public static void MaxItems<T>(IEnumerable<T>? collection, int maxItems, string fieldName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         if (collection is not null && collection.Count() > maxItems)
             throw new ValidationException(fieldName, $"{fieldName} cannot contain more than {maxItems} items");
     }
@@ -147,6 +171,10 @@ public static class ValidationHelper
     /// </summary>
     public static void Equal<T>(T value1, T value2, string fieldName) where T : notnull
     {
+        ArgumentNullException.ThrowIfNull(value1);
+        ArgumentNullException.ThrowIfNull(value2);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         if (!value1.Equals(value2))
             throw new ValidationException(fieldName, "Values do not match");
     }
