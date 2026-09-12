@@ -47,6 +47,8 @@ public static class XmlFormatter
     /// </summary>
     public static byte[] ToXmlBytes<T>(T obj) where T : class
     {
+        ArgumentNullException.ThrowIfNull(obj);
+
         var xml = ToXml(obj);
         return System.Text.Encoding.UTF8.GetBytes(xml);
     }
@@ -141,6 +143,8 @@ public static class XmlFormatter
     /// </summary>
     public static XmlElement CreateElement(string name, Dictionary<string, string> attributes = null!)
     {
+        ArgumentNullException.ThrowIfNull(name);
+
         var doc = new XmlDocument();
         var element = doc.CreateElement(name);
 
