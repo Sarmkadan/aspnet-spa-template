@@ -129,6 +129,8 @@ public static class EncryptionHelper
     /// </summary>
     public static string ComputeChecksum(byte[] data)
     {
+        ArgumentNullException.ThrowIfNull(data);
+
         using (var sha256 = SHA256.Create())
         {
             var hashedBytes = sha256.ComputeHash(data);
