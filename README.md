@@ -43,6 +43,23 @@ public async Task RecalculateAsync_WithProductsAndReviews_UpdatesAllProducts
 public async Task RecalculateAsync_NoProducts_ReturnsZero
 ```
 
+**Table of contents**
+
+- [PaginationRequestUnitTests](#paginationrequestunittests)
+- [ReviewsController](#reviewscontroller)
+- [OrderStatsResponse](#orderstatsresponse)
+- [NotificationWorkerTests](#notificationworkertests)
+- [OrderControllerIdempotencyTests](#ordercontrolleridempotencytests)
+- [MetricsRegistry](#metricsregistry)
+- [OrderServiceUnitTests](#orderserviceunittests)
+- [AssetVersioningServiceTests](#assetversioningservicetests)
+- [DataExportHelperUnitTests](#dataexporthelperunittests)
+- [ErrorMappingHelperUnitTests](#errormappinghelperunittests)
+- [CacheKeyBuilder](#cachekeybuilder)
+- [WebhooksController](#webhookscontroller)
+- [ManifestController](#manifestcontroller)
+- [PwaService](#pwaservice)
+
 ## PaginationRequestUnitTests
 
 The `PaginationRequestUnitTests` class validates the behavior of the `PaginationRequest` DTO. It ensures that default values are set correctly and that paging, sorting, and search‑term properties enforce their minimum and maximum constraints.
