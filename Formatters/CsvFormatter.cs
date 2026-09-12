@@ -22,6 +22,8 @@ public static class CsvFormatter
     /// </summary>
     public static string ToCsv<T>(IEnumerable<T> items) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+
         if (!items.Any())
             return string.Empty;
 
@@ -62,6 +64,8 @@ public static class CsvFormatter
     /// </summary>
     public static byte[] ToCsvBytes<T>(IEnumerable<T> items) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+
         var csv = ToCsv(items);
         return Encoding.UTF8.GetBytes(csv);
     }
@@ -99,6 +103,8 @@ public static class CsvFormatter
     /// </summary>
     public static List<Dictionary<string, string>> ParseCsv(string csvContent)
     {
+        ArgumentNullException.ThrowIfNull(csvContent);
+
         if (string.IsNullOrWhiteSpace(csvContent))
             return new List<Dictionary<string, string>>();
 
