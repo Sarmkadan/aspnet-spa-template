@@ -92,6 +92,8 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
         string? bodyJson = null)
     {
         ArgumentNullException.ThrowIfNull(clientRequestId);
+        ArgumentNullException.ThrowIfNull(method);
+        ArgumentNullException.ThrowIfNull(relativePath);
         ArgumentException.ThrowIfNullOrEmpty(method);
         ArgumentException.ThrowIfNullOrEmpty(relativePath);
 
@@ -200,6 +202,7 @@ public sealed class SyncQueueService : ISyncQueueService, IDisposable
     public bool Fail(int id, string error)
     {
         _logger.LogInformation("Fail called for entry={Id}", id);
+        ArgumentNullException.ThrowIfNull(error);
         ArgumentException.ThrowIfNullOrEmpty(error);
 
         if (!_store.TryGetValue(id, out var entry))
