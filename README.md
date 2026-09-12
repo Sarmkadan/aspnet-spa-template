@@ -506,6 +506,7 @@ BatchPushDeliveryResult batchResult = await pwaService.BroadcastPushAsync(
     userIds, 
     pushNotificationPayload);
 ```
+
 ## JsonSerializationHelper
 
 The `JsonSerializationHelper` class (defined in `Utilities/JsonSerializationHelper.cs`) provides consistent JSON serialization and deserialization for the application. It centralizes JSON configuration (camelCase property naming, null-ignoring, and enum conversion) to ensure uniformity across the API.
@@ -540,4 +541,33 @@ var options = JsonSerializationHelper.GetDefaultOptions();
 
 // Check if a string is valid JSON
 bool isValid = JsonSerializationHelper.IsValidJson(json);
+```
+## ThemeService
+
+The `ThemeService` (defined in `Services/ThemeService.cs`) implements the `IThemeService` interface and manages per-user UI theme preferences so the server can pre-render the correct theme class before client-side JavaScript executes, eliminating the flash of unstyled content on page load. The service is registered as a scoped service in the ASP.NET Core dependency injection container.
+
+Public methods:
+- `GetSchemeAsync`: Returns the saved colour scheme for the given user.
+- `SetSchemeAsync`: Persists the user's explicit theme choice.
+- `ClearSchemeAsync`: Removes any saved preference for the given user.
+
+Example usage:
+
+```csharp
+// ThemeService is activated by the ASP.NET Core framework, which
+// resolves its constructor dependencies via dependency injection:
+//
+//     public ThemeService(ICacheService cache, ILogger<ThemeService> logger)
+//
+// Once an instance exists (for example in a unit test), its methods can
+// be awaited directly.
+
+// Get the theme scheme for a user:
+ColourScheme scheme = await themeService.GetSchemeAsync(userId);
+
+// Set the theme scheme for a user:
+await themeService.SetSchemeAsync(userId, ColourScheme.Dark);
+
+// Clear the theme scheme for a user:
+await themeService.ClearSchemeAsync(userId);
 ```
