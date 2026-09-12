@@ -571,3 +571,40 @@ await themeService.SetSchemeAsync(userId, ColourScheme.Dark);
 // Clear the theme scheme for a user:
 await themeService.ClearSchemeAsync(userId);
 ```
+
+## AssetVersioningService
+
+The `AssetVersioningService` (defined in `Services/AssetVersioningService.cs`) provides asset versioning and live-change notification for the offline-first SPA. It computes truncated SHA-256 content hashes for wwwroot assets, exposes them as an asset manifest for the service worker, and in development mode watches the file system to broadcast changes to all active HMR subscribers via async channels.
+
+Public methods:
+- `GetAssetManifestAsync`: Returns a mapping of asset paths to their short content-hash versions.
+- `WatchForChangesAsync`: Yields the relative path of each asset that changes while the caller holds a subscription.
+- `StartAsync`: Builds the initial manifest and, in development, starts watching for file changes.
+- `StopAsync`: Stops the watcher and completes all active subscriber channels.
+
+Example usage:
+
+```csharp
+// AssetVersioningService is activated by the ASP.NET Core framework, which
+// resolves its constructor dependencies via dependency injection:
+//
+//     public AssetVersioningService(IWebHostEnvironment environment, ILogger<AssetVersioningService> logger)
+//
+// Once an instance exists (for example in a unit test), its methods can
+// be awaited directly.
+
+// Get the asset manifest:
+var manifest = await assetVersioningService.GetAssetManifestAsync();
+
+// Watch for asset changes:
+await foreach (var changedPath in assetVersioningService.WatchForChangesAsync(cancellationToken))
+{
+    // Handle changed asset path
+}
+
+// Start the service (called by the host):
+await assetVersioningService.StartAsync(cancellationToken);
+
+// Stop the service (called by the host):
+await assetVersioningService.StopAsync(cancellationToken);
+```
