@@ -542,6 +542,7 @@ var options = JsonSerializationHelper.GetDefaultOptions();
 // Check if a string is valid JSON
 bool isValid = JsonSerializationHelper.IsValidJson(json);
 ```
+
 ## ThemeService
 
 The `ThemeService` (defined in `Services/ThemeService.cs`) implements the `IThemeService` interface and manages per-user UI theme preferences so the server can pre-render the correct theme class before client-side JavaScript executes, eliminating the flash of unstyled content on page load. The service is registered as a scoped service in the ASP.NET Core dependency injection container.
@@ -607,4 +608,41 @@ await assetVersioningService.StartAsync(cancellationToken);
 
 // Stop the service (called by the host):
 await assetVersioningService.StopAsync(cancellationToken);
+```
+## OrderRepository
+
+The `OrderRepository` (defined in `Data/Repositories/OrderRepository.cs`) provides data access methods for the `Order` entity. It includes specialized queries for retrieving orders by number, user, status, and date ranges, as well as aggregate functions for reporting.
+
+Example usage:
+
+```csharp
+// OrderRepository is instantiated via dependency injection in services:
+//     public OrderService(OrderRepository orderRepository)
+
+// Get an order by its order number:
+Order? order = await orderRepository.GetByOrderNumberAsync("ORD-1001");
+
+// Get all orders for a specific user:
+IEnumerable<Order> userOrders = await orderRepository.GetByUserIdAsync(42);
+
+// Get orders with a specific status:
+IEnumerable<Order> pendingOrders = await orderRepository.GetByStatusAsync(OrderStatus.Pending);
+
+// Get paginated orders for a user:
+IEnumerable<Order> recentUserOrders = await orderRepository.GetUserOrdersAsync(userId: 42, pageNumber: 1, pageSize: 10);
+
+// Get orders from the last 30 days (default):
+IEnumerable<Order> recentOrders = await orderRepository.GetRecentOrdersAsync();
+
+// Get orders from the last 7 days:
+IEnumerable<Order> weekOldOrders = await orderRepository.GetRecentOrdersAsync(days: 7);
+
+// Get all pending or confirmed orders:
+IEnumerable<Order> pendingOrders = await orderRepository.GetPendingOrdersAsync();
+
+// Get total revenue (excluding cancelled/refunded):
+decimal totalRevenue = await orderRepository.GetTotalRevenueAsync();
+
+// Get total revenue for the last 30 days:
+decimal monthlyRevenue = await orderRepository.GetTotalRevenueAsync(days: 30);
 ```
