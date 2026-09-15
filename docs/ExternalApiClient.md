@@ -1,101 +1,85 @@
 # ExternalApiClient
 
-`ExternalApiClient` is a configurable HTTP client wrapper designed to simplify calling external REST APIs. It provides typed `GET` and `POST` methods with automatic JSON serialization, configurable retry logic, and optional request/response logging. The class is intended to be registered and managed via `IHttpClientFactory`.
+`ExternalApiClient` is a typed wrapper around an injected `HttpClient` for making JSON `GET` and `POST` requests to external APIs. It provides logging, retries for selected transient failures, JSON serialization through `JsonSerializationHelper`, and consistent error wrapping with `ExternalApiException`.
+
+The class is registered as a scoped service by the application. Configure the injected `HttpClient` (for example, its base address, headers, and timeout) when registering it.
 
 ## API
 
-### `public ExternalApiClient`
+### `public ExternalApiClient(HttpClient httpClient, ILogger<ExternalApiClient> logger)`
 
-The parameterized constructor. It accepts configuration values required to set up the underlying `HttpClient` and the client’s behavior. The exact signature is not listed here, but it initializes the `BaseUrl`, `ApiKey`, `Timeout`, `MaxRetries`, `LogRequests`, and `LogResponses` properties.
+Creates a client using the supplied `HttpClient` and logger. The implementation uses a fixed maximum of three attempts and a linearly increasing delay of one second per retry number.
 
-### `public async Task<T> GetAsync<T>(string requestUri)`
+- `httpClient`: The client used to send requests. Relative endpoints are resolved using its `BaseAddress`.
+- `logger`: Receives informational, warning, and error messages for request attempts and failures.
 
-Sends a `GET` request to the specified relative or absolute URI and deserializes the response body as JSON.
+### `public Task<T> GetAsync<T>(string endpoint) where T : class`
 
-- **Parameters:**
-  - `requestUri` (`string`): The request URI, relative to `BaseUrl` or absolute.
-- **Returns:** `Task<T>` – The deserialized response body.
-- **Throws:**
-  - `HttpRequestException` on network failures or non-success status codes.
-  - `TaskCanceledException` when the request times out.
-  - `JsonException` when the response body cannot be deserialized to `T`.
+Sends a `GET` request and deserializes a successful JSON response to `T`.
 
-### `public async Task<T> PostAsync<T>(string path, object body)`
+- `endpoint`: A relative or absolute request URI accepted by `HttpClient`.
+- Returns: The deserialized response. A JSON `null` result is treated as an error.
+- Retry behavior: HTTP `5xx` and `408 Request Timeout` responses are retried, up to three total attempts. An `HttpRequestException` whose inner exception is a `TimeoutException` is also retried. Delays before the second and third attempts are one and two seconds, respectively.
+- Errors: Failures are wrapped in `ExternalApiException`. Non-success responses eventually pass through `EnsureSuccessStatusCode`; client errors are not retried. Deserialization errors and null responses are also wrapped.
 
-Sends a `POST` request with a JSON-serialized body and deserializes the response body as JSON.
+### `public Task<T> PostAsync<T>(string endpoint, object request) where T : class`
 
-- **Parameters:**
-  - `path` (`string`): The request path, relative to `BaseUrl` or absolute.
-  - `body` (`object`): The payload to serialize as JSON in the request body.
-- **Returns:** `Task<T>` — the deserialized response body.
-- **Throws:**
-  - `HttpRequestException` on network failures or non-success status codes.
-  - `TaskCanceledException` when the request times out.
-  - `JsonException` when serialization of the request body or deserialization of the response fails.
+Serializes `request` as JSON, sends it as UTF-8 `application/json`, and deserializes a successful JSON response to `T`.
 
-### `public string BaseUrl`
+- `endpoint`: A relative or absolute request URI accepted by `HttpClient`.
+- `request`: The value serialized as the request body.
+- Returns: The deserialized response. A JSON `null` result is treated as an error.
+- Retry behavior: HTTP `5xx` responses are retried, up to three total attempts. An `HttpRequestException` whose inner exception is a `TimeoutException` is also retried. Unlike `GET`, an HTTP `408` response is not explicitly retried by the status-code branch. Delays before the second and third attempts are one and two seconds, respectively.
+- Errors: Failures are wrapped in `ExternalApiException`. Non-success responses eventually pass through `EnsureSuccessStatusCode`; client errors are not retried. Serialization, deserialization, and null-response errors are also wrapped.
 
-The base URL used for all requests when a relative path is provided. Trailing slashes are normalized internally.
+## ExternalApiConfig
 
-### `public string ApiKey`
+`ExternalApiConfig` is a separate public configuration model. `ExternalApiClient` does not consume this type directly; it can be used by application registration code to configure an `HttpClient` or related integration services.
 
-The API key sent with every request, typically as a header (e.g., `X-Api-Key`). If `null` or empty, the header is omitted.
+### `public string BaseUrl { get; set; } = ""`
 
-### `public TimeSpan Timeout`
+The external service's base URL.
 
-The per-request timeout applied to the underlying `HttpClient`. Defaults to a value set during construction.
+### `public string ApiKey { get; set; } = ""`
 
-### `public int MaxRetries`
+The API key used by the external service.
 
-The maximum number of automatic retries for transient failures (e.g., `5xx` responses, network errors). A value of `0` disables retries.
+### `public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30)`
 
-### `public bool LogRequests`
+The configured request timeout. The default is 30 seconds.
 
-When `true`, the full request URI, method, and headers are written to the configured logging infrastructure before the request is sent. Defaults to `false`.
+### `public int MaxRetries { get; set; } = 3`
 
-### `public bool LogResponses`
+The configured maximum retry count. The default is 3. The current `ExternalApiClient` implementation uses its own fixed value of 3 rather than reading this property.
 
-When `true`, the response status code, headers, and body are logged after a response is received. Defaults to `false`.
+### `public bool LogRequests { get; set; } = true`
+
+Indicates whether requests should be logged. The default is `true`. The current `ExternalApiClient` always writes its request-attempt log messages and does not read this property directly.
+
+### `public bool LogResponses { get; set; } = false`
+
+Indicates whether responses should be logged. The default is `false`. The current `ExternalApiClient` does not read this property or log response bodies.
 
 ## Usage
 
-### Example 1: Basic GET request
-
 ```csharp
-var client = new ExternalApiClient(httpClientFactory, options =>
+var httpClient = new HttpClient
 {
-    options.BaseUrl = "https://api.example.com";
-    options.ApiKey = "sk-12345";
-    options.Timeout = TimeSpan.FromSeconds(10);
-    options.MaxRetries = 2;
-    options.LogResponses = true;
-});
+    BaseAddress = new Uri("https://api.example.com"),
+    Timeout = TimeSpan.FromSeconds(30)
+};
+
+var client = new ExternalApiClient(httpClient, logger);
 
 var user = await client.GetAsync<User>("/users/42");
-Console.WriteLine(user.Email);
-```
 
-### Example 2: POST with retries and logging
-
-```csharp
-var client = new ExternalApiClient(httpClientFactory, options =>
-{
-    options.BaseUrl = "https://api.example.com";
-    options.ApiKey = "sk-67890";
-    options.MaxRetries = 3;
-    options.LogRequests = true;
-    options.LogResponses = true;
-});
-
-var payload = new CreateOrderRequest { ProductId = 9, Quantity = 1 };
-var order = await client.PostAsync<Order>("/orders", payload);
-Console.WriteLine($"Order {order.Id} created.");
+var request = new CreateOrderRequest { ProductId = 9, Quantity = 1 };
+var order = await client.PostAsync<Order>("/orders", request);
 ```
 
 ## Notes
 
-- **Thread safety:** The `GetAsync<T>` and `PostAsync<T>` methods are safe to call concurrently from multiple threads. The underlying `HttpClient` is managed by `IHttpClientFactory` and is designed for concurrent use.
-- **Retry behavior:** Retries are performed only for transient failures (typically `5xx` status codes, `408 Request Timeout`, and `TaskCanceledException` due to timeout). Non-transient errors (e.g., `400`, `401`, `403`) are not retried. The `MaxRetries` count includes the initial attempt; setting it to `1` means no retries.
-- **Timeout:** The `Timeout` property sets the overall timeout for each HTTP call, including all retry attempts. If a single attempt exceeds the timeout, it is canceled and may be retried if retries remain.
-- **Logging:** When `LogRequests` or `LogResponses` is enabled, sensitive data (including the `ApiKey` header value) may appear in logs. Ensure log redaction is applied in production environments.
-- **Disposal:** The class does not implement `IDisposable`. The underlying `HttpClient` lifecycle is managed by the dependency injection container through `IHttpClientFactory`.
+- `ExternalApiClient` does not implement `IDisposable`; ownership and lifetime of the injected `HttpClient` remain with the caller or dependency injection container.
+- The client can be called concurrently when its injected `HttpClient` and logger are safe for concurrent use.
+- Request attempts are logged at information level. Retryable GET server errors and timeout retries are logged at warning level, and terminal request failures are logged at error level.
+- Error context may contain endpoint details and, for some POST failures, the request object. Avoid placing secrets in endpoints or request objects if exception context is recorded or exposed.
