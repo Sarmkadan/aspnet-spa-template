@@ -1,111 +1,91 @@
 # WebhookHandler
 
-A utility class for receiving and processing webhook payloads from external providers. It encapsulates the logic for validating, acknowledging, and handling webhook messages with support for signature verification and error tracking.
+`WebhookHandler` receives JSON webhook payloads from supported external providers and publishes the corresponding internal events through `IEventBus`. Signature verification is not performed by this class; callers must validate the signature before invoking it.
 
-## API
+The handler and its request and response models are in the `AspNetSpaTemplate.Integration` namespace.
 
-### `public WebhookHandler`
+## `WebhookHandler` API
 
-Initializes a new instance of the `WebhookHandler` class. This constructor sets up the handler with default values for all properties.
+### `public WebhookHandler(IEventBus eventBus, ILogger<WebhookHandler> logger)`
 
-### `public async Task<bool> HandleWebhookAsync`
+Creates a handler with the event bus used to publish internal events and the logger used to record processing results.
 
-Processes the incoming webhook payload asynchronously. Returns `true` if the webhook was handled successfully; otherwise, `false`.
+- `eventBus`: Event bus that receives events produced from webhook payloads.
+- `logger`: Logger for webhook validation, routing, and processing messages.
+- Throws `ArgumentNullException` if either dependency is `null`.
 
-- **Parameters**: None
-- **Return value**: A `Task<bool>` representing the asynchronous operation. The result indicates success (`true`) or failure (`false`).
-- **Exceptions**: Throws `ArgumentNullException` if `Payload` is null or empty.
+### `public Task<bool> HandleWebhookAsync(string provider, string payload, string signature)`
 
-### `public void RegisterWebhook`
+Processes a previously authenticated webhook and routes it according to its provider.
 
-Registers the webhook with the specified provider. This method is typically called during application startup to configure webhook endpoints.
+- `provider`: Provider identifier. Supported values are `payment-provider`, `email-service`, and `shipping-provider`.
+- `payload`: Webhook body as a JSON object string.
+- `signature`: The webhook signature. It is required, but is assumed to have already been validated by the caller.
+- Returns `true` when the provider and event are supported and processing succeeds; otherwise, returns `false`.
+- Throws `ArgumentNullException` when any argument is `null`.
+- Throws `ArgumentException` when any argument is an empty string.
+- Throws `ExternalApiException` when deserialization produces `null` (for example, for the JSON literal `null`).
 
-- **Parameters**: None
-- **Return value**: None
-- **Exceptions**: None
+Whitespace-only arguments pass the initial argument guards but are rejected during processing and return `false`. Malformed JSON is wrapped by `JsonSerializationHelper` and, like other unexpected processing or routing exceptions, is logged and normally results in `false`.
 
-### `public string Provider`
+## Provider routing
 
-Gets or sets the name of the webhook provider (e.g., "GitHub", "Stripe"). This value identifies the source of the incoming payload.
+### Payment provider
 
-- **Type**: `string`
-- **Default**: `null`
+For `payment-provider`, the payload must contain a non-empty `event_type`. The supported event types publish these `CustomEvent` instances:
 
-### `public string Payload`
+| `event_type` | Published `EventName` | `AggregateType` |
+| --- | --- | --- |
+| `payment_succeeded` | `PaymentSucceeded` | `Payment` |
+| `payment_failed` | `PaymentFailed` | `Payment` |
+| `payment_refunded` | `PaymentRefunded` | `Payment` |
 
-Gets or sets the raw JSON payload received from the webhook provider. This is the unprocessed data sent by the external service.
+The original deserialized payload is assigned to the event's `Data`. An unknown or missing event type, or an invalid `order_id` value when present, returns `false`.
 
-- **Type**: `string`
-- **Default**: `null`
+### Email service
 
-### `public string Signature`
+For `email-service`, the handler reads the `event` and `email` fields. A `bounce` publishes an `EmailBounced` `CustomEvent` containing the original payload. `complaint` and `delivered` are logged and return `true` without publishing an event. Unknown event types return `false`.
 
-Gets or sets the signature provided by the webhook provider for verification. This is typically used to validate the authenticity of the payload.
+### Shipping provider
 
-- **Type**: `string`
-- **Default**: `null`
+For `shipping-provider`, the payload must contain a non-empty `tracking_number`. Successful processing publishes a `ShippingStatusChanged` `CustomEvent` with `AggregateType` set to `Shipment` and the original payload assigned to `Data`. A missing tracking number returns `false`.
 
-### `public bool Acknowledged`
+Unknown provider identifiers are logged and return `false`.
 
-Gets or sets a value indicating whether the webhook has been acknowledged. Acknowledgment typically means the payload has been processed or queued for processing.
+## Request and response models
 
-- **Type**: `bool`
-- **Default**: `false`
+The source file also defines the public DTOs used by a webhook API endpoint.
 
-### `public string? Message`
+### `public sealed class WebhookRequest`
 
-Gets or sets an optional message associated with the webhook processing (e.g., a success message or error description).
+| Property | Type | Default | Description |
+| --- | --- | --- | --- |
+| `Provider` | `string` | `""` | Provider identifier passed to the handler. |
+| `Payload` | `string` | `""` | Raw JSON payload passed to the handler. |
+| `Signature` | `string` | `""` | Signature supplied by the provider and validated by the caller. |
 
-- **Type**: `string`
-- **Default**: `null`
+### `public sealed class WebhookResponse`
 
-### `public string? ErrorCode`
-
-Gets or sets an optional error code if the webhook processing failed. This can be used to identify specific failure scenarios.
-
-- **Type**: `string`
-- **Default**: `null`
+| Property | Type | Default | Description |
+| --- | --- | --- | --- |
+| `Acknowledged` | `bool` | `false` | Whether the webhook was acknowledged. |
+| `Message` | `string?` | `null` | Optional response message. |
+| `ErrorCode` | `string?` | `null` | Optional error code. |
 
 ## Usage
 
-### Example 1: Basic Webhook Handling
 ```csharp
-var handler = new WebhookHandler();
-handler.Provider = "GitHub";
-handler.Payload = "{\"action\":\"opened\",\"issue\":{\"number\":1}}";
-handler.Signature = "sha256=...";
+var handler = new WebhookHandler(eventBus, logger);
 
-bool success = await handler.HandleWebhookAsync();
-if (success)
+var handled = await handler.HandleWebhookAsync(
+    "payment-provider",
+    """{"event_type":"payment_succeeded","order_id":123}""",
+    validatedSignature);
+
+if (!handled)
 {
-    Console.WriteLine("Webhook processed successfully.");
-}
-else
-{
-    Console.WriteLine($"Error: {handler.ErrorCode} - {handler.Message}");
+    // Return an appropriate non-success response to the provider.
 }
 ```
 
-### Example 2: Registering a Webhook Provider
-```csharp
-var handler = new WebhookHandler();
-handler.RegisterWebhook();
-handler.Provider = "Stripe";
-
-// Simulate receiving a webhook
-handler.Payload = "{\"id\":\"evt_123\",\"type\":\"payment_intent.succeeded\"}";
-handler.Signature = "t=1234567890,v1=...";
-
-await handler.HandleWebhookAsync();
-if (handler.Acknowledged)
-{
-    Console.WriteLine($"Webhook from {handler.Provider} acknowledged.");
-}
-```
-
-## Notes
-
-- **Thread Safety**: This class is not thread-safe. Concurrent access to properties like `Payload`, `Signature`, or methods like `HandleWebhookAsync` may lead to race conditions. External synchronization is required if used in a multi-threaded context.
-- **Null Checks**: The `Payload` property must be set before calling `HandleWebhookAsync`; otherwise, an `ArgumentNullException` is thrown.
-- **Signature Verification**: While the class exposes a `Signature` property, it does not perform automatic verification. Implementers must validate the signature against the provider's expected algorithm and secret.
-- **Error Handling**: If `HandleWebhookAsync` fails, inspect `ErrorCode` and `Message` for diagnostic information. The handler does not throw exceptions for business-logic failures (e.g., invalid payload structure), instead setting these properties to indicate the issue.
+Each invocation uses only its arguments and injected services; `WebhookHandler` does not retain request state. Whether concurrent calls are safe therefore depends on the injected `IEventBus` and logger implementations.
