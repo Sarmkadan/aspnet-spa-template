@@ -15,6 +15,7 @@ Complete reference for all REST API endpoints provided by the aspnet-spa-templat
 - [Products API](#products-api)
 - [Orders API](#orders-api)
 - [Users API](#users-api)
+- [Manifest API](#manifest-api)
 - [Health API](#health-api)
 
 ## Base URL
@@ -508,6 +509,44 @@ curl -X GET "https://localhost:7001/api/users/550e8400-e29b-41d4-a716-4466554400
 {
   "firstName": "Jane",
   "phone": "+0987654321"
+}
+```
+
+---
+
+## Manifest API
+
+### Get Web App Manifest
+
+**Endpoint:** `GET /manifest.json`
+
+**Description:** Retrieve the dynamically generated Web App Manifest. No authentication required.
+
+**Example Request:**
+```bash
+curl -X GET "https://localhost:7001/manifest.json"
+```
+
+**Success Response:** 200 OK
+
+The response uses the `application/manifest+json` content type.
+
+### Get Theme Colors
+
+**Endpoint:** `GET /v1/manifest/theme-color`
+
+**Description:** Retrieve the theme and background colors used by the application. No authentication required.
+
+**Example Request:**
+```bash
+curl -X GET "https://localhost:7001/api/v1/manifest/theme-color"
+```
+
+**Success Response:** 200 OK
+```json
+{
+  "themeColor": "#000000",
+  "backgroundColor": "#ffffff"
 }
 ```
 
