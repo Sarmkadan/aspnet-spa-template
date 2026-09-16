@@ -16,6 +16,19 @@ namespace AspNetSpaTemplate.Formatters;
 /// </summary>
 public static class CsvFormatter
 {
+    private const char Delimiter = ',';
+    private const char Quote = '"';
+    private const string QuoteString = "\"";
+    private const string EscapedQuote = "\"\"";
+    private const string CarriageReturnLineFeed = "\r\n";
+    private const string CarriageReturn = "\r";
+    private const string LineFeed = "\n";
+    private const string FormulaPrefix = "'";
+    private const string EqualsSign = "=";
+    private const string PlusSign = "+";
+    private const string MinusSign = "-";
+    private const string AtSign = "@";
+
     /// <summary>
     /// Converts collection of objects to CSV format.
     /// Uses object properties as CSV columns.
@@ -35,7 +48,7 @@ public static class CsvFormatter
         foreach (var property in properties)
         {
             if (headerBuilder.Length > 0)
-                headerBuilder.Append(",");
+                headerBuilder.Append(Delimiter);
             headerBuilder.Append(EscapeCsvValue(property.Name));
         }
         var header = headerBuilder.ToString();
@@ -49,7 +62,7 @@ public static class CsvFormatter
             foreach (var property in properties)
             {
                 if (rowBuilder.Length > 0)
-                    rowBuilder.Append(",");
+                    rowBuilder.Append(Delimiter);
                 rowBuilder.Append(EscapeCsvValue(property.GetValue(item)));
             }
             csvBuilder.AppendLine(rowBuilder.ToString());
@@ -83,15 +96,15 @@ public static class CsvFormatter
         var strValue = value.ToString() ?? string.Empty;
 
         // Prevent CSV formula injection: prefix with single quote if starts with =, +, -, @
-        if (strValue.StartsWith("=") || strValue.StartsWith("+") || strValue.StartsWith("-") || strValue.StartsWith("@"))
+        if (strValue.StartsWith(EqualsSign) || strValue.StartsWith(PlusSign) || strValue.StartsWith(MinusSign) || strValue.StartsWith(AtSign))
         {
-            strValue = "'" + strValue;
+            strValue = FormulaPrefix + strValue;
         }
 
         // If contains special characters, wrap in quotes and escape inner quotes
-        if (strValue.Contains(",") || strValue.Contains("\"") || strValue.Contains("\n"))
+        if (strValue.Contains(Delimiter) || strValue.Contains(Quote) || strValue.Contains(LineFeed))
         {
-            return $"\"{strValue.Replace("\"", "\"\"")}\"";
+            return $"{QuoteString}{strValue.Replace(QuoteString, EscapedQuote)}{QuoteString}";
         }
 
         return strValue;
@@ -108,7 +121,7 @@ public static class CsvFormatter
         if (string.IsNullOrWhiteSpace(csvContent))
             return new List<Dictionary<string, string>>();
 
-        var lines = csvContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        var lines = csvContent.Split(new[] { CarriageReturnLineFeed, CarriageReturn, LineFeed }, StringSplitOptions.None);
         if (lines.Length < 2)
             return new List<Dictionary<string, string>>();
 
@@ -149,12 +162,12 @@ public static class CsvFormatter
         {
             var ch = line[i];
 
-            if (ch == '"')
+            if (ch == Quote)
             {
                 // Check for escaped quote
-                if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                if (inQuotes && i + 1 < line.Length && line[i + 1] == Quote)
                 {
-                    currentValue.Append('"');
+                    currentValue.Append(Quote);
                     i++; // Skip next quote
                 }
                 else
@@ -162,7 +175,7 @@ public static class CsvFormatter
                     inQuotes = !inQuotes;
                 }
             }
-            else if (ch == ',' && !inQuotes)
+            else if (ch == Delimiter && !inQuotes)
             {
                 values.Add(currentValue.ToString().Trim());
                 currentValue = new StringBuilder();
@@ -185,10 +198,14 @@ public static class CsvFormatter
 /// </summary>
 public class CsvExportOptions
 {
+    private const string DefaultDelimiter = ",";
+    private const string DefaultDateFormat = "yyyy-MM-dd";
+    private const string DefaultCurrencyFormat = "F2";
+
     public bool IncludeHeader { get; set; } = true;
-    public string Delimiter { get; set; } = ",";
-    public string? DateFormat { get; set; } = "yyyy-MM-dd";
-    public string? CurrencyFormat { get; set; } = "F2";
+    public string Delimiter { get; set; } = DefaultDelimiter;
+    public string? DateFormat { get; set; } = DefaultDateFormat;
+    public string? CurrencyFormat { get; set; } = DefaultCurrencyFormat;
     public List<string>? ColumnsToInclude { get; set; }
     public List<string>? ColumnsToExclude { get; set; }
 }
