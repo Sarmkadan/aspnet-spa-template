@@ -82,6 +82,13 @@ The `ProductRepository` class provides data‑access operations for the `Product
 - **Return value**: A `Task` yielding an `int` count of available products.
 - **Exceptions**: Same as other query methods; may throw exceptions from the data access layer.
 
+### `public virtual async Task<IEnumerable<Product>> GetAllAsync()`
+
+- **Purpose**: Returns all products from the repository without applying filters or ordering.
+- **Parameters**: None.
+- **Return value**: A `Task` whose result is an `IEnumerable<Product>` containing all products; the sequence is empty when no products exist.
+- **Exceptions**: Propagates exceptions thrown while Entity Framework Core executes the query.
+
 ## Usage
 
 ```csharp
