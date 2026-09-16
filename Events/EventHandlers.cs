@@ -31,6 +31,10 @@ public sealed class DomainEventHandlers
         NotificationService notificationService,
         ILogger<DomainEventHandlers> logger)
     {
+        ArgumentNullException.ThrowIfNull(cacheService);
+        ArgumentNullException.ThrowIfNull(notificationService);
+        ArgumentNullException.ThrowIfNull(logger);
+
         _cacheService = cacheService;
         _notificationService = notificationService;
         _logger = logger;
