@@ -278,6 +278,7 @@ public class ExceptionHandlingMiddleware
 
 ### Supporting Technologies
 - **Caching**: In-Memory Cache (IMemoryCache)
+- **Cache Key Construction**: `CacheKeyBuilder` provides a dedicated helper for building cache keys used by the caching subsystem
 - **Background Jobs**: Hosted Services
 - **Logging**: ILogger (built-in)
 - **Validation**: Data Annotations + Custom Validators
