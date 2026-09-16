@@ -24,6 +24,7 @@ public sealed class ManifestService : IManifestService
 
     private const string Icon192File = "icon-192.png";
     private const string Icon512File = "icon-512.png";
+    private const string PngMimeType = "image/png";
 
     private static readonly string[] DefaultCategories = new[] { "productivity", "utilities" };
 
@@ -82,14 +83,14 @@ public sealed class ManifestService : IManifestService
         {
             Src = $"{baseUrl}/icons/{Icon192File}",
             Sizes = "192x192",
-            Type = "image/png",
+            Type = PngMimeType,
             Purpose = "any maskable"
         },
         new ManifestIcon
         {
             Src = $"{baseUrl}/icons/{Icon512File}",
             Sizes = "512x512",
-            Type = "image/png",
+            Type = PngMimeType,
             Purpose = "any maskable"
         }
     ];
