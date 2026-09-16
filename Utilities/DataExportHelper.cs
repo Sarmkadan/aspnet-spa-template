@@ -95,7 +95,10 @@ public static class DataExportHelper
     /// </summary>
     public static ExportFormat NegotiateFormat(string? acceptHeader)
     {
-        ArgumentException.ThrowIfNullOrEmpty(acceptHeader);
+        if (string.IsNullOrEmpty(acceptHeader))
+        {
+            return ExportFormat.Json;
+        }
 
         return acceptHeader.ToLowerInvariant() switch
         {
