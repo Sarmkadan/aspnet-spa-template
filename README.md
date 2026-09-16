@@ -646,3 +646,11 @@ decimal totalRevenue = await orderRepository.GetTotalRevenueAsync();
 // Get total revenue for the last 30 days:
 decimal monthlyRevenue = await orderRepository.GetTotalRevenueAsync(days: 30);
 ```
+
+## Running Benchmarks
+
+The solution includes a BenchmarkDotNet project under `benchmarks/aspnet-spa-template.Benchmarks/`. To run the benchmarks, execute the following from the repository root:
+
+```bash
+dotnet run --project benchmarks/aspnet-spa-template.Benchmarks/aspnet-spa-template.Benchmarks.csproj -c Release
+```
