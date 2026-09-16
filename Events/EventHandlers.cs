@@ -219,6 +219,9 @@ public static class EventHandlerExtensions
 {
     public static void RegisterEventHandlers(this IServiceCollection services, IEventBus eventBus)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(eventBus);
+
         var handlerProvider = services.BuildServiceProvider();
         var handlers = handlerProvider.GetRequiredService<DomainEventHandlers>();
 
