@@ -12,6 +12,11 @@ The `UserRepository` class exposes the following public members:
 - `public virtual async Task<int> GetUserCountAsync`: Retrieves the total count of users. The method returns an integer representing the total number of users. It may throw exceptions related to database access or query execution.
 - `public virtual async Task<int> GetActiveUserCountAsync`: Retrieves the count of active users. The method returns an integer representing the number of active users. It may throw exceptions related to database access or query execution.
 - `public virtual async Task<bool> EmailExistsAsync`: Checks if an email address exists in the user database. The method returns a boolean indicating whether the email address is found. It may throw exceptions related to database access or query execution.
+- `public virtual async Task<User?> GetByIdAsync(int id)`: Retrieves a non-deleted user by ID. Returns the matching `User`, or `null` when no non-deleted user has the specified ID.
+- `public virtual async Task<IEnumerable<User>> GetAllAsync()`: Retrieves all users that have not been soft-deleted.
+- `public virtual async Task<User?> GetByIdIncludingDeletedAsync(int id)`: Retrieves a user by ID without excluding soft-deleted users. Returns the matching `User`, or `null` when no user has the specified ID.
+- `public virtual void SoftDelete(User user)`: Marks the supplied user as soft-deleted and registers it for update. Throws `ArgumentNullException` when `user` is `null`.
+- `public virtual void Restore(User user)`: Restores the supplied soft-deleted user and registers it for update. Throws `ArgumentNullException` when `user` is `null`.
 
 ## Usage
 The following examples demonstrate how to use the `UserRepository` class:
