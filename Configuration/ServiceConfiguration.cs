@@ -53,6 +53,8 @@ public static class ServiceConfiguration
     /// </summary>
     public static IServiceCollection AddHttpClients(this IServiceCollection services, IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
         services.AddHttpClient("ExternalApi", client =>
         {
             client.BaseAddress = new Uri("https://api.example.com");
@@ -69,6 +71,7 @@ public static class ServiceConfiguration
     /// </summary>
     public static IApplicationBuilder UseApplicationMiddleware(this IApplicationBuilder app)
     {
+        ArgumentNullException.ThrowIfNull(app);
         // Correlation ID should be first (tracks request through entire pipeline)
         app.UseMiddleware<Middleware.CorrelationIdMiddleware>();
 
