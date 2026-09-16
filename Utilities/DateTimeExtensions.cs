@@ -152,6 +152,18 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
+    /// Checks if the given DateTime falls on a weekend.
+    /// </summary>
+    /// <param name="dateTime">The DateTime to check.</param>
+    /// <returns>True if the DateTime falls on Saturday or Sunday; otherwise false.</returns>
+    public static bool IsWeekend(this DateTime dateTime)
+    {
+        ArgumentNullException.ThrowIfNull(nameof(dateTime));
+        return dateTime.DayOfWeek == DayOfWeek.Saturday
+            || dateTime.DayOfWeek == DayOfWeek.Sunday;
+    }
+
+    /// <summary>
     /// Checks if the given DateTime is in the past relative to now.
     /// </summary>
     /// <param name="dateTime">The DateTime to check.</param>
