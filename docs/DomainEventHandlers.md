@@ -1,98 +1,60 @@
 # DomainEventHandlers
 
-Centralized event handler registry for domain events in the application. This class provides asynchronous handlers for core domain events such as product lifecycle changes, order processing, user registration, and review submissions. Handlers are registered once during application startup to decouple event producers from consumers.
+The `DomainEventHandlers` class contains the application's strongly typed handlers for product, order, user, and review domain events. It connects event-bus notifications to application side effects such as cache invalidation and logging while keeping event publishers independent of those concerns.
+
+`DomainEventHandlers` is a sealed service. Its constructor requires an `ICacheService`, a `NotificationService`, and an `ILogger<DomainEventHandlers>`; each dependency is validated and an `ArgumentNullException` is thrown when any dependency is `null`.
 
 ## API
 
-### `public DomainEventHandlers`
+The class exposes the following public members.
 
-Static class containing all domain event handler methods. No instance members are exposed; all functionality is provided through static methods.
+| Member | Description |
+|--------|-------------|
+| `DomainEventHandlers(ICacheService cacheService, NotificationService notificationService, ILogger<DomainEventHandlers> logger)` | Creates the handler service with its cache, notification, and logging dependencies. |
+| `Task OnProductCreated(ProductCreatedEvent @event)` | Logs the new product and invalidates the cached product lists. |
+| `Task OnProductUpdated(ProductUpdatedEvent @event)` | Invalidates the individual product cache entry and the cached product lists. |
+| `Task OnProductDeleted(ProductDeletedEvent @event)` | Invalidates the individual product cache entry and the cached product lists. |
+| `Task OnOrderPlaced(OrderPlacedEvent @event)` | Logs that the order was placed and that its notification was queued. |
+| `Task OnOrderCompleted(OrderCompletedEvent @event)` | Logs that the order was completed. |
+| `Task OnOrderCancelled(OrderCancelledEvent @event)` | Logs the cancellation and its reason. |
+| `Task OnUserRegistered(UserRegisteredEvent @event)` | Logs the registered user's identifier and email address. |
+| `Task OnReviewSubmitted(ReviewSubmittedEvent @event)` | Invalidates the affected product and product-review cache entries. |
 
-### `public async Task OnProductCreated(ProductCreatedEvent @event)`
+Every handler throws `ArgumentNullException` when its event argument is `null`. Exceptions raised while processing a non-null event are caught and logged, so they are not propagated to the event bus.
 
-Handles the `ProductCreatedEvent` domain event.
-- **Parameters**: `@event` – The domain event containing product details.
-- **Return value**: `Task` representing the asynchronous operation.
-- **Exceptions**: Throws `ArgumentNullException` if `@event` is null.
+The same source file also defines the `EventHandlerExtensions` static class:
 
-### `public async Task OnProductUpdated(ProductUpdatedEvent @event)`
+| Member | Description |
+|--------|-------------|
+| `void RegisterEventHandlers(this IServiceCollection services, IEventBus eventBus)` | Resolves `DomainEventHandlers` from a service provider and subscribes all eight handler methods to their corresponding event types. |
 
-Handles the `ProductUpdatedEvent` domain event.
-- **Parameters**: `@event` – The domain event containing updated product details.
-- **Return value**: `Task` representing the asynchronous operation.
-- **Exceptions**: Throws `ArgumentNullException` if `@event` is null.
-
-### `public async Task OnProductDeleted(ProductDeletedEvent @event)`
-
-Handles the `ProductDeletedEvent` domain event.
-- **Parameters**: `@event` – The domain event containing the identifier of the deleted product.
-- **Return value**: `Task` representing the asynchronous operation.
-- **Exceptions**: Throws `ArgumentNullException` if `@event` is null.
-
-### `public async Task OnOrderPlaced(OrderPlacedEvent @event)`
-
-Handles the `OrderPlacedEvent` domain event.
-- **Parameters**: `@event` – The domain event containing order details.
-- **Return value**: `Task` representing the asynchronous operation.
-- **Exceptions**: Throws `ArgumentNullException` if `@event` is null.
-
-### `public async Task OnOrderCompleted(OrderCompletedEvent @event)`
-
-Handles the `OrderCompletedEvent` domain event.
-- **Parameters**: `@event` – The domain event containing order details.
-- **Return value**: `Task` representing the asynchronous operation.
-- **Exceptions**: Throws `ArgumentNullException` if `@event` is null.
-
-### `public async Task OnOrderCancelled(OrderCancelledEvent @event)`
-
-Handles the `OrderCancelledEvent` domain event.
-- **Parameters**: `@event` – The domain event containing order details.
-- **Return value**: `Task` representing the asynchronous operation.
-- **Exceptions**: Throws `ArgumentNullException` if `@event` is null.
-
-### `public async Task OnUserRegistered(UserRegisteredEvent @event)`
-
-Handles the `UserRegisteredEvent` domain event.
-- **Parameters**: `@event` – The domain event containing user registration details.
-- **Return value**: `Task` representing the asynchronous operation.
-- **Exceptions**: Throws `ArgumentNullException` if `@event` is null.
-
-### `public async Task OnReviewSubmitted(ReviewSubmittedEvent @event)`
-
-Handles the `ReviewSubmittedEvent` domain event.
-- **Parameters**: `@event` – The domain event containing review details.
-- **Return value**: `Task` representing the asynchronous operation.
-- **Exceptions**: Throws `ArgumentNullException` if `@event` is null.
-
-### `public static void RegisterEventHandlers(IServiceCollection services)`
-
-Registers all domain event handlers with the dependency injection container.
-- **Parameters**: `services` – The `IServiceCollection` instance to register handlers with.
-- **Return value**: `void`.
-- **Exceptions**: Throws `ArgumentNullException` if `services` is null.
+`RegisterEventHandlers` does not explicitly validate its arguments. A null argument or a missing `DomainEventHandlers` registration therefore fails through the service-resolution or subscription operations it performs.
 
 ## Usage
 
-Register handlers during application startup:
+Register `DomainEventHandlers` and its dependencies with the service collection, then connect the handlers to the event bus:
 
 ```csharp
-// In Program.cs or Startup.cs
-services.RegisterEventHandlers(services);
+services.AddSingleton<DomainEventHandlers>();
+
+var eventBus = serviceProvider.GetRequiredService<IEventBus>();
+services.RegisterEventHandlers(eventBus);
 ```
 
-Subscribe to domain events via the event bus:
+Once registered, publishing a matching event invokes its handler:
 
 ```csharp
-// Example: Publishing a ProductCreatedEvent
-var productCreatedEvent = new ProductCreatedEvent(
-    productId: Guid.NewGuid(),
-    name: "Premium Headphones",
-    price: 199.99m,
-    stockQuantity: 50
-);
-await eventBus.PublishAsync(productCreatedEvent);
+await eventBus.PublishAsync(new ProductCreatedEvent
+{
+    ProductId = 42,
+    ProductName = "Premium Headphones",
+    Price = 199.99m
+});
 ```
 
 ## Notes
 
-Handlers are designed for fire-and-forget execution; failures should be logged and not propagated to the caller. Each handler is invoked sequentially by the event bus, so handlers should avoid long-running operations to prevent blocking subsequent events. Thread safety is ensured by the event bus implementation, which serializes event processing. Handlers should be idempotent where possible, as retries may occur after transient failures.
+- Product and review handlers perform cache invalidation; the current order and user handlers only log their work and contain placeholders for future notification or workflow integration.
+- The injected `NotificationService` is retained for those notification scenarios but is not currently called by the public handlers.
+- Handler delegates are subscribed to the event bus by event type. The event bus invokes subscribers sequentially.
+- Operational failures are logged and suppressed by each handler. Callers can rely on a completed task after a handled failure, but should inspect logs for errors.
