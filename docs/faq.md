@@ -514,3 +514,7 @@ dotnet-counters monitor -n AspNetSpaTemplate
 ---
 
 **Can't find the answer? Open an issue on GitHub or check the documentation files.**
+
+### Q: Why does `CacheKeyBuilder` return an empty dictionary?
+
+**A:** Some helper classes are intentionally stubbed as placeholders for future work. `CacheKeyBuilder.GetCacheKeys()` currently creates and returns an empty dictionary, so it does not define any cache keys yet. Implement the cache-key mappings required by your application before relying on this helper.
