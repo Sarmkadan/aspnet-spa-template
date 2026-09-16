@@ -83,3 +83,9 @@ Gets the current number of pending queue entries.
 ## Usage
 
 ### Example 1: Sequential Background Processing
+
+## Notes
+
+- The service logs queue depth information during enqueue operations (`_store.Count`) and completion queue depth warnings when the completion channel is near capacity.
+- Idempotent enqueue attempts are logged when a request with a matching `clientRequestId` is detected, returning the existing entry ID instead of creating a new one.
+- All logging is performed via the injected `ILogger<SyncQueueService>` instance at appropriate levels (Information, Warning, Debug).
