@@ -15,6 +15,7 @@ Complete reference for all REST API endpoints provided by the aspnet-spa-templat
 - [Products API](#products-api)
 - [Orders API](#orders-api)
 - [Users API](#users-api)
+- [Webhooks API](#webhooks-api)
 - [Manifest API](#manifest-api)
 - [Health API](#health-api)
 
@@ -511,6 +512,70 @@ curl -X GET "https://localhost:7001/api/users/550e8400-e29b-41d4-a716-4466554400
   "phone": "+0987654321"
 }
 ```
+
+---
+
+## Webhooks API
+
+Webhook endpoints validate the `X-Signature` header using HMAC-SHA256 and return immediately after queuing the payload for processing. No bearer token is required.
+
+All webhook requests use the following headers and body:
+
+**Headers:**
+```
+Content-Type: application/json
+X-Signature: <hmac_sha256_signature>
+```
+
+**Request Body:**
+```json
+{
+  "provider": "payment-provider",
+  "payload": "<provider_payload>",
+  "signature": "<provider_signature>"
+}
+```
+
+### Receive Payment Webhook
+
+**Endpoint:** `POST /webhooks/payment`
+
+**Description:** Receive a webhook from the payment provider.
+
+### Receive Email Webhook
+
+**Endpoint:** `POST /webhooks/email`
+
+**Description:** Receive delivery status, bounce, and complaint webhooks from the email service.
+
+### Receive Shipping Webhook
+
+**Endpoint:** `POST /webhooks/shipping`
+
+**Description:** Receive shipment tracking updates from the shipping provider.
+
+### Receive Provider Webhook
+
+**Endpoint:** `POST /webhooks/{provider}`
+
+**Description:** Receive a webhook for the provider identified by the route parameter.
+
+**URL Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| provider | string | Webhook provider name |
+
+**Success Response:** 200 OK
+```json
+{
+  "acknowledged": true,
+  "message": "Webhook received and queued for processing"
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - The request, provider, or payload is invalid
+- `401 Unauthorized` - The signature is missing, invalid, or cannot be verified
 
 ---
 
