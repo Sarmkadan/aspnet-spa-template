@@ -89,6 +89,8 @@ public class EventBusImplementation : IEventBus
 
     public void Unsubscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : DomainEvent
     {
+        ArgumentNullException.ThrowIfNull(handler);
+
         lock (_subscriberLock)
         {
             var eventType = typeof(TEvent);
@@ -195,6 +197,8 @@ public class EventBusImplementation : IEventBus
 
     public async Task PublishManyAsync<TEvent>(IEnumerable<TEvent> events) where TEvent : DomainEvent
     {
+        ArgumentNullException.ThrowIfNull(events);
+
         // Publish all events sequentially (not in parallel)
         foreach (var @event in events)
         {
@@ -237,6 +241,9 @@ public static class EventBusExtensions
     /// </summary>
     public static async Task PublishProductCreatedAsync(this IEventBus eventBus, int productId, string productName, decimal price)
     {
+        ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(productName);
+
         await eventBus.PublishAsync(new ProductCreatedEvent
         {
             ProductId = productId,
@@ -251,6 +258,8 @@ public static class EventBusExtensions
     /// </summary>
     public static async Task PublishOrderPlacedAsync(this IEventBus eventBus, int orderId, int userId, decimal totalAmount, int itemCount)
     {
+        ArgumentNullException.ThrowIfNull(eventBus);
+
         await eventBus.PublishAsync(new OrderPlacedEvent
         {
             OrderId = orderId,
@@ -266,6 +275,10 @@ public static class EventBusExtensions
     /// </summary>
     public static async Task PublishUserRegisteredAsync(this IEventBus eventBus, int userId, string email, string fullName)
     {
+        ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(email);
+        ArgumentNullException.ThrowIfNull(fullName);
+
         await eventBus.PublishAsync(new UserRegisteredEvent
         {
             UserId = userId,
@@ -280,6 +293,10 @@ public static class EventBusExtensions
     /// </summary>
     public static async Task PublishCustomEventAsync(this IEventBus eventBus, string eventName, Dictionary<string, object> data)
     {
+        ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(eventName);
+        ArgumentNullException.ThrowIfNull(data);
+
         await eventBus.PublishAsync(new CustomEvent
         {
             EventName = eventName,
